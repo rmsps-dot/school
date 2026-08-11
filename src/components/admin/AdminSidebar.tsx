@@ -59,8 +59,8 @@ export default function AdminSidebar({ adminName }: Props) {
 
   useEffect(() => {
     const fetchCounts = async () => {
-      const { data } = (await getSidebarCounts()) as any;
-      if (data) setCounts(data);
+      const res = await getSidebarCounts();
+      if ('data' in res && res.data) setCounts(res.data);
     };
     fetchCounts() // initial fetch
 
