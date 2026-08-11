@@ -11,7 +11,7 @@ interface SettingsClientProps {
 
 export default function SettingsClient({ initialSettings }: SettingsClientProps) {
   const attendanceWindowSetting = initialSettings.find(s => s.key === 'teacher_attendance_window')
-  const defaultTimes = attendanceWindowSetting?.value || { start: '06:00', end: '12:00' }
+  const defaultTimes = (attendanceWindowSetting?.value as { start: string, end: string }) || { start: '06:00', end: '12:00' }
 
   const [startTime, setStartTime] = useState(defaultTimes.start)
   const [endTime, setEndTime] = useState(defaultTimes.end)

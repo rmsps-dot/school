@@ -7,18 +7,11 @@ import { revalidatePath } from 'next/cache'
    TYPES
 ════════════════════════════════════════════════════════════ */
 
-export type GalleryCategory = 'Event' | 'Sports' | 'Campus' | 'Other'
-export type GalleryMediaType = 'photo' | 'video'
+import type { Database } from '@/types/supabase'
 
-export interface GalleryItem {
-  id: string
-  title: string
-  category: GalleryCategory
-  media_type: GalleryMediaType
-  media_url: string
-  created_by: string
-  created_at: string
-}
+export type GalleryCategory = Database['public']['Enums']['gallery_category']
+export type GalleryMediaType = Database['public']['Enums']['gallery_media_type']
+export type GalleryItem = Database['public']['Tables']['gallery']['Row']
 
 import { requireAdmin } from '@/utils/auth-helpers'
 
@@ -38,7 +31,7 @@ export async function fetchGalleryItems(): Promise<{ data: GalleryItem[]; error?
       .order('created_at', { ascending: false })
 
     if (error) throw new Error(error.message)
-    return { data: data as GalleryItem[] }
+    return { data: data || [] }
   } catch (err) {
     return { data: [], error: err instanceof Error ? err.message : 'Unknown error' }
   }

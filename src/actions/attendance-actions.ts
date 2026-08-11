@@ -28,8 +28,9 @@ export async function getStudentAttendance(classId: string, date: string) {
   if (error) return { data: null, error: error.message }
   return { data, error: null }
 }
+import type { Database } from '@/types/supabase'
 
-export async function markStudentAttendance(records: any[]) {
+export async function markStudentAttendance(records: Database['public']['Tables']['student_attendance']['Insert'][]) {
   // records array should have { student_id, class_id, date, status }
   if (!records || records.length === 0) return { success: true }
   const classId = records[0].class_id

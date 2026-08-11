@@ -34,11 +34,16 @@ export async function getTeacherDetails(profileId: string) {
 
   // Fetch email using admin client (only admin client can read auth.users)
   const { data: authData } = await supabaseAdmin.auth.admin.getUserById(profileId)
-  if (authData?.user && data.profiles) {
-    (data.profiles as any).email = authData.user.email
+  
+  const teacherData = {
+    ...data,
+    profiles: data.profiles ? {
+      ...data.profiles,
+      email: authData?.user?.email || null
+    } : null
   }
 
-  return { data, error: null }
+  return { data: teacherData, error: null }
 }
 
 export async function recordTeacherPayment(formData: FormData) {

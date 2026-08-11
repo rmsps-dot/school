@@ -37,12 +37,15 @@ export async function getAssignClassesData() {
   if (classesError) return { error: classesError.message }
 
   // Format data
-  const formattedTeachers = teachers.map((t) => ({
-    id: t.id,
-    full_name: (t.profiles as any)?.full_name || 'Unknown',
-    email: emailMap.get(t.profile_id) || 'N/A',
-    assignedClassIds: t.teacher_classes.map((tc: any) => tc.class_id)
-  }))
+  const formattedTeachers = teachers.map((t) => {
+    const profile = Array.isArray(t.profiles) ? t.profiles[0] : t.profiles
+    return {
+      id: t.id,
+      full_name: profile?.full_name || 'Unknown',
+      email: emailMap.get(t.profile_id) || 'N/A',
+      assignedClassIds: t.teacher_classes.map(tc => tc.class_id)
+    }
+  })
 
   return { teachers: formattedTeachers, classes, error: null }
 }
@@ -59,7 +62,7 @@ export async function updateTeacherClasses(teacherId: string, classIds: string[]
 
   if (fetchError) return { success: false, error: fetchError.message }
 
-  const existingClassIds = new Set((existing ?? []).map((r) => r.class_id as string))
+  const existingClassIds = new Set((existing ?? []).map((r) => r.class_id))
   const desiredClassIds  = new Set(classIds)
 
   // 2. Remove only the class IDs that were de-selected

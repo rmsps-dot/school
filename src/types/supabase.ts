@@ -857,7 +857,13 @@ export type Database = {
       my_teacher_id: { Args: never; Returns: string }
     }
     Enums: {
-      attendance_status: "present" | "absent" | "late" | "half_day" | "holiday"
+      attendance_status:
+        | "present"
+        | "absent"
+        | "late"
+        | "half_day"
+        | "holiday"
+        | "leave"
       exam_type: "unit_test" | "mid_term" | "pre_board" | "final" | "other"
       gallery_category: "Event" | "Sports" | "Campus" | "Other"
       gallery_media_type: "photo" | "video"
@@ -992,7 +998,14 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
-      attendance_status: ["present", "absent", "late", "half_day", "holiday"],
+      attendance_status: [
+        "present",
+        "absent",
+        "late",
+        "half_day",
+        "holiday",
+        "leave",
+      ],
       exam_type: ["unit_test", "mid_term", "pre_board", "final", "other"],
       gallery_category: ["Event", "Sports", "Campus", "Other"],
       gallery_media_type: ["photo", "video"],

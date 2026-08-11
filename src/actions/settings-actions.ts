@@ -4,13 +4,9 @@ import { createClient } from '@/utils/supabase/server'
 import { revalidatePath } from 'next/cache'
 import { requireAuth, requireAdmin } from '@/utils/auth-helpers'
 
-export interface AppSetting {
-  id: string
-  key: string
-  value: any
-  created_at: string
-  updated_at: string
-}
+import type { Database, Json } from '@/types/supabase'
+
+export type AppSetting = Database['public']['Tables']['settings']['Row']
 
 export async function getSettings() {
   const auth = await requireAuth()
@@ -23,9 +19,7 @@ export async function getSettings() {
   return { data, error: null }
 }
 
-type JsonValue = string | number | boolean | null | JsonValue[] | { [key: string]: JsonValue }
-
-export async function updateSetting(key: string, value: JsonValue) {
+export async function updateSetting(key: string, value: Json) {
   const auth = await requireAdmin()
   if (!auth.ok) return { error: auth.error }
 

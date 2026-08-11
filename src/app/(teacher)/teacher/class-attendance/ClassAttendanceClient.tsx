@@ -14,11 +14,13 @@ interface Props {
   timeWindow: { start: string, end: string }
 }
 
+import type { Database } from '@/types/supabase'
+
 export default function ClassAttendanceClient({ classes, timeWindow }: Props) {
   const [selectedClass, setSelectedClass] = useState('')
   const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0])
   const [students, setStudents] = useState<any[]>([])
-  const [attendance, setAttendance] = useState<Record<string, string>>({})
+  const [attendance, setAttendance] = useState<Record<string, Database['public']['Enums']['attendance_status']>>({})
   
   const [isPending, startTransition] = useTransition()
   const [loadingData, setLoadingData] = useState(false)
@@ -54,8 +56,8 @@ export default function ClassAttendanceClient({ classes, timeWindow }: Props) {
         if (studentsRes.data) setStudents(studentsRes.data)
         
         if (attRes.data) {
-          const attMap: Record<string, string> = {}
-          attRes.data.forEach((a: { student_id: string; status: string }) => {
+          const attMap: Record<string, Database['public']['Enums']['attendance_status']> = {}
+          attRes.data.forEach((a: { student_id: string; status: Database['public']['Enums']['attendance_status'] }) => {
             attMap[a.student_id] = a.status
           })
           setAttendance(attMap)
@@ -69,7 +71,7 @@ export default function ClassAttendanceClient({ classes, timeWindow }: Props) {
     }
   }, [selectedClass, selectedDate])
 
-  const handleMark = (studentId: string, status: string) => {
+  const handleMark = (studentId: string, status: Database['public']['Enums']['attendance_status']) => {
     if (!canEdit) return
     setAttendance(prev => ({ ...prev, [studentId]: status }))
   }

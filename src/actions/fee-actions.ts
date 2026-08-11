@@ -2,14 +2,9 @@
 
 import { createClient } from '@/utils/supabase/server'
 import { requireSelfOrGuardianOf } from '@/utils/auth-helpers'
+import type { Database } from '@/types/supabase'
 
-export interface FeeRecord {
-  id: string
-  student_id: string
-  fee_name: string
-  amount: number
-  paid_amount: number
-  due_date: string
+export type FeeRecord = Database['public']['Tables']['student_fees']['Row'] & {
   status: 'paid' | 'due' | 'upcoming'
 }
 
@@ -28,7 +23,7 @@ export async function getStudentFees(studentIdStr: string): Promise<{ data: FeeR
 
     if (error) throw error
 
-    return { data: data || [] }
+    return { data: (data ?? []) as FeeRecord[] }
   } catch (err) {
     return { data: [], error: err instanceof Error ? err.message : 'Unknown error' }
   }
