@@ -2,7 +2,8 @@
 
 import { createClient } from '@/utils/supabase/server'
 import { supabaseAdmin } from '@/utils/supabase/admin'
-import { requireAuth } from '@/utils/auth-helpers'
+import { requireAuth, requireAdmin } from '@/utils/auth-helpers'
+import type { Database } from '@/types/supabase'
 
 /* ════════════════════════════════════════════════════════════
    TYPES
@@ -15,14 +16,7 @@ export interface ChatContact {
   extraInfo?: string
 }
 
-export interface ChatMessage {
-  id: string
-  sender_id: string
-  receiver_id: string
-  content: string
-  is_read: boolean
-  created_at: string
-}
+export type ChatMessage = Database['public']['Tables']['messages']['Row']
 
 /* ════════════════════════════════════════════════════════════
    ACTIONS
@@ -38,6 +32,9 @@ export async function getContactsForTeacher(tab: string, classId?: string): Prom
   try {
     const auth = await requireAuth()
     if (!auth.ok) return { data: [], error: auth.error }
+    if (auth.profile.role !== 'teacher' && auth.profile.role !== 'admin') {
+      return { data: [], error: 'Forbidden: Admin or Teacher only' }
+    }
     const client = await createClient()
 
     // Teachers/Admins list: use RLS client — teacher can see other staff profiles
@@ -228,7 +225,7 @@ export async function getUnreadCounts(): Promise<{
  */
 export async function getAllProfiles(): Promise<{ data: ChatContact[]; error?: string }> {
   try {
-    const auth = await requireAuth()
+    const auth = await requireAdmin()
     if (!auth.ok) return { data: [], error: auth.error }
     const client = await createClient()
     const { data, error } = await client
