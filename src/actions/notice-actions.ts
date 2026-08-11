@@ -8,16 +8,10 @@ import { requireTeacher, requireAuth, requireAdmin } from '@/utils/auth-helpers'
    TYPES
 ════════════════════════════════════════════════════════════ */
 
-export type TargetRole = 'all' | 'teacher' | 'student' | 'parent'
+import type { Database } from '@/types/supabase'
 
-export interface Notice {
-  id: string
-  title: string
-  content: string
-  target_role: TargetRole
-  created_by: string
-  created_at: string
-}
+export type TargetRole = Database['public']['Enums']['notice_target']
+export type Notice = Database['public']['Tables']['notices']['Row']
 
 /* ════════════════════════════════════════════════════════════
    SERVER ACTIONS
@@ -36,7 +30,7 @@ export async function fetchNotices(): Promise<{ data: Notice[]; error?: string }
       .order('created_at', { ascending: false })
 
     if (error) throw new Error(error.message)
-    return { data: data as Notice[] }
+    return { data: data || [] }
   } catch (err) {
     return { data: [], error: err instanceof Error ? err.message : 'Unknown error' }
   }

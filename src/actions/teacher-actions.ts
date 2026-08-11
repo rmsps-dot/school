@@ -35,10 +35,12 @@ async function getTeacherId() {
 /* ─────────────────────────────────────────────────────────────
    CHECK TODAY'S ATTENDANCE  (called on page load)
 ───────────────────────────────────────────────────────────── */
+import type { Database } from '@/types/supabase'
+
 export async function getTodayAttendance(): Promise<{
   marked: boolean
   record?: {
-    status: string
+    status: Database['public']['Enums']['attendance_status']
     check_in_at: string | null
     photo_url: string | null
     location_lat: number | null
@@ -88,11 +90,16 @@ export async function getTeacherProfile() {
 
     // Fetch the user's email safely using their own session
     const { data: { user } } = await supabase.auth.getUser()
-    if (user && teacherData.profiles) {
-      (teacherData.profiles as any).email = user.email
+    
+    const teacherProfile = {
+      ...teacherData,
+      profiles: teacherData.profiles ? {
+        ...teacherData.profiles,
+        email: user?.email || null
+      } : null
     }
 
-    return { data: teacherData, error: null }
+    return { data: teacherProfile, error: null }
   } catch (err: any) {
     return { data: null, error: err.message }
   }
