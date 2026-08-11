@@ -7,9 +7,11 @@ import { requireStudent as requireAuthStudent, requireParent as requireAuthParen
    SHARED TYPES
 ════════════════════════════════════════════════════════════ */
 
+import type { Database } from '@/types/supabase'
+
 export interface ApprovedResult {
   id: string
-  exam_type: string
+  exam_type: Database['public']['Enums']['exam_type']
   subject: string
   marks_obtained: number
   total_marks: number
@@ -21,7 +23,7 @@ export interface ApprovedResult {
 export interface AttendanceRecord {
   id: string
   date: string
-  status: string
+  status: Database['public']['Enums']['attendance_status']
   remarks: string | null
 }
 
@@ -75,7 +77,7 @@ async function requireStudentData() {
     .single()
   if (!student) throw new Error('Student record not found. Contact admin.')
 
-  const cls = student.classes as unknown as { class_name: string; section: string } | null
+  const cls = Array.isArray(student.classes) ? student.classes[0] : student.classes
 
   return {
     user: auth.profile,
@@ -131,7 +133,7 @@ export async function getStudentResults(): Promise<{ data: ApprovedResult[]; err
     if (error) return { data: [], error: error.message }
 
     const results: ApprovedResult[] = (data ?? []).map((r) => {
-      const cls = r.classes as unknown as { class_name: string; section: string } | null
+      const cls = Array.isArray(r.classes) ? r.classes[0] : r.classes
       return {
         id:              r.id,
         exam_type:       r.exam_type,
@@ -224,18 +226,15 @@ export async function getParentChildren(): Promise<{ data: ChildInfo[]; error?: 
     if (error) return { data: [], error: error.message }
 
     const children: ChildInfo[] = (data ?? []).map((row) => {
-      const student = row.students as unknown as {
-        id: string
-        student_id: string
-        profiles: { full_name: string }
-        classes: { class_name: string; section: string } | null
-      }
+      const student = Array.isArray(row.students) ? row.students[0] : row.students
+      const cls = Array.isArray(student?.classes) ? student.classes[0] : student?.classes
+      const prof = Array.isArray(student?.profiles) ? student.profiles[0] : student?.profiles
       return {
         studentRowId: student.id,
         studentCode:  student.student_id,
-        fullName:     student.profiles.full_name,
-        className:    student.classes?.class_name ?? '—',
-        section:      student.classes?.section ?? '—',
+        fullName:     prof?.full_name ?? 'Unknown',
+        className:    cls?.class_name ?? '—',
+        section:      cls?.section ?? '—',
         relation:     row.relation,
       }
     })
@@ -273,7 +272,7 @@ export async function getChildResults(studentRowId: string): Promise<{ data: App
     if (error) return { data: [], error: error.message }
 
     const results: ApprovedResult[] = (data ?? []).map((r) => {
-      const cls = r.classes as unknown as { class_name: string; section: string } | null
+      const cls = Array.isArray(r.classes) ? r.classes[0] : r.classes
       return {
         id:             r.id,
         exam_type:      r.exam_type,

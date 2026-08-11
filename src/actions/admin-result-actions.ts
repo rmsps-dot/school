@@ -6,13 +6,13 @@ import { requireAdmin } from '@/utils/auth-helpers'
 import { calcGrade } from '@/utils/helpers'
 
 
-/* ── Types ─────────────────────────────────────────────────── */
+import type { Database } from '@/types/supabase'
 
 export interface PendingResultRow {
   id: string
   student_id: string          // students.id (UUID)
   class_id: string
-  exam_type: string
+  exam_type: Database['public']['Enums']['exam_type']
   subject: string
   marks_obtained: number
   total_marks: number
@@ -36,7 +36,7 @@ export interface StudentMarksheet {
   section: string
 
   // Exam info
-  examType: string
+  examType: Database['public']['Enums']['exam_type']
 
   // Teacher who uploaded
   teacherName: string | null
@@ -122,26 +122,24 @@ export async function fetchPendingResults(): Promise<{
     const marksheetMap = new Map<string, StudentMarksheet>()
 
     for (const row of data) {
-      const student = row.students as unknown as {
-        id: string; student_id: string; father_name: string | null; mother_name: string | null
-        profiles: { full_name: string; dob: string | null; address: string | null }
-      }
-      const cls = row.classes as unknown as { class_name: string; section: string }
+      const student = Array.isArray(row.students) ? row.students[0] : row.students
+      const cls = Array.isArray(row.classes) ? row.classes[0] : row.classes
+      const prof = Array.isArray(student?.profiles) ? student.profiles[0] : student?.profiles
       const key = `${row.student_id}__${row.exam_type}`
 
       if (!marksheetMap.has(key)) {
         const teacherName = row.uploaded_by ? (teacherNameMap.get(row.uploaded_by) ?? null) : null
         marksheetMap.set(key, {
           studentRowId:  row.student_id,
-          studentCode:   student.student_id,
-          studentName:   student.profiles.full_name,
-          fatherName:    student.father_name,
-          motherName:    student.mother_name,
-          dob:           student.profiles.dob,
-          address:       student.profiles.address,
+          studentCode:   student?.student_id ?? 'Unknown',
+          studentName:   prof?.full_name ?? 'Unknown',
+          fatherName:    student?.father_name ?? null,
+          motherName:    student?.mother_name ?? null,
+          dob:           prof?.dob ?? null,
+          address:       prof?.address ?? null,
           classId:       row.class_id,
-          className:     cls.class_name,
-          section:       cls.section,
+          className:     cls?.class_name ?? '—',
+          section:       cls?.section ?? '—',
           examType:      row.exam_type,
           teacherName,
           subjects:      [],
@@ -273,7 +271,8 @@ export async function fetchApprovedResults(): Promise<{
         .select('id, profiles(full_name)')
         .in('id', teacherIds)
       for (const t of teachers ?? []) {
-        const name = (t.profiles as unknown as { full_name: string } | null)?.full_name
+        const prof = Array.isArray(t.profiles) ? t.profiles[0] : t.profiles
+        const name = prof?.full_name
         if (name) teacherNameMap.set(t.id, name)
       }
     }
@@ -281,26 +280,24 @@ export async function fetchApprovedResults(): Promise<{
     const marksheetMap = new Map<string, StudentMarksheet & { approvedAt?: string }>()
 
     for (const row of data) {
-      const student = row.students as unknown as {
-        id: string; student_id: string; father_name: string | null; mother_name: string | null
-        profiles: { full_name: string; dob: string | null; address: string | null }
-      }
-      const cls = row.classes as unknown as { class_name: string; section: string }
+      const student = Array.isArray(row.students) ? row.students[0] : row.students
+      const cls = Array.isArray(row.classes) ? row.classes[0] : row.classes
+      const prof = Array.isArray(student?.profiles) ? student.profiles[0] : student?.profiles
       const key = `${row.student_id}__${row.exam_type}`
 
       if (!marksheetMap.has(key)) {
         const teacherName = row.uploaded_by ? (teacherNameMap.get(row.uploaded_by) ?? null) : null
         marksheetMap.set(key, {
           studentRowId:  row.student_id,
-          studentCode:   student.student_id,
-          studentName:   student.profiles.full_name,
-          fatherName:    student.father_name,
-          motherName:    student.mother_name,
-          dob:           student.profiles.dob,
-          address:       student.profiles.address,
+          studentCode:   student?.student_id ?? 'Unknown',
+          studentName:   prof?.full_name ?? 'Unknown',
+          fatherName:    student?.father_name ?? null,
+          motherName:    student?.mother_name ?? null,
+          dob:           prof?.dob ?? null,
+          address:       prof?.address ?? null,
           classId:       row.class_id,
-          className:     cls.class_name,
-          section:       cls.section,
+          className:     cls?.class_name ?? '—',
+          section:       cls?.section ?? '—',
           examType:      row.exam_type,
           teacherName,
           subjects:      [],
@@ -308,7 +305,7 @@ export async function fetchApprovedResults(): Promise<{
           grandTotal:    0,
           percentage:    0,
           grade:         '',
-          approvedAt:    (row as unknown as { approved_at: string }).approved_at,
+          approvedAt:    row.approved_at || undefined,
         })
       }
 
@@ -394,7 +391,7 @@ export async function approveModificationRequest(resultIds: string[], actionType
         const { data } = await supabase.from('results').select('edit_request').eq('id', id).single()
         if (!data?.edit_request) continue // Skip if no edit request found
         
-        const req = data.edit_request as any
+        const req = data.edit_request as { marks_obtained: number, total_marks: number }
         const { error } = await supabase.from('results').update({
           marks_obtained: req.marks_obtained,
           total_marks: req.total_marks,

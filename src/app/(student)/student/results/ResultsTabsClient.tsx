@@ -64,7 +64,7 @@ export default function ResultsTabsClient({ grouped, profile }: Props) {
       classId: 'N/A',
       className: current.rows[0].class_name,
       section: current.rows[0].section,
-      examType: current.examType,
+      examType: current.examType as any,
       teacherName: 'School Admin',
       subjects: current.rows.map(r => ({
         id: r.id,
