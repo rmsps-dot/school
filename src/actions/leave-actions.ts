@@ -8,18 +8,12 @@ import { requireAuth, requireAdmin } from '@/utils/auth-helpers'
    TYPES
 ════════════════════════════════════════════════════════════ */
 
-export type LeaveStatus = 'pending' | 'approved' | 'rejected'
+import type { Database } from '@/types/supabase'
+
+export type LeaveStatus = Database['public']['Enums']['leave_status']
 export type LeaveRole = 'student' | 'teacher'
 
-export interface LeaveRequest {
-  id: string
-  user_id: string
-  role: LeaveRole
-  start_date: string
-  end_date: string
-  reason: string
-  status: LeaveStatus
-  created_at: string
+export type LeaveRequest = Database['public']['Tables']['leave_requests']['Row'] & {
   profiles?: {
     full_name: string
   }
@@ -84,7 +78,7 @@ export async function fetchMyLeaves(): Promise<{ data: LeaveRequest[]; error?: s
       .order('created_at', { ascending: false })
 
     if (error) throw new Error(error.message)
-    return { data: data as LeaveRequest[] }
+    return { data: data || [] }
   } catch (err) {
     return { data: [], error: err instanceof Error ? err.message : 'Unknown error' }
   }
@@ -108,17 +102,7 @@ export async function fetchAllPendingLeaves(): Promise<{ data: LeaveRequest[]; e
 
     if (error) throw new Error(error.message)
 
-    const formattedData: LeaveRequest[] = (data || []).map((row: {
-      id: string
-      user_id: string
-      role: LeaveRole
-      start_date: string
-      end_date: string
-      reason: string
-      status: LeaveStatus
-      created_at: string
-      profiles: { full_name: string }[] | { full_name: string } | null
-    }) => {
+    const formattedData: LeaveRequest[] = (data || []).map((row) => {
       const profileData = Array.isArray(row.profiles) ? row.profiles[0] : row.profiles
       return {
         id: row.id,

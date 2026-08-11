@@ -8,15 +8,9 @@ import { requireAuth, requireTeacher } from '@/utils/auth-helpers'
    TYPES
 ════════════════════════════════════════════════════════════ */
 
-export interface Homework {
-  id: string
-  class_id: string
-  subject: string
-  title: string
-  description: string
-  due_date: string
-  created_by: string
-  created_at: string
+import type { Database } from '@/types/supabase'
+
+export type Homework = Database['public']['Tables']['homework']['Row'] & {
   class_info?: {
     class_name: string
     section: string
@@ -68,7 +62,7 @@ export async function fetchTeacherClasses(): Promise<{ data: ClassOption[]; erro
     // Deduplicate classes (a teacher might teach multiple subjects in the same class)
     const classMap = new Map<string, ClassOption>()
     for (const row of (data || [])) {
-      const cls = row.classes as unknown as { class_name: string; section: string } | null
+      const cls = Array.isArray(row.classes) ? row.classes[0] : row.classes
       if (cls && !classMap.has(row.class_id)) {
         classMap.set(row.class_id, {
           id: row.class_id,
@@ -157,17 +151,10 @@ export async function fetchRecentHomework(classId?: string): Promise<{ data: Hom
     if (error) throw new Error(error.message)
 
     const formattedData: Homework[] = (data || []).map((row) => {
-      const cls = row.classes as unknown as { class_name: string; section: string } | null
-      const prof = row.profiles as unknown as { full_name: string } | null
+      const cls = Array.isArray(row.classes) ? row.classes[0] : row.classes
+      const prof = Array.isArray(row.profiles) ? row.profiles[0] : row.profiles
       return {
-        id: row.id,
-        class_id: row.class_id,
-        subject: row.subject,
-        title: row.title,
-        description: row.description,
-        due_date: row.due_date,
-        created_by: row.created_by,
-        created_at: row.created_at,
+        ...row,
         class_info: cls ? { class_name: cls.class_name, section: cls.section } : undefined,
         teacher_info: prof ? { full_name: prof.full_name } : undefined
       }
