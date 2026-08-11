@@ -7,19 +7,7 @@ import { type ClassWithSubject } from '@/actions/result-actions'
 import { getStudentsByClass } from '@/actions/class-actions'
 import ResultUploadModal from '@/components/teacher/ResultUploadModal'
 
-export interface TeacherClassStudent {
-  id: string
-  student_id: string
-  father_name: string | null
-  class_id: string
-  classes: { class_name: string; section: string } | null
-  profiles: {
-    id: string
-    full_name: string | null
-    profile_photo_url: string | null
-    mobile: string | null
-  } | null
-}
+export type TeacherClassStudent = Exclude<Awaited<ReturnType<typeof getStudentsByClass>>['data'], null>[number]
 
 interface Props {
   classes: ClassWithSubject[]
@@ -45,13 +33,13 @@ export default function ClassesClient({ classes }: Props) {
     startTransition(async () => {
       if (selectedClass) {
         const { data } = await getStudentsByClass(selectedClass)
-        if (data) setStudents(data as any)
+        if (data) setStudents(data)
       } else {
         // Fetch all assigned students
         const allStudents: TeacherClassStudent[] = []
         for (const cid of uniqueClassIds) {
           const { data } = await getStudentsByClass(cid)
-          if (data) allStudents.push(...(data as any))
+          if (data) allStudents.push(...data)
         }
         // Deduplicate students
         const unique = Array.from(new Map(allStudents.map(s => [s.id, s])).values())
@@ -61,7 +49,7 @@ export default function ClassesClient({ classes }: Props) {
   }, [selectedClass])
 
   const filteredStudents = students.filter(s => 
-    s.profiles?.full_name?.toLowerCase().includes(search.toLowerCase()) ||
+    s.profiles?.[0]?.full_name?.toLowerCase().includes(search.toLowerCase()) ||
     s.student_id?.toLowerCase().includes(search.toLowerCase())
   )
 
@@ -116,18 +104,18 @@ export default function ClassesClient({ classes }: Props) {
                 style={{ animationDelay: `${i * 0.03}s` }}
               >
                 <div className="flex items-center gap-4">
-                  {s.profiles?.profile_photo_url ? (
-                    <Image src={s.profiles.profile_photo_url} alt="Avatar" width={48} height={48} className="w-12 h-12 rounded-full object-cover border border-hairline flex-shrink-0" />
+                  {s.profiles?.[0]?.profile_photo_url ? (
+                    <Image src={s.profiles[0].profile_photo_url} alt="Avatar" width={48} height={48} className="w-12 h-12 rounded-full object-cover border border-hairline flex-shrink-0" />
                   ) : (
                     <div className="w-12 h-12 rounded-full bg-veena-blue/10 flex items-center justify-center text-veena-blue shrink-0">
                       <UserCircle className="w-8 h-8" />
                     </div>
                   )}
                   <div className="flex-1 min-w-0">
-                    <h3 className="font-bold text-parchment truncate">{s.profiles?.full_name}</h3>
+                    <h3 className="font-bold text-parchment truncate">{s.profiles?.[0]?.full_name}</h3>
                     <p className="text-[10px] text-mist font-mono tracking-widest mt-1">{s.student_id}</p>
                     <p className="text-xs text-veena-blue truncate mt-0.5">
-                      {s.classes?.class_name} {s.classes?.section !== '-' ? `(${s.classes?.section})` : ''}
+                      {s.classes?.[0]?.class_name} {s.classes?.[0]?.section !== '-' ? `(${s.classes?.[0]?.section})` : ''}
                     </p>
                   </div>
                 </div>

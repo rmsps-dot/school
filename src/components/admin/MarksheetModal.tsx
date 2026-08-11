@@ -103,7 +103,7 @@ export default function MarksheetModal({ sheet, onClose, onApproved, readOnly }:
               className="rounded-xl overflow-hidden shadow-2xl border border-hairline"
             >
               <div>
-                <MarksheetTemplate sheet={sheet} approvedAt={(sheet as any).approvedAt} />
+                <MarksheetTemplate sheet={sheet} approvedAt={sheet.approvedAt} />
               </div>
             </div>
           </div>

@@ -55,6 +55,7 @@ export interface StudentMarksheet {
   grandTotal: number
   percentage: number
   grade: string
+  approvedAt?: string
 }
 
 /* ── Grade calculator ─────────────────────────────────────── */
