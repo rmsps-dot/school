@@ -5,12 +5,9 @@ import { supabaseAdmin } from '@/utils/supabase/admin'
 import { revalidatePath } from 'next/cache'
 import { requireAuth, requireAdmin, requireTeacherForClass } from '@/utils/auth-helpers'
 
-export interface SchoolClass {
-  id: string
-  class_name: string
-  section: string
-  created_at: string
-}
+import type { Database } from '@/types/supabase'
+
+export type SchoolClass = Database['public']['Tables']['classes']['Row']
 
 export async function getClasses(): Promise<{ data: SchoolClass[] | null; error: string | null }> {
   const auth = await requireAuth()
@@ -138,8 +135,8 @@ export async function getAdminClassAttendance(classId: string | undefined, date:
   // Map to students
   const attendanceMap = new Map(attendance.map(a => [a.student_id, a.status]))
 
-  const result = students.map((s: any) => {
-    const profile = s.profiles as unknown as { full_name: string } | null
+  const result = students.map((s) => {
+    const profile = Array.isArray(s.profiles) ? s.profiles[0] : s.profiles
     return {
       student_id:   s.id,
       student_code: s.student_id,
@@ -202,8 +199,12 @@ export async function getStudentProfileData(studentId: string) {
   // Fetch email from auth users
   const { data: authUser } = await supabaseAdmin.auth.admin.getUserById(student.profile_id)
   
-  if (authUser?.user) {
-    student.profiles.email = authUser.user.email
+  const studentProfile = {
+    ...student,
+    profiles: student.profiles ? {
+      ...student.profiles,
+      email: authUser?.user?.email || null
+    } : null
   }
 
   // Also fetch overall attendance stats
@@ -228,7 +229,7 @@ export async function getStudentProfileData(studentId: string) {
 
   return {
     data: {
-      student,
+      student: studentProfile,
       attendanceStats: { present, total, percentage: attPct },
       results: results || []
     },
@@ -236,7 +237,7 @@ export async function getStudentProfileData(studentId: string) {
   }
 }
 
-export async function uploadStudentResult(classId: string, studentId: string, data: { exam_type: string, subject: string, marks_obtained: number, total_marks: number }) {
+export async function uploadStudentResult(classId: string, studentId: string, data: { exam_type: Database['public']['Enums']['exam_type'], subject: string, marks_obtained: number, total_marks: number }) {
   const auth = await requireAdmin();
   if (!auth.ok) return { error: auth.error };
   const user = { id: auth.profile.id };
@@ -340,7 +341,7 @@ export async function deleteAttendanceRecord(id: string) {
   return { success: true }
 }
 
-export async function updateAttendanceRecordStatus(id: string, status: string) {
+export async function updateAttendanceRecordStatus(id: string, status: Database['public']['Enums']['attendance_status']) {
   const supabase = await createClient()
   
   // Lookup classId

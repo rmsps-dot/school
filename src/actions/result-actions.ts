@@ -84,7 +84,7 @@ export async function getTeacherClasses(): Promise<{
     if (!data) return { data: [] }
 
     const result: ClassWithSubject[] = data.map((row) => {
-      const cls = row.classes as unknown as { id: string; class_name: string; section: string } | null
+      const cls = Array.isArray(row.classes) ? row.classes[0] : row.classes
       return {
         classId: row.class_id,
         className: cls?.class_name ?? 'Unknown',
@@ -134,11 +134,14 @@ export async function getStudentsForClass(classId: string): Promise<{
     if (error) return { data: [], error: error.message }
     if (!data) return { data: [] }
 
-    const students: StudentInClass[] = data.map((s) => ({
-      studentRowId: s.id,
-      studentCode: s.student_id,
-      fullName: (s.profiles as unknown as { full_name: string } | null)?.full_name ?? 'Unknown',
-    }))
+    const students: StudentInClass[] = data.map((s) => {
+      const prof = Array.isArray(s.profiles) ? s.profiles[0] : s.profiles
+      return {
+        studentRowId: s.id,
+        studentCode: s.student_id,
+        fullName: prof?.full_name ?? 'Unknown',
+      }
+    })
 
     return { data: students }
   } catch (err) {
@@ -156,9 +159,11 @@ export async function getStudentsForClass(classId: string): Promise<{
      2. Teacher must be assigned to the given classId.
      3. All studentRowIds must belong to the given classId.
 ───────────────────────────────────────────────────────────── */
+import type { Database } from '@/types/supabase'
+
 export async function uploadResults(payload: {
   classId: string
-  examType: 'unit_test' | 'mid_term' | 'pre_board' | 'final' | 'other'
+  examType: Database['public']['Enums']['exam_type']
   subject: string
   marks: MarkEntry[]
 }): Promise<ResultActionResult> {

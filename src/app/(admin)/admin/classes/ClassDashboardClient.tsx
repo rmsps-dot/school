@@ -198,7 +198,7 @@ export default function ClassDashboardClient({ classes: initialClasses }: ClassD
 
   const handleUpdateManageAttendanceStatus = async (id: string, newStatus: string) => {
     startTransition(async () => {
-      await updateAttendanceRecordStatus(id, newStatus)
+      await updateAttendanceRecordStatus(id, newStatus as any)
       const { data } = await getManageAttendanceRecords(selectedClass)
       if (data) setManageAttendance(data)
     })
