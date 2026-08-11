@@ -1,7 +1,7 @@
 import type { ApprovedResult } from '@/actions/portal-actions'
 
 export function groupResultsByExam(results: ApprovedResult[]) {
-  const map = new Map<string, ApprovedResult[]>()
+  const map = new Map<ApprovedResult['exam_type'], ApprovedResult[]>()
   for (const r of results) {
     if (!map.has(r.exam_type)) map.set(r.exam_type, [])
     map.get(r.exam_type)!.push(r)

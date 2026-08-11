@@ -8,17 +8,18 @@ import { FileSpreadsheet } from 'lucide-react'
 import MarksheetModal from '@/components/admin/MarksheetModal'
 import MarksheetTemplate from '@/components/admin/MarksheetTemplate'
 import PrintPortal from '@/components/admin/PrintPortal'
+import type { Database } from '@/types/supabase'
 import type { StudentMarksheet } from '@/actions/admin-result-actions'
 
 interface ExamGroup {
-  examType: string
+  examType: Database['public']['Enums']['exam_type']
   label: string
   rows: ApprovedResult[]
 }
 
 interface Props {
   grouped: ExamGroup[]
-  examTypes: string[]
+  examTypes: Database['public']['Enums']['exam_type'][]
   profile: StudentProfile
 }
 
@@ -64,7 +65,7 @@ export default function ResultsTabsClient({ grouped, profile }: Props) {
       classId: 'N/A',
       className: current.rows[0].class_name,
       section: current.rows[0].section,
-      examType: current.examType as any,
+      examType: current.examType,
       teacherName: 'School Admin',
       subjects: current.rows.map(r => ({
         id: r.id,

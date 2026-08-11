@@ -9,12 +9,13 @@ import MarksheetModal from '@/components/admin/MarksheetModal'
 import MarksheetTemplate from '@/components/admin/MarksheetTemplate'
 import PrintPortal from '@/components/admin/PrintPortal'
 import type { StudentMarksheet } from '@/actions/admin-result-actions'
+import type { Database } from '@/types/supabase'
 
 export interface TeacherResultRecord {
   id: string
   student_id: string
   class_id: string
-  exam_type: string
+  exam_type: Database['public']['Enums']['exam_type']
   subject: string
   marks_obtained: number
   total_marks: number
@@ -22,6 +23,8 @@ export interface TeacherResultRecord {
   uploaded_by: string
   is_approved: boolean
   created_at: string
+  edit_request?: Record<string, unknown> | null
+  delete_request?: boolean | null
   students: {
     id: string
     student_id: string
@@ -60,7 +63,7 @@ export default function ManageResultsClient({ initialResults }: Props) {
     }
   }, [printSheet])
 
-  const mapGroupToMarksheet = (group: any): StudentMarksheet => {
+  const mapGroupToMarksheet = (group: { totalObtained: number, grandTotal: number, student_id: string, class_id: string, exam_type: Database['public']['Enums']['exam_type'], students: any, classes: any, subjectsList: TeacherResultRecord[] }): StudentMarksheet => {
     const totalObtained = group.totalObtained
     const grandTotal = group.grandTotal
     const percentage = grandTotal > 0 ? (totalObtained / grandTotal) * 100 : 0
@@ -88,7 +91,7 @@ export default function ManageResultsClient({ initialResults }: Props) {
       section: group.classes?.section || '-',
       examType: group.exam_type,
       teacherName: null,
-      subjects: group.subjectsList.map((sub: any) => ({
+      subjects: group.subjectsList.map((sub: TeacherResultRecord) => ({
         id: sub.id,
         subject: sub.subject,
         marksObtained: sub.marks_obtained,
@@ -102,7 +105,7 @@ export default function ManageResultsClient({ initialResults }: Props) {
     }
   }
 
-  const handleEditResult = (r: any) => setEditResult(r)
+  const handleEditResult = (r: TeacherResultRecord) => setEditResult(r)
 
   const handleEditSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
@@ -112,10 +115,10 @@ export default function ManageResultsClient({ initialResults }: Props) {
     const fd = new FormData(e.currentTarget)
 
     startTransition(async () => {
-      const res: any = await updateTeacherResult(editResult.id, fd)
+      const res = await updateTeacherResult(editResult.id, fd)
       if (res.error) {
         setErrorMsg(res.error)
-      } else if (res.pending) {
+      } else if ('pending' in res && res.pending) {
         alert('Edit request submitted for admin approval.')
         setEditResult(null)
       } else {
@@ -133,10 +136,10 @@ export default function ManageResultsClient({ initialResults }: Props) {
     if (!confirm('Are you sure you want to delete this entire result (all subjects)?')) return
     
     startTransition(async () => {
-      const res: any = await deleteTeacherResult(resultIds)
+      const res = await deleteTeacherResult(resultIds)
       if (res.error) {
         setErrorMsg(res.error)
-      } else if (res.pending) {
+      } else if ('pending' in res && res.pending) {
         alert('Delete request submitted for admin approval for all subjects.')
         setResults(prev => prev.map(r => resultIds.includes(r.id) ? { ...r, delete_request: true } : r))
       } else {
@@ -200,7 +203,7 @@ export default function ManageResultsClient({ initialResults }: Props) {
                   const hasMultiple = group.subjectsList.length > 1
                   
                   // Action buttons component (only Edit now)
-                  const ActionButtons = ({ r }: { r: any }) => (
+                  const ActionButtons = ({ r }: { r: TeacherResultRecord }) => (
                     <div className="flex justify-end gap-2">
                       <button
                         onClick={() => handleEditResult(r)}
@@ -255,7 +258,7 @@ export default function ManageResultsClient({ initialResults }: Props) {
                             <button 
                               onClick={(e) => {
                                 e.stopPropagation()
-                                handleDeleteResult(group.subjectsList.map((s: any) => s.id))
+                                handleDeleteResult(group.subjectsList.map((s: TeacherResultRecord) => s.id))
                               }}
                               className="flex items-center gap-1.5 text-xs font-bold text-mist hover:text-red-400 p-2 rounded-lg hover:bg-red-500/10 transition-colors"
                               title="Delete Entire Result"
@@ -265,7 +268,7 @@ export default function ManageResultsClient({ initialResults }: Props) {
                             <button 
                               onClick={(e) => {
                                 e.stopPropagation()
-                                setPreviewSheet(group as any)
+                                setPreviewSheet(mapGroupToMarksheet(group))
                               }}
                               className="flex items-center gap-1.5 text-xs font-bold text-mist hover:text-veena-blue p-2 rounded-lg hover:bg-veena-blue/10 transition-colors"
                               title="Preview PDF"
@@ -275,7 +278,7 @@ export default function ManageResultsClient({ initialResults }: Props) {
                             <button 
                               onClick={(e) => {
                                 e.stopPropagation()
-                                setPrintSheet(group as any)
+                                setPrintSheet(mapGroupToMarksheet(group))
                               }}
                               className="flex items-center gap-1.5 text-xs font-bold text-veena-blue hover:text-coral p-2 rounded-lg hover:bg-veena-blue/10 transition-colors"
                               title="Download PDF"
@@ -290,7 +293,7 @@ export default function ManageResultsClient({ initialResults }: Props) {
                         </td>
                       </tr>
                       
-                      {hasMultiple && expandedRows.has(key) && group.subjectsList.map((sub: any, j: number) => {
+                      {hasMultiple && expandedRows.has(key) && group.subjectsList.map((sub: TeacherResultRecord, j: number) => {
                         const sp = (sub.marks_obtained / (sub.total_marks || sub.max_marks || 1)) * 100
                         let sg = 'F'
                         if (sp >= 90) sg = 'A+'

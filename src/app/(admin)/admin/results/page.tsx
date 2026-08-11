@@ -55,7 +55,7 @@ export default async function AdminResultsPage() {
       )}
 
       {/* ── Results list ── */}
-      {(marksheets.length > 0 || modRequests.length > 0) && <ResultsClient marksheets={marksheets} modRequests={modRequests as any} />}
+      {(marksheets.length > 0 || modRequests.length > 0) && <ResultsClient marksheets={marksheets} modRequests={modRequests} />}
     </div>
   )
 }

@@ -6,27 +6,11 @@ import {
   Eye, User, BookOpen, Calendar, TrendingUp, Award,
   ChevronDown, ChevronUp, Clock, CheckCircle2, AlertCircle
 } from 'lucide-react'
-import { approveModificationRequest, rejectModificationRequest } from '@/actions/admin-result-actions'
+import { approveModificationRequest, rejectModificationRequest, fetchModificationRequests } from '@/actions/admin-result-actions'
 import type { StudentMarksheet } from '@/actions/admin-result-actions'
 import MarksheetModal from '@/components/admin/MarksheetModal'
 
-export interface ModificationRequest {
-  id: string
-  exam_type: string
-  subject: string
-  marks_obtained: number
-  total_marks: number
-  edit_request: { marks_obtained: number; total_marks: number } | null
-  delete_request: boolean
-  students: {
-    student_id: string
-    profiles: { full_name: string | null } | null
-  } | null
-  classes: {
-    class_name: string
-    section: string
-  } | null
-}
+export type ModificationRequest = Exclude<Awaited<ReturnType<typeof fetchModificationRequests>>['data'], null>[number]
 
 interface Props {
   marksheets: StudentMarksheet[]
@@ -190,15 +174,15 @@ export default function ResultsClient({ marksheets: initial, modRequests: initia
 
               modReqs.forEach((req: ModificationRequest) => {
                 const type = req.delete_request ? 'delete' : 'edit'
-                const key = `${req.students?.student_id}_${req.exam_type}_${type}`
+                const key = `${req.students?.[0]?.student_id}_${req.exam_type}_${type}`
                 
                 if (!groupedMods.has(key)) {
                   groupedMods.set(key, {
                     type,
-                    studentName: req.students?.profiles?.full_name || 'Unknown',
-                    studentId: req.students?.student_id || 'Unknown',
-                    className: req.classes?.class_name || '',
-                    section: req.classes?.section || '',
+                    studentName: req.students?.[0]?.profiles?.[0]?.full_name || 'Unknown',
+                    studentId: req.students?.[0]?.student_id || 'Unknown',
+                    className: req.classes?.[0]?.class_name || '',
+                    section: req.classes?.[0]?.section || '',
                     examType: req.exam_type,
                     requests: []
                   })

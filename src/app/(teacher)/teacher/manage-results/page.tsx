@@ -5,7 +5,9 @@ import { redirect } from 'next/navigation'
 export const dynamic = 'force-dynamic'
 
 export default async function ManageResultsPage() {
-  const { data: results, error } = (await getTeacherResults()) as any
+  const res = await getTeacherResults()
+  const error = res.error
+  const results = 'data' in res ? res.data : null
 
   if (error || !results) {
     // You could render an error state or redirect

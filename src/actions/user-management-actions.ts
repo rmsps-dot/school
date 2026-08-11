@@ -360,7 +360,7 @@ export async function addTeacher(formData: FormData) {
     return { error: `Failed to create teacher profile: ${profileUpsertError.message}` }
   }
 
-  const insertData: any = {
+  const insertData: import('@/types/supabase').Database['public']['Tables']['teachers']['Insert'] = {
     profile_id: authData.user.id,
     teacher_id: teacherId,
     qualification,
