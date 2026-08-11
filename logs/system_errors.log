@@ -1,0 +1,7 @@
+{
+  "timestamp": "2026-06-30T14:43:24.303Z",
+  "context": "Server Action: getSidebarCounts",
+  "userMessage": "Unauthenticated",
+  "rawError": "Unauthenticated",
+  "stack": "No stack trace available"
+},

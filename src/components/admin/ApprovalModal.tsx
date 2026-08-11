@@ -1,0 +1,319 @@
+"use client";
+
+import { useState, useTransition } from "react";
+import { motion, AnimatePresence } from "framer-motion";
+import {
+  X,
+  CheckCircle,
+  XCircle,
+  BookOpen,
+  User,
+  Mail,
+  Phone,
+  MapPin,
+  Calendar,
+  Users,
+  AlertCircle,
+  Loader2,
+} from "lucide-react";
+import { approveRegistration, rejectRegistration } from "@/actions/admin-actions";
+
+/* ── Types ── */
+interface Registration {
+  id: string;
+  student_name: string;
+  student_dob: string | null;
+  student_email: string;
+  student_mobile: string | null;
+  address: string | null;
+  father_name: string | null;
+  mother_name: string | null;
+  parent_mobile: string | null;
+  parent_email: string | null;
+  created_at: string;
+}
+
+interface ClassOption {
+  id: string;
+  class_name: string;
+  section: string;
+}
+
+interface Props {
+  registration: Registration;
+  classes: ClassOption[];
+  onClose: () => void;
+  onDone: (type: "approved" | "rejected") => void;
+}
+
+/* ── Info Row ── */
+function InfoRow({
+  icon: Icon,
+  label,
+  value,
+}: {
+  icon: React.ElementType;
+  label: string;
+  value: string | null | undefined;
+}) {
+  if (!value) return null;
+  return (
+    <div className="flex items-start gap-3">
+      <Icon className="w-4 h-4 text-coral mt-0.5 flex-shrink-0" />
+      <div>
+        <p className="text-xs text-mist">{label}</p>
+        <p className="text-sm text-parchment font-medium">{value}</p>
+      </div>
+    </div>
+  );
+}
+
+/* ── Toast helper ── */
+function Toast({
+  msg,
+  type,
+}: {
+  msg: string;
+  type: "error" | "success";
+}) {
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: -10 }}
+      animate={{ opacity: 1, y: 0 }}
+      className={`flex items-center gap-2 rounded-xl px-4 py-3 text-sm mb-4
+        ${type === "error"
+          ? "bg-red-500/10 border border-red-500/30 text-red-400"
+          : "bg-emerald-500/10 border border-emerald-500/30 text-emerald-400"
+        }`}
+    >
+      {type === "error" ? (
+        <AlertCircle className="w-4 h-4 flex-shrink-0" />
+      ) : (
+        <CheckCircle className="w-4 h-4 flex-shrink-0" />
+      )}
+      {msg}
+    </motion.div>
+  );
+}
+
+/* ── MAIN MODAL ── */
+export default function ApprovalModal({ registration: reg, classes, onClose, onDone }: Props) {
+  const [tab, setTab] = useState<"approve" | "reject">("approve");
+  const [classId, setClassId] = useState(classes[0]?.id ?? "");
+  const [rejectReason, setRejectReason] = useState("");
+  const [toast, setToast] = useState<{ msg: string; type: "error" | "success" } | null>(null);
+  const [isPending, startTransition] = useTransition();
+
+  function showToast(msg: string, type: "error" | "success") {
+    setToast({ msg, type });
+    setTimeout(() => setToast(null), 4000);
+  }
+
+  function handleApprove() {
+    if (!classId) { showToast("Please select a class first.", "error"); return; }
+    startTransition(async () => {
+      const result = await approveRegistration(reg.id, classId);
+      if (result.success) {
+        showToast("Student approved successfully!", "success");
+        setTimeout(() => onDone("approved"), 1000);
+      } else {
+        showToast(result.error ?? "Approval failed.", "error");
+      }
+    });
+  }
+
+  function handleReject() {
+    if (!rejectReason.trim()) { showToast("Please provide a rejection reason.", "error"); return; }
+    startTransition(async () => {
+      const result = await rejectRegistration(reg.id, rejectReason);
+      if (result.success) {
+        showToast("Registration rejected.", "success");
+        setTimeout(() => onDone("rejected"), 1000);
+      } else {
+        showToast(result.error ?? "Rejection failed.", "error");
+      }
+    });
+  }
+
+  return (
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      className="fixed inset-0 z-50 flex items-center justify-center p-4 overflow-y-auto bg-ink/80 backdrop-blur-sm"
+    >
+      <motion.div
+        initial={{ scale: 0.92, opacity: 0 }}
+        animate={{ scale: 1, opacity: 1 }}
+        exit={{ scale: 0.92, opacity: 0 }}
+        transition={{ type: "spring", damping: 22 }}
+        className="glass-panel border border-hairline rounded-2xl w-full max-w-xl relative my-4 flex flex-col max-h-[85vh] shadow-2xl"
+        onClick={(e) => e.stopPropagation()}
+      >
+        {/* Header */}
+        <div className="flex items-center justify-between p-6 border-b border-hairline shrink-0">
+          <div>
+            <h2 className="font-display text-lg font-bold text-parchment">Review Application</h2>
+            <p className="text-xs text-mist mt-0.5 font-mono">
+              Applied {new Date(reg.created_at).toLocaleDateString("en-IN")}
+            </p>
+          </div>
+          <button
+            onClick={onClose}
+            className="p-2 rounded-lg text-mist hover:text-parchment transition-colors"
+          >
+            <X className="w-5 h-5" />
+          </button>
+        </div>
+
+        {/* Body */}
+        <div className="p-6 space-y-6 overflow-y-auto">
+          {/* Toast */}
+          <AnimatePresence>
+            {toast && <Toast {...toast} />}
+          </AnimatePresence>
+
+          {/* Student details */}
+          <div>
+            <p className="text-xs font-bold text-mist uppercase tracking-widest mb-3">
+              Student Information
+            </p>
+            <div className="surface-card rounded-xl p-4 grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <InfoRow icon={User}     label="Full Name"  value={reg.student_name} />
+              <InfoRow icon={Calendar} label="Date of Birth" value={reg.student_dob ? new Date(reg.student_dob).toLocaleDateString("en-IN") : null} />
+              <InfoRow icon={Mail}     label="Student Email"  value={reg.student_email} />
+              <InfoRow icon={Phone}    label="Mobile"    value={reg.student_mobile} />
+              <InfoRow icon={MapPin}   label="Address"   value={reg.address} />
+            </div>
+          </div>
+
+          {/* Parent details */}
+          <div>
+            <p className="text-xs font-bold text-mist uppercase tracking-widest mb-3">
+              Parent / Guardian Information
+            </p>
+            <div className="surface-card rounded-xl p-4 grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <InfoRow icon={Users} label="Father's Name"  value={reg.father_name} />
+              <InfoRow icon={Users} label="Mother's Name"  value={reg.mother_name} />
+              <InfoRow icon={Phone} label="Parent Mobile"  value={reg.parent_mobile} />
+              <InfoRow icon={Mail}  label="Parent Email"   value={reg.parent_email} />
+            </div>
+          </div>
+
+          {/* Tab switcher */}
+          <div className="flex gap-2 p-1 surface-card rounded-xl">
+            <button
+              id="tab-approve"
+              onClick={() => setTab("approve")}
+              className={`flex-1 py-2 rounded-lg text-sm font-bold transition-all duration-200 flex items-center justify-center gap-2
+                ${tab === "approve" ? "bg-emerald-500/20 text-emerald-400 border border-emerald-500/30" : "text-mist hover:text-parchment"}`}
+            >
+              <CheckCircle className="w-4 h-4" /> Approve
+            </button>
+            <button
+              id="tab-reject"
+              onClick={() => setTab("reject")}
+              className={`flex-1 py-2 rounded-lg text-sm font-bold transition-all duration-200 flex items-center justify-center gap-2
+                ${tab === "reject" ? "bg-red-500/20 text-red-400 border border-red-500/30" : "text-mist hover:text-parchment"}`}
+            >
+              <XCircle className="w-4 h-4" /> Reject
+            </button>
+          </div>
+
+          {/* Approve panel */}
+          <AnimatePresence mode="wait">
+            {tab === "approve" ? (
+              <motion.div
+                key="approve-panel"
+                initial={{ opacity: 0, y: 8 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -8 }}
+                className="space-y-4"
+              >
+                <div>
+                  <label htmlFor="class-select" className="text-sm font-bold text-mist mb-1.5 flex items-center gap-2">
+                    <BookOpen className="w-4 h-4 text-coral" />
+                    Assign Class <span className="text-coral">*</span>
+                  </label>
+                  {classes.length === 0 ? (
+                    <div className="surface-card rounded-xl p-3 text-sm text-gold border border-gold/20">
+                      ⚠ No classes exist yet. Create at least one class before approving.
+                    </div>
+                  ) : (
+                    <select
+                      id="class-select"
+                      value={classId}
+                      onChange={(e) => setClassId(e.target.value)}
+                      className="w-full px-4 py-3 rounded-xl input-glass text-sm"
+                    >
+                      {classes.map((c) => (
+                        <option key={c.id} value={c.id}>
+                          {c.class_name} — Section {c.section}
+                        </option>
+                      ))}
+                    </select>
+                  )}
+                </div>
+
+                <div className="surface-card rounded-xl p-3 text-xs text-mist space-y-1">
+                  <p>✓ Student profile will be updated with submitted details</p>
+                  <p>✓ Parent account will be created and an invite email sent</p>
+                  <p>✓ Student & parent will be linked automatically</p>
+                  <p>✓ Registration status will be marked as Approved</p>
+                </div>
+
+                <button
+                  id="confirm-approve-btn"
+                  onClick={handleApprove}
+                  disabled={isPending || classes.length === 0}
+                  className="w-full py-3.5 rounded-xl font-bold text-sm flex items-center justify-center gap-2 disabled:opacity-60 bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 hover:bg-emerald-500/30 transition-colors"
+                >
+                  {isPending ? (
+                    <><Loader2 className="w-4 h-4 animate-spin" /> Processing...</>
+                  ) : (
+                    <><CheckCircle className="w-4 h-4" /> Confirm Approval</>
+                  )}
+                </button>
+              </motion.div>
+            ) : (
+              <motion.div
+                key="reject-panel"
+                initial={{ opacity: 0, y: 8 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -8 }}
+                className="space-y-4"
+              >
+                <div>
+                  <label htmlFor="reject-reason" className="text-sm font-bold text-mist mb-1.5 block">
+                    Rejection Reason <span className="text-red-400">*</span>
+                  </label>
+                  <textarea
+                    id="reject-reason"
+                    rows={3}
+                    value={rejectReason}
+                    onChange={(e) => setRejectReason(e.target.value)}
+                    placeholder="e.g. Incomplete documents, age criteria not met..."
+                    className="w-full px-4 py-3 rounded-xl input-glass text-sm resize-none"
+                  />
+                </div>
+
+                <button
+                  id="confirm-reject-btn"
+                  onClick={handleReject}
+                  disabled={isPending}
+                  className="w-full py-3.5 rounded-xl font-bold text-sm flex items-center justify-center gap-2 disabled:opacity-60 bg-red-500/20 text-red-400 border border-red-500/30 hover:bg-red-500/30 transition-colors"
+                >
+                  {isPending ? (
+                    <><Loader2 className="w-4 h-4 animate-spin" /> Processing...</>
+                  ) : (
+                    <><XCircle className="w-4 h-4" /> Confirm Rejection</>
+                  )}
+                </button>
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </div>
+      </motion.div>
+    </motion.div>
+  );
+}
