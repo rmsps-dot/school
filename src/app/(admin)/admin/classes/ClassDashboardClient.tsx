@@ -14,17 +14,11 @@ import { useRouter } from 'next/navigation'
 import DateInput from '@/components/shared/DateInput'
 import type { StudentMarksheet } from '@/actions/admin-result-actions'
 
-export interface ResultRecordDashboard {
-  id: string
-  exam_type: string
-  subject: string
-  marks_obtained: number
-  total_marks: number
-  max_marks?: number
-  created_at?: string
-  student_id?: string
-  class_id?: string
-}
+type StudentType = Exclude<Awaited<ReturnType<typeof getStudentsByClass>>['data'], null>[number]
+type AttendanceType = Exclude<Awaited<ReturnType<typeof getAdminClassAttendance>>['data'], null>[number]
+type ManageAttendanceType = Exclude<Awaited<ReturnType<typeof getManageAttendanceRecords>>['data'], null>[number]
+type ResultType = Exclude<Awaited<ReturnType<typeof getClassResults>>['data'], null>[number]
+type GroupedResult = ResultType & { subjectsList: ResultType[], totalObtained: number, grandTotal: number }
 
 interface ClassDashboardProps {
   classes: SchoolClass[]
@@ -44,21 +38,21 @@ export default function ClassDashboardClient({ classes: initialClasses }: ClassD
   const [newSection, setNewSection] = useState('')
 
   // Data states
-  const [students, setStudents] = useState<any[]>([])
+  const [students, setStudents] = useState<StudentType[]>([])
   const [attendanceDate, setAttendanceDate] = useState(() => new Date().toISOString().split('T')[0])
-  const [attendanceRecords, setAttendanceRecords] = useState<any[]>([])
+  const [attendanceRecords, setAttendanceRecords] = useState<AttendanceType[]>([])
   const [isSavingAtt, setIsSavingAtt] = useState(false)
-  const [manageAttendance, setManageAttendance] = useState<any[]>([])
+  const [manageAttendance, setManageAttendance] = useState<ManageAttendanceType[]>([])
 
   // Result Upload State
   const [uploadModalOpen, setUploadModalOpen] = useState(false)
 
   // Manage Result State
-  const [results, setResults] = useState<any[]>([])
+  const [results, setResults] = useState<ResultType[]>([])
   const [expandedRows, setExpandedRows] = useState<Set<string>>(new Set())
-  const [editResult, setEditResult] = useState<any>(null)
-  const [printSheet, setPrintSheet] = useState<any>(null)
-  const [previewSheet, setPreviewSheet] = useState<any>(null)
+  const [editResult, setEditResult] = useState<ResultType | null>(null)
+  const [printSheet, setPrintSheet] = useState<GroupedResult | null>(null)
+  const [previewSheet, setPreviewSheet] = useState<GroupedResult | null>(null)
 
   useEffect(() => {
     if (printSheet) {
@@ -70,7 +64,7 @@ export default function ClassDashboardClient({ classes: initialClasses }: ClassD
     }
   }, [printSheet])
 
-  const mapGroupToMarksheet = (group: any): StudentMarksheet => {
+  const mapGroupToMarksheet = (group: GroupedResult): StudentMarksheet => {
     const totalObtained = group.totalObtained
     const grandTotal = group.grandTotal
     const percentage = grandTotal > 0 ? (totalObtained / grandTotal) * 100 : 0
@@ -98,7 +92,7 @@ export default function ClassDashboardClient({ classes: initialClasses }: ClassD
       section: group.classes?.section || '-',
       examType: group.exam_type,
       teacherName: null,
-      subjects: group.subjectsList.map((sub: ResultRecordDashboard) => ({
+      subjects: group.subjectsList.map((sub: ResultType) => ({
         id: sub.id,
         subject: sub.subject,
         marksObtained: sub.marks_obtained,
@@ -198,7 +192,7 @@ export default function ClassDashboardClient({ classes: initialClasses }: ClassD
 
   const handleUpdateManageAttendanceStatus = async (id: string, newStatus: string) => {
     startTransition(async () => {
-      await updateAttendanceRecordStatus(id, newStatus as any)
+      await updateAttendanceRecordStatus(id, newStatus as 'present' | 'absent' | 'leave')
       const { data } = await getManageAttendanceRecords(selectedClass)
       if (data) setManageAttendance(data)
     })
@@ -382,18 +376,18 @@ export default function ClassDashboardClient({ classes: initialClasses }: ClassD
                         className="ledger-row surface-card hover:border-coral/40 border-hairline rounded-2xl p-4 flex items-center gap-4 cursor-pointer transition-all group"
                         style={{ animationDelay: `${i * 0.05}s` }}
                       >
-                        {s.profiles?.avatar_url ? (
-                          <Image src={s.profiles.avatar_url} alt="Avatar" width={48} height={48} className="w-12 h-12 rounded-full object-cover border border-hairline flex-shrink-0" />
+                        {s.profiles?.[0]?.profile_photo_url ? (
+                          <Image src={s.profiles[0].profile_photo_url} alt="Avatar" width={48} height={48} className="w-12 h-12 rounded-full object-cover border border-hairline flex-shrink-0" />
                         ) : (
                           <div className="w-12 h-12 rounded-full bg-ink border border-hairline flex items-center justify-center text-mist group-hover:text-coral transition-colors">
                             <UserCircle className="w-8 h-8" />
                           </div>
                         )}
                         <div className="flex-1 min-w-0">
-                          <h3 className="font-semibold text-parchment truncate group-hover:text-coral transition-colors">{s.profiles?.full_name}</h3>
+                          <h3 className="font-semibold text-parchment truncate group-hover:text-coral transition-colors">{s.profiles?.[0]?.full_name}</h3>
                           <p className="text-[10px] font-mono text-mist tracking-widest uppercase mt-1">ID: {s.student_id}</p>
-                          {!selectedClass && s.classes && (
-                            <p className="text-xs text-coral truncate mt-0.5">{s.classes.class_name} {s.classes.section !== '-' ? `(${s.classes.section})` : ''}</p>
+                          {!selectedClass && s.classes?.[0] && (
+                            <p className="text-xs text-coral truncate mt-0.5">{s.classes[0].class_name} {s.classes[0].section !== '-' ? `(${s.classes[0].section})` : ''}</p>
                           )}
                         </div>
                         <ArrowRight className="w-5 h-5 text-mist group-hover:text-coral transition-colors" />
@@ -558,7 +552,7 @@ export default function ClassDashboardClient({ classes: initialClasses }: ClassD
                     </thead>
                     <tbody className="divide-y divide-hairline">
                       {(() => {
-                        const grouped = new Map<string, typeof results[0] & { subjectsList: typeof results, totalObtained: number, grandTotal: number }>()
+                        const grouped = new Map<string, GroupedResult>()
                         results.forEach(r => {
                           const key = `${r.student_id}_${r.exam_type}`
                           if (!grouped.has(key)) {
@@ -595,7 +589,7 @@ export default function ClassDashboardClient({ classes: initialClasses }: ClassD
                           const hasMultiple = group.subjectsList.length > 1
                           
                           // Component for a single row actions (only Edit now)
-                          const ActionButtons = ({ r }: { r: ResultRecordDashboard }) => (
+                          const ActionButtons = ({ r }: { r: ResultType }) => (
                             <div className="flex justify-end gap-2">
                               <button
                                 onClick={(e) => {
@@ -653,7 +647,7 @@ export default function ClassDashboardClient({ classes: initialClasses }: ClassD
                                     <button 
                                       onClick={(e) => {
                                         e.stopPropagation()
-                                        handleDeleteResult(group.subjectsList.map((s: any) => s.id))
+                                        handleDeleteResult(group.subjectsList.map((s: ResultType) => s.id))
                                       }}
                                       className="flex items-center gap-1.5 text-xs font-bold text-mist hover:text-red-400 p-2 rounded-lg hover:bg-red-500/10 transition-colors"
                                       title="Delete Entire Result"
@@ -663,7 +657,7 @@ export default function ClassDashboardClient({ classes: initialClasses }: ClassD
                                     <button 
                                       onClick={(e) => {
                                         e.stopPropagation()
-                                        setPreviewSheet(group as any)
+                                        setPreviewSheet(group)
                                       }}
                                       className="flex items-center gap-1.5 text-xs font-bold text-mist hover:text-veena-blue p-2 rounded-lg hover:bg-veena-blue/10 transition-colors"
                                       title="Preview PDF"
@@ -673,7 +667,7 @@ export default function ClassDashboardClient({ classes: initialClasses }: ClassD
                                     <button 
                                       onClick={(e) => {
                                         e.stopPropagation()
-                                        setPrintSheet(group as any)
+                                        setPrintSheet(group)
                                       }}
                                       className="flex items-center gap-1.5 text-xs font-bold text-veena-blue hover:text-coral p-2 rounded-lg hover:bg-veena-blue/10 transition-colors"
                                       title="Download PDF"
@@ -688,7 +682,7 @@ export default function ClassDashboardClient({ classes: initialClasses }: ClassD
                                 </td>
                               </tr>
                               
-                              {hasMultiple && expandedRows.has(key) && group.subjectsList.map((sub: any) => {
+                              {hasMultiple && expandedRows.has(key) && group.subjectsList.map((sub: ResultType) => {
                                 const sp = (sub.marks_obtained / (sub.total_marks || sub.max_marks || 1)) * 100
                                 let sg = 'F'
                                 if (sp >= 90) sg = 'A+'

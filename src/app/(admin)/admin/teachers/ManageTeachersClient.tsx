@@ -5,26 +5,10 @@ import Image from 'next/image'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Search, Plus, UserCircle, Trash2, Loader2, UserX, AlertCircle, BookOpen, GraduationCap } from 'lucide-react'
 import Link from 'next/link'
-import { addTeacher, deleteTeacher } from '@/actions/user-management-actions'
+import { addTeacher, deleteTeacher, getAllTeachers } from '@/actions/user-management-actions'
 import DateInput from '@/components/shared/DateInput'
 
-export interface TeacherRecord {
-  id: string
-  profile_id: string
-  teacher_id: string
-  qualification: string
-  profiles: {
-    full_name: string
-    avatar_url: string | null
-  }
-  teacher_classes: {
-    subject: string
-    classes: {
-      class_name: string
-      section: string
-    } | { class_name: string; section: string }[] | null
-  }[]
-}
+export type TeacherRecord = Exclude<Awaited<ReturnType<typeof getAllTeachers>>['data'], null>[number]
 
 interface ManageTeachersClientProps {
   teachers: TeacherRecord[]
@@ -146,11 +130,14 @@ export default function ManageTeachersClient({ teachers: initialTeachers }: Mana
               </div>
               {t.teacher_classes?.length > 0 ? (
                 <div className="flex flex-wrap gap-2">
-                  {t.teacher_classes.map((tc: any, i: number) => (
-                    <span key={i} className="text-[10px] uppercase tracking-wider font-bold px-2.5 py-1 bg-surface border border-hairline rounded-md text-mist group-hover:border-coral/30 transition-colors">
-                      {tc.classes?.class_name} • {tc.subject}
-                    </span>
-                  ))}
+                  {t.teacher_classes.map((tc, i: number) => {
+                    const cls = Array.isArray(tc.classes) ? tc.classes[0] : tc.classes;
+                    return (
+                      <span key={i} className="text-[10px] uppercase tracking-wider font-bold px-2.5 py-1 bg-surface border border-hairline rounded-md text-mist group-hover:border-coral/30 transition-colors">
+                        {cls?.class_name} • {tc.subject}
+                      </span>
+                    );
+                  })}
                 </div>
               ) : (
                 <p className="text-xs text-mist/60 italic font-mono">No classes assigned yet.</p>
