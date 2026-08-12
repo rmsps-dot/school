@@ -60,11 +60,14 @@ export async function getContactsForTeacher(tab: string, classId?: string): Prom
 
       if (error) throw error
       
-      const formatted = (data || []).map((row: any) => ({
-        id: row.id,
-        full_name: row.profiles?.full_name || 'Unknown',
-        role: 'student'
-      })).sort((a, b) => a.full_name.localeCompare(b.full_name))
+      const formatted = (data || []).map((row) => {
+        const prof = Array.isArray(row.profiles) ? row.profiles[0] : row.profiles
+        return {
+          id: row.id,
+          full_name: prof?.full_name || 'Unknown',
+          role: 'student' as const
+        }
+      }).sort((a, b) => a.full_name.localeCompare(b.full_name))
 
       return { data: formatted }
     }
@@ -108,7 +111,10 @@ export async function getContactsForTeacher(tab: string, classId?: string): Prom
         const linkedStudentIds = parentLinks.filter(pl => pl.parent_id === parent.id).map(pl => pl.student_id)
         const linkedStudentNames = students
           .filter(s => linkedStudentIds.includes(s.student_id))
-          .map(s => (s.profiles as any)?.full_name)
+          .map(s => {
+            const prof = Array.isArray(s.profiles) ? s.profiles[0] : s.profiles
+            return prof?.full_name || 'Unknown'
+          })
           .join(', ')
           
         return {
@@ -163,7 +169,7 @@ export async function getStaffContacts(): Promise<{ data: ChatContact[]; error?:
       if (m.receiver_id !== userId) interactors.add(m.receiver_id)
     })
 
-    let admins: any[] = []
+    let admins: ChatContact[] = []
     if (interactors.size > 0) {
       const { data: adminData } = await supabaseAdmin
         .from('profiles')
@@ -172,7 +178,7 @@ export async function getStaffContacts(): Promise<{ data: ChatContact[]; error?:
         .in('id', Array.from(interactors))
         .eq('is_active', true)
         
-      if (adminData) admins = adminData
+      if (adminData) admins = adminData as ChatContact[]
     }
 
     const combined = [...admins, ...(teachers || [])]
@@ -207,9 +213,10 @@ export async function getUnreadCounts(): Promise<{
     const byRole: { [key: string]: number } = {}
     let total = 0
 
-    data?.forEach((msg: any) => {
+    data?.forEach((msg) => {
       bySender[msg.sender_id] = (bySender[msg.sender_id] || 0) + 1
-      const role = msg.profiles?.role || 'unknown'
+      const prof = Array.isArray(msg.profiles) ? msg.profiles[0] : msg.profiles
+      const role = prof?.role || 'unknown'
       byRole[role] = (byRole[role] || 0) + 1
       total++
     })

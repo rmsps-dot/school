@@ -71,10 +71,12 @@ export async function applyForLeave(
 export async function fetchMyLeaves(): Promise<{ data: LeaveRequest[]; error?: string }> {
   try {
     const auth = await requireAuth(); if (!auth.ok) throw new Error(auth.error);
+    const userId = auth.profile.id
     const client = await createClient()
     const { data, error } = await client
       .from('leave_requests')
       .select('*')
+      .eq('user_id', userId)
       .order('created_at', { ascending: false })
 
     if (error) throw new Error(error.message)
