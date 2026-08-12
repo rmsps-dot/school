@@ -8,6 +8,8 @@ import {
   useReducedMotion,
   AnimatePresence,
   useInView,
+  useMotionValue,
+  animate,
 } from "framer-motion";
 import Image from "next/image";
 import Link from "next/link";
@@ -21,33 +23,33 @@ import {
 function AnimatedCounter({ target, suffix = "" }: { target: number; suffix?: string }) {
   const ref = useRef<HTMLSpanElement>(null);
   const isInView = useInView(ref, { once: true, margin: "0px" });
+  const count = useMotionValue(0);
   const [display, setDisplay] = useState(0);
 
   useEffect(() => {
     if (!isInView) return;
 
-    const duration = 1800;
-    const startTime = performance.now();
-    let raf: number;
+    const controls = animate(count, target, {
+      duration: 2.2,
+      ease: [0.16, 1, 0.3, 1],
+      onUpdate: (latest) => {
+        setDisplay(Math.round(latest));
+      },
+    });
 
-    const step = (now: number) => {
-      const elapsed = now - startTime;
-      const progress = Math.min(elapsed / duration, 1);
-      const eased = 1 - Math.pow(1 - progress, 3);
-      setDisplay(Math.round(eased * target));
-      if (progress < 1) {
-        raf = requestAnimationFrame(step);
-      }
-    };
-
-    raf = requestAnimationFrame(step);
-    return () => cancelAnimationFrame(raf);
-  }, [isInView, target]);
+    return () => controls.stop();
+  }, [isInView, target, count]);
 
   return (
-    <span ref={ref}>
+    <motion.span
+      ref={ref}
+      initial={{ opacity: 0, scale: 0.9, y: 6 }}
+      animate={isInView ? { opacity: 1, scale: 1, y: 0 } : {}}
+      transition={{ duration: 0.6, ease: [0.21, 0.47, 0.32, 0.98] }}
+      className="inline-block tabular-nums font-display tracking-tight"
+    >
       {display}{suffix}
-    </span>
+    </motion.span>
   );
 }
 
