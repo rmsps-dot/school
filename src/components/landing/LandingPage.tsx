@@ -409,6 +409,44 @@ export default function LandingPage({ notices = [] }: {
           ))}
         </div>
       </div>
+      {/* ── NOTICE BOARD ── */}
+      <div id="notices" className="border-t border-hairline">
+        <div className="pt-20 pb-12">
+          <div className="max-w-7xl mx-auto px-6 pb-4">
+            <SectionHeader label="Latest Announcements" title="Notice Board" subtitle="Stay informed with official school announcements and updates." />
+          </div>
+          <div className="max-w-7xl mx-auto px-6">
+            {(() => {
+              const defaultNotices = [
+                {
+                  title: "Admissions Open — Session 2026–27",
+                  content: "Applications are now open for Primary, Secondary, and Senior Secondary classes. Apply online or visit the school admissions office.",
+                  created_at: new Date().toISOString(),
+                },
+                {
+                  title: "BSEB Class X & XII Board Examination Guidance",
+                  content: "Special practical classes and mock examinations for BSEB board candidates will commence this month. Timetable available in student portal.",
+                  created_at: new Date().toISOString(),
+                },
+                {
+                  title: "Annual Sports & Cultural Exhibition",
+                  content: "RMSPS annual sports meet and science exhibition dates announced. Parents and guardians are invited to attend.",
+                  created_at: new Date().toISOString(),
+                },
+              ];
+              const displayNotices = notices.length > 0 ? notices : defaultNotices;
+
+              return (
+                <div className="flex gap-4 overflow-x-auto snap-x snap-mandatory pb-8 no-scrollbar">
+                  {displayNotices.map((notice, i) => (
+                    <NoticeItem key={i} {...notice} delay={i * 0.05} />
+                  ))}
+                </div>
+              );
+            })()}
+          </div>
+        </div>
+      </div>
 
       {/* ── FEATURES ── */}
       <div className="max-w-7xl mx-auto px-6 py-24">
@@ -507,44 +545,7 @@ export default function LandingPage({ notices = [] }: {
         </div>
       </div>
 
-      {/* ── NOTICE BOARD ── */}
-      <div id="notices" className="border-t border-hairline">
-        <div className="pt-24 pb-12">
-          <div className="max-w-7xl mx-auto px-6 pb-6">
-            <SectionHeader label="Latest Announcements" title="Notice Board" subtitle="Stay informed with official school announcements and updates." />
-          </div>
-          <div className="max-w-7xl mx-auto px-6">
-            {(() => {
-              const defaultNotices = [
-                {
-                  title: "Admissions Open — Session 2026–27",
-                  content: "Applications are now open for Primary, Secondary, and Senior Secondary classes. Apply online or visit the school admissions office.",
-                  created_at: new Date().toISOString(),
-                },
-                {
-                  title: "BSEB Class X & XII Board Examination Guidance",
-                  content: "Special practical classes and mock examinations for BSEB board candidates will commence this month. Timetable available in student portal.",
-                  created_at: new Date().toISOString(),
-                },
-                {
-                  title: "Annual Sports & Cultural Exhibition",
-                  content: "RMSPS annual sports meet and science exhibition dates announced. Parents and guardians are invited to attend.",
-                  created_at: new Date().toISOString(),
-                },
-              ];
-              const displayNotices = notices.length > 0 ? notices : defaultNotices;
 
-              return (
-                <div className="flex gap-4 overflow-x-auto snap-x snap-mandatory pb-8 no-scrollbar">
-                  {displayNotices.map((notice, i) => (
-                    <NoticeItem key={i} {...notice} delay={i * 0.05} />
-                  ))}
-                </div>
-              );
-            })()}
-          </div>
-        </div>
-      </div>
 
       {/* ── ADMISSIONS CTA ── */}
       <div id="admissions" className="border-t border-hairline">
