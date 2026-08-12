@@ -239,12 +239,14 @@ function NoticeItem({ title, content, created_at, delay }: {
   const ref = useRef<HTMLDivElement>(null);
   const isInView = useInView(ref, { once: true });
   return (
-    <motion.div ref={ref} initial={{ opacity: 0, y: 20 }} animate={isInView ? { opacity: 1, y: 0 } : {}} transition={{ duration: 0.4, delay }} className="w-72 sm:w-80 md:w-96 shrink-0 snap-start surface-card rounded-2xl p-6 border-l-2 border-coral flex flex-col">
+    <motion.div ref={ref} initial={{ opacity: 0, y: 20 }} animate={isInView ? { opacity: 1, y: 0 } : {}} transition={{ duration: 0.4, delay }}
+      className="group w-72 sm:w-80 md:w-96 shrink-0 snap-start surface-card rounded-2xl p-6 border-l-4 border-coral border-y border-r border-hairline hover:border-coral/40 hover:scale-[1.02] transition-all flex flex-col cursor-default"
+    >
       <div className="flex items-center gap-2 mb-3">
         <Bell className="w-4 h-4 text-coral shrink-0" />
         <span className="text-mist text-xs font-mono">{new Date(created_at).toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" })}</span>
       </div>
-      <h3 className="font-display text-lg font-bold text-parchment mb-2">{title}</h3>
+      <h3 className="font-display text-lg font-bold text-parchment mb-2 group-hover:text-coral transition-colors">{title}</h3>
       <p className="text-mist text-sm leading-relaxed line-clamp-3">{content}</p>
     </motion.div>
   );
@@ -436,14 +438,29 @@ export default function LandingPage({ notices = [] }: {
       <div id="academics" className="border-t border-hairline">
         <div className="max-w-7xl mx-auto px-6 py-24">
           <SectionHeader label="Academic Structure" title="Three Pillars of Learning" subtitle="A complete BSEB-affiliated journey from Primary to Senior Secondary." />
-          <div className="flex gap-2 mb-10 p-1 bg-surface rounded-2xl w-fit max-w-full mx-auto overflow-x-auto snap-x" style={{ scrollbarWidth: "none" }}>
+          <div className="flex bg-ink/50 p-1.5 rounded-2xl border border-hairline w-fit max-w-full mx-auto overflow-x-auto snap-x mb-10 no-scrollbar">
             {academicTabs.map((tab, i) => (
-              <button key={tab.label} onClick={() => setActiveTab(i)} className={`shrink-0 snap-center whitespace-nowrap px-6 py-3 rounded-xl text-sm font-semibold transition-all duration-200 ${activeTab === i ? "bg-coral text-ink" : "text-mist hover:text-parchment"}`}>{tab.label}</button>
+              <button
+                key={tab.label}
+                onClick={() => setActiveTab(i)}
+                className={`relative shrink-0 snap-center whitespace-nowrap px-6 py-3 rounded-xl text-sm font-semibold transition-colors z-10 ${
+                  activeTab === i ? "text-ink font-bold" : "text-mist hover:text-parchment"
+                }`}
+              >
+                {tab.label}
+                {activeTab === i && (
+                  <motion.div
+                    layoutId="academic-tab-pill"
+                    className="absolute inset-0 bg-coral rounded-xl -z-10 shadow-lg"
+                    transition={{ type: "spring", stiffness: 400, damping: 30 }}
+                  />
+                )}
+              </button>
             ))}
           </div>
           <AnimatePresence mode="wait">
             <motion.div key={activeTab} initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -12 }} transition={{ duration: 0.3 }} className="grid grid-cols-1 md:grid-cols-3 gap-8">
-              <div className="md:col-span-1 surface-card rounded-3xl p-8">
+              <div className="md:col-span-1 surface-card rounded-3xl p-8 border border-hairline hover:border-coral/30 transition-colors">
                 <p className="text-mist text-xs font-mono uppercase tracking-widest mb-2">{academicTabs[activeTab].grades}</p>
                 <h3 className="font-display text-3xl font-bold text-parchment mb-3">{academicTabs[activeTab].label}</h3>
                 <span className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full border border-coral/30 bg-coral/10 text-coral text-xs font-semibold">
@@ -455,11 +472,11 @@ export default function LandingPage({ notices = [] }: {
                   ))}
                 </div>
               </div>
-              <div className="md:col-span-2 surface-card rounded-3xl p-8">
+              <div className="md:col-span-2 surface-card rounded-3xl p-8 border border-hairline">
                 <p className="text-mist text-xs font-mono uppercase tracking-widest mb-6">Core Subjects</p>
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
                   {academicTabs[activeTab].subjects.map((subject) => (
-                    <div key={subject} className="flex items-center gap-2 px-4 py-3 rounded-xl border border-hairline text-sm text-parchment font-medium hover:border-coral/40 transition-colors">
+                    <div key={subject} className="flex items-center gap-2.5 px-4 py-3 rounded-xl border border-hairline text-sm text-parchment font-medium hover:border-coral/40 hover:bg-surface-hover hover:scale-[1.02] transition-all cursor-default">
                       <BookOpen className="w-4 h-4 text-coral shrink-0" />
                       <span className="truncate">{subject}</span>
                     </div>
@@ -505,14 +522,23 @@ export default function LandingPage({ notices = [] }: {
           <div className="max-w-7xl mx-auto px-6 pb-6">
             <SectionHeader label="Latest Announcements" title="Notice Board" subtitle="Stay informed with official school announcements and updates." />
           </div>
-          <div className="max-w-7xl mx-auto">
+          <div className="max-w-7xl mx-auto px-6">
             {notices.length > 0 ? (
-              <div className="flex gap-4 px-6 overflow-x-auto snap-x snap-mandatory pb-8" style={{ scrollbarWidth: "none" }}>
+              <div className="flex gap-4 overflow-x-auto snap-x snap-mandatory pb-8 no-scrollbar">
                 {notices.map((notice, i) => <NoticeItem key={i} {...notice} delay={i * 0.05} />)}
               </div>
             ) : (
-              <div className="text-center text-mist py-12 border border-dashed border-hairline rounded-2xl mx-6">
-                No official announcements at this time.
+              <div className="glass-panel p-10 rounded-3xl text-center max-w-2xl mx-auto flex flex-col items-center">
+                <div className="w-12 h-12 rounded-2xl bg-coral/10 border border-coral/30 flex items-center justify-center mb-4 text-coral">
+                  <Bell className="w-6 h-6 animate-pulse" />
+                </div>
+                <h4 className="font-display text-xl font-bold text-parchment mb-2">No Active Announcements</h4>
+                <p className="text-mist text-sm leading-relaxed max-w-md mb-6">
+                  Official school notices, exam dates, and academic circulars will be published here in real-time by the administration.
+                </p>
+                <Link href="/login?role=student" className="inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-widest text-coral hover:underline">
+                  Log in to portal for private notices <ArrowRight className="w-4 h-4" />
+                </Link>
               </div>
             )}
           </div>
@@ -531,17 +557,22 @@ export default function LandingPage({ notices = [] }: {
                 <span className="w-1.5 h-1.5 rounded-full bg-coral animate-pulse" /> Applications Closing Soon
               </span>
               <h2 className="font-display text-4xl md:text-6xl font-bold text-parchment mb-4">Join RMSPS.</h2>
-              <p className="text-mist text-lg mb-10 max-w-xl mx-auto">
+              <p className="text-mist text-lg mb-10 max-w-xl mx-auto leading-relaxed">
                 Secure your child&apos;s future with a BSEB-affiliated education that combines academic rigour with holistic development.{" "}
                 <strong className="text-parchment">Session 2026–27 admissions are now open.</strong>
               </p>
-              <div className="flex flex-wrap gap-4 justify-center">
+              <div className="flex flex-wrap gap-4 justify-center mb-10">
                 <Link href="/register" className="btn-primary inline-flex items-center gap-3 px-10 py-5 rounded-2xl font-bold text-base hover:scale-105 transition-transform">
                   Apply Now <ArrowRight className="w-5 h-5" />
                 </Link>
                 <a href="tel:+919546536279" className="inline-flex items-center gap-3 px-10 py-5 rounded-2xl font-bold text-base border border-hairline hover:border-coral/40 text-parchment hover:bg-surface transition-all">
                   <Phone className="w-5 h-5 text-coral" /> Call Admissions
                 </a>
+              </div>
+              <div className="flex flex-wrap justify-center items-center gap-6 text-mist text-xs font-mono uppercase tracking-wider">
+                <span className="flex items-center gap-2"><CheckCircle className="w-4 h-4 text-coral" /> Instant Online Registration</span>
+                <span className="flex items-center gap-2"><CheckCircle className="w-4 h-4 text-gold" /> Direct Office Support</span>
+                <span className="flex items-center gap-2"><CheckCircle className="w-4 h-4 text-role-student" /> Session 2026–27 Open</span>
               </div>
             </div>
           </motion.div>
@@ -563,14 +594,19 @@ export default function LandingPage({ notices = [] }: {
               <div className="space-y-3 text-sm text-mist">
                 <div className="flex items-start gap-3"><MapPin className="w-4 h-4 text-coral mt-0.5 shrink-0" /><span>RMSPS Kating Chowk, Maheshpur road, Pipra, Bihar 852109</span></div>
                 <div className="flex items-center gap-3"><Phone className="w-4 h-4 text-coral shrink-0" /><a href="tel:+919546536279" className="hover:text-parchment transition-colors">+91 95465 36279</a></div>
-                <div className="flex items-center gap-3"><Mail className="w-4 h-4 text-coral shrink-0" /><a href="mailto:ekvillan222006@gmail.com" className="hover:text-parchment transition-colors">ekvillan222006@gmail.com</a></div>
+                <div className="flex items-center gap-3"><Mail className="w-4 h-4 text-coral shrink-0" /><a href="mailto:srzsurazzrajput@gmail.com" className="hover:text-parchment transition-colors">srzsurazzrajput@gmail.com</a></div>
               </div>
             </div>
             <div>
               <h4 className="font-display font-bold text-parchment mb-6 text-sm uppercase tracking-widest">Portals</h4>
               <ul className="space-y-3">
-                {[["Admin Portal", "/login"], ["Teacher Portal", "/login"], ["Parent Portal", "/login"], ["Student Portal", "/login"]].map(([label, href]) => (
-                  <li key={label}><Link href={href} className="text-mist text-sm hover:text-parchment flex items-center gap-2 transition-colors group"><ChevronRight className="w-3 h-3 group-hover:translate-x-1 transition-transform" />{label}</Link></li>
+                {[
+                  ["Admin Portal", "/login?role=admin"],
+                  ["Teacher Portal", "/login?role=teacher"],
+                  ["Parent Portal", "/login?role=parent"],
+                  ["Student Portal", "/login?role=student"]
+                ].map(([label, href]) => (
+                  <li key={label}><Link href={href} className="text-mist text-sm hover:text-parchment flex items-center gap-2 transition-colors group"><ChevronRight className="w-3 h-3 group-hover:translate-x-1 transition-transform text-coral" />{label}</Link></li>
                 ))}
               </ul>
             </div>
