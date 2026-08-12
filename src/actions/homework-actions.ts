@@ -125,6 +125,9 @@ export async function createHomework(
  */
 export async function fetchRecentHomework(classId?: string): Promise<{ data: Homework[]; error?: string }> {
   try {
+    const auth = await requireAuth()
+    if (!auth.ok) return { data: [], error: auth.error }
+
     const client = await createClient()
     
     // Calculate the date 7 days ago
