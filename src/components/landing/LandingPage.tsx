@@ -221,10 +221,10 @@ export default function LandingPage({ notices = [] }: {
   ];
 
   const portals = [
-    { title: "Admin Portal", desc: "Full institutional oversight. Approve registrations, manage staff, publish notices, and track all financial records.", icon: Shield, colorVar: "#F1917D", features: ["Approve admissions", "Manage teachers & parents", "Publish notices", "View all reports"], link: "/login" },
-    { title: "Teacher Portal", desc: "Mark attendance with geolocation, upload results, and communicate with students securely.", icon: BookOpen, colorVar: "#3E5C76", features: ["Geofenced attendance", "Upload exam results", "Manage homework", "Chat with students"], link: "/login" },
-    { title: "Parent Portal", desc: "Stay connected with your child's academic journey. Track attendance, fees, results, and school notices in real-time.", icon: Users, colorVar: "#D4AF6A", features: ["Child progress tracking", "Fee ledger & payments", "Attendance history", "School notices"], link: "/login" },
-    { title: "Student Portal", desc: "Your personal academic hub. Check results, homework, attendance, apply for leave, and chat with teachers.", icon: GraduationCap, colorVar: "#81B29A", features: ["View exam results", "Check attendance", "Submit homework", "Apply for leave"], link: "/login" },
+    { title: "Admin Portal", desc: "Full institutional oversight. Approve registrations, manage staff, publish notices, and track all financial records.", icon: Shield, colorVar: "#F1917D", features: ["Approve admissions", "Manage teachers & parents", "Publish notices", "View all reports"], link: "/login?role=admin" },
+    { title: "Teacher Portal", desc: "Mark attendance with geolocation, upload results, and communicate with students securely.", icon: BookOpen, colorVar: "#3E5C76", features: ["Geofenced attendance", "Upload exam results", "Manage homework", "Chat with students"], link: "/login?role=teacher" },
+    { title: "Parent Portal", desc: "Stay connected with your child's academic journey. Track attendance, fees, results, and school notices in real-time.", icon: Users, colorVar: "#D4AF6A", features: ["Child progress tracking", "Fee ledger & payments", "Attendance history", "School notices"], link: "/login?role=parent" },
+    { title: "Student Portal", desc: "Your personal academic hub. Check results, homework, attendance, apply for leave, and chat with teachers.", icon: GraduationCap, colorVar: "#81B29A", features: ["View exam results", "Check attendance", "Submit homework", "Apply for leave"], link: "/login?role=student" },
   ];
 
   const testimonials = [
