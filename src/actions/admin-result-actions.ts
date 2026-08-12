@@ -114,7 +114,8 @@ export async function fetchPendingResults(): Promise<{
         .select('id, profiles(full_name)')
         .in('id', teacherIds)
       for (const t of teachers ?? []) {
-        const name = (t.profiles as unknown as { full_name: string } | null)?.full_name
+        const prof = Array.isArray(t.profiles) ? t.profiles[0] : t.profiles
+        const name = prof?.full_name
         if (name) teacherNameMap.set(t.id, name)
       }
     }

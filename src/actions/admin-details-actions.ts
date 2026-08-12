@@ -9,43 +9,6 @@ import { requireAdmin } from '@/utils/auth-helpers'
 // TEACHER DETAILS
 // --------------------------------------------------------------------------------
 
-export async function getTeacherDetails(profileId: string) {
-  const auth = await requireAdmin()
-  if (!auth.ok) return { data: null, error: auth.error }
-
-  const supabase = await createClient()
-
-  const { data, error } = await supabase
-    .from('teachers')
-    .select(`
-      *,
-      profiles (*),
-      teacher_classes (
-        subject,
-        classes (id, class_name, section)
-      ),
-      teacher_attendance (*),
-      teacher_payments (*)
-    `)
-    .eq('profile_id', profileId)
-    .single()
-
-  if (error) return { data: null, error: error.message }
-
-  // Fetch email using admin client (only admin client can read auth.users)
-  const { data: authData } = await supabaseAdmin.auth.admin.getUserById(profileId)
-  
-  const teacherData = {
-    ...data,
-    profiles: data.profiles ? {
-      ...data.profiles,
-      email: authData?.user?.email || null
-    } : null
-  }
-
-  return { data: teacherData, error: null }
-}
-
 export async function recordTeacherPayment(formData: FormData) {
   const auth = await requireAdmin()
   if (!auth.ok) return { error: auth.error }
