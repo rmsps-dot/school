@@ -21,16 +21,10 @@ import {
 function AnimatedCounter({ target, suffix = "" }: { target: number; suffix?: string }) {
   const ref = useRef<HTMLSpanElement>(null);
   const isInView = useInView(ref, { once: true, margin: "0px" });
-  const prefersReducedMotion = useReducedMotion();
   const [display, setDisplay] = useState(0);
 
   useEffect(() => {
     if (!isInView) return;
-
-    if (prefersReducedMotion) {
-      setDisplay(target);
-      return;
-    }
 
     const duration = 1800;
     const startTime = performance.now();
@@ -48,7 +42,7 @@ function AnimatedCounter({ target, suffix = "" }: { target: number; suffix?: str
 
     raf = requestAnimationFrame(step);
     return () => cancelAnimationFrame(raf);
-  }, [isInView, target, prefersReducedMotion]);
+  }, [isInView, target]);
 
   return (
     <span ref={ref}>
