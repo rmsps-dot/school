@@ -17,39 +17,42 @@ import {
   Bell, GraduationCap, Award, Zap,
 } from "lucide-react";
 
-/* ─── ANIMATED COUNTER (useMotionValue + useEffect — no RAF setState loop) ─── */
+/* ─── ANIMATED COUNTER ─── */
 function AnimatedCounter({ target, suffix = "" }: { target: number; suffix?: string }) {
   const ref = useRef<HTMLSpanElement>(null);
-  const isInView = useInView(ref, { once: true, margin: "-50px" });
+  const isInView = useInView(ref, { once: true, margin: "0px" });
   const prefersReducedMotion = useReducedMotion();
   const [display, setDisplay] = useState(0);
 
-  // Drive animation via Framer Motion's motion value engine (not a RAF setState loop)
-  // useEffect triggers only when isInView becomes true
-  // The motion.animate utility drives the count without React re-renders on every frame
   useEffect(() => {
-    if (!isInView || prefersReducedMotion) return;
-    let start = 0;
+    if (!isInView) return;
+
+    if (prefersReducedMotion) {
+      setDisplay(target);
+      return;
+    }
+
     const duration = 1800;
     const startTime = performance.now();
     let raf: number;
+
     const step = (now: number) => {
       const elapsed = now - startTime;
       const progress = Math.min(elapsed / duration, 1);
-      // Ease out
       const eased = 1 - Math.pow(1 - progress, 3);
       setDisplay(Math.round(eased * target));
       if (progress < 1) {
         raf = requestAnimationFrame(step);
       }
     };
+
     raf = requestAnimationFrame(step);
     return () => cancelAnimationFrame(raf);
   }, [isInView, target, prefersReducedMotion]);
 
   return (
     <span ref={ref}>
-      {isInView ? `${display}${suffix}` : "0"}
+      {display}{suffix}
     </span>
   );
 }

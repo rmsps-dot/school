@@ -35,7 +35,7 @@ export async function updateSession(request: NextRequest) {
   const pathname = request.nextUrl.pathname
 
   // Public routes that should not be protected
-  const publicRoutes = ['/', '/login', '/register', '/forgot-password', '/reset-password']
+  const publicRoutes = ['/', '/login', '/register', '/forgot-password', '/reset-password', '/manifest.webmanifest']
   
   // Exclude the cron route exactly — do not use startsWith to avoid accidentally
   // bypassing auth for any future /api/cron-* routes.
@@ -56,7 +56,7 @@ export async function updateSession(request: NextRequest) {
 
   // Prevent browser from caching protected pages
   // This stops the back-button-after-logout bypass
-  const isPublicPath = ['/', '/login', '/register', '/forgot-password', '/reset-password']
+  const isPublicPath = ['/', '/login', '/register', '/forgot-password', '/reset-password', '/manifest.webmanifest']
     .some(p => pathname === p || pathname.startsWith(p + '/'))
 
   if (!isPublicPath) {
