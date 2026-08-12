@@ -6,39 +6,12 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { ArrowLeft, UserCircle, Phone, Calendar, MapPin, IndianRupee, CheckCircle2, AlertCircle, Loader2, BookOpen, Clock, FileText } from 'lucide-react'
 import Link from 'next/link'
 import { recordTeacherPayment } from '@/actions/admin-details-actions'
+import { getTeacherDetails } from '@/actions/user-management-actions'
 import DateInput from '@/components/shared/DateInput'
 
-export interface TeacherDetailData {
-  id: string
-  profile_id: string
-  teacher_id: string
-  qualification: string
-  joining_date: string | null
-  profiles: {
-    full_name: string | null
-    avatar_url: string | null
-    dob: string | null
-    mobile: string | null
-    address: string | null
-  }
-  teacher_classes: {
-    subject: string
-    classes: { class_name: string; section: string } | { class_name: string; section: string }[] | null
-  }[]
-  teacher_attendance: {
-    id: string
-    date: string
-    status: string
-  }[]
-  teacher_payments: {
-    id: string
-    amount: number
-    month: string
-    payment_date: string
-    status: string
-    notes: string | null
-  }[]
-}
+export type TeacherDetailData = Exclude<Awaited<ReturnType<typeof getTeacherDetails>>['data'], null>
+
+type TabType = 'overview' | 'attendance' | 'payments'
 
 interface Props {
   teacher: TeacherDetailData
@@ -56,9 +29,9 @@ export default function TeacherDetailClient({ teacher }: Props) {
   const attendance = teacher.teacher_attendance || []
   const payments = teacher.teacher_payments || []
 
-  const totalPaid = payments.reduce((sum: number, p: any) => sum + Number(p.amount), 0)
-  const presentDays = attendance.filter((a: any) => a.status === 'present').length
-  const absentDays = attendance.filter((a: any) => a.status === 'absent').length
+  const totalPaid = payments.reduce((sum, p) => sum + Number(p.amount), 0)
+  const presentDays = attendance.filter((a) => a.status === 'present').length
+  const absentDays = attendance.filter((a) => a.status === 'absent').length
 
   const formatDate = (d?: string | null) => {
     if (!d) return 'N/A'
@@ -81,7 +54,7 @@ export default function TeacherDetailClient({ teacher }: Props) {
     })
   }
 
-  const tabs = [
+  const tabs: { id: TabType; label: string; icon: any }[] = [
     { id: 'overview',    label: 'Overview',       icon: BookOpen },
     { id: 'attendance',  label: 'Attendance Log',  icon: Clock },
     { id: 'payments',    label: 'Payments',         icon: IndianRupee },
@@ -154,7 +127,7 @@ export default function TeacherDetailClient({ teacher }: Props) {
         {tabs.map(t => (
           <button
             key={t.id}
-            onClick={() => setActiveTab(t.id as any)}
+            onClick={() => setActiveTab(t.id)}
             className={`flex items-center gap-2 px-5 py-2.5 rounded-xl font-bold text-sm transition-all whitespace-nowrap ${
               activeTab === t.id ? 'text-ink' : 'text-mist hover:text-parchment'
             }`}
@@ -252,8 +225,8 @@ export default function TeacherDetailClient({ teacher }: Props) {
                   </thead>
                   <tbody className="divide-y divide-hairline">
                     {attendance.length > 0 ? attendance
-                      .sort((a: any, b: any) => new Date(b.date).getTime() - new Date(a.date).getTime())
-                      .map((a: any) => (
+                      .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
+                      .map((a) => (
                         <tr key={a.id} className="hover:bg-white/[0.01] transition-colors">
                           <td className="p-4 font-medium text-parchment">{formatDate(a.date)}</td>
                           <td className="p-4">
@@ -305,8 +278,8 @@ export default function TeacherDetailClient({ teacher }: Props) {
                     </thead>
                     <tbody className="divide-y divide-hairline">
                       {payments.length > 0 ? payments
-                        .sort((a: any, b: any) => new Date(b.payment_date).getTime() - new Date(a.payment_date).getTime())
-                        .map((p: any) => (
+                        .sort((a, b) => new Date(b.payment_date).getTime() - new Date(a.payment_date).getTime())
+                        .map((p) => (
                           <tr key={p.id} className="hover:bg-white/[0.01] transition-colors">
                             <td className="p-4 font-medium text-parchment">{formatDate(p.payment_date)}</td>
                             <td className="p-4 font-bold text-emerald-400">₹{p.amount}</td>

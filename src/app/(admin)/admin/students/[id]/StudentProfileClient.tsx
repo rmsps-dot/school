@@ -9,51 +9,22 @@ import {
   GraduationCap, TrendingUp, CheckCircle2, XCircle, Edit
 } from 'lucide-react'
 import { useRouter } from 'next/navigation'
+import { getStudentProfileData } from '@/actions/class-actions'
 
-export interface ResultRecord {
-  id: string
-  exam_type: string
-  subject: string
-  marks_obtained: number
-  total_marks: number
-  max_marks?: number
-  created_at: string
-}
-
-export interface StudentDetailData {
-  id: string
-  student_id: string
-  father_name: string | null
-  mother_name: string | null
-  admission_date: string | null
-  classes: {
-    class_name: string
-    section: string
-  } | null
-  profiles: {
-    full_name: string | null
-    mobile: string | null
-    profile_photo_url: string | null
-    dob: string | null
-    address: string | null
-    email?: string | null
-  } | null
-}
+type StudentProfileDataPayload = Exclude<Awaited<ReturnType<typeof getStudentProfileData>>['data'], null>
 
 interface StudentProfileProps {
-  data: {
-    student: StudentDetailData
-    attendanceStats: { present: number; total: number; percentage: number }
-    results: ResultRecord[]
-  }
+  data: StudentProfileDataPayload
 }
+
+type TabType = 'details' | 'fees' | 'progress' | 'attendance'
 
 export default function StudentProfileClient({ data }: StudentProfileProps) {
   const router = useRouter()
   const [activeTab, setActiveTab] = useState<'details' | 'fees' | 'progress' | 'attendance'>('details')
 
   const { student, attendanceStats, results } = data
-  const profile = student.profiles
+  const profile = Array.isArray(student.profiles) ? student.profiles[0] : student.profiles
 
   // 3D Tilt effect handlers for ID card
   const [rotateX, setRotateX] = useState(0)
@@ -82,7 +53,9 @@ export default function StudentProfileClient({ data }: StudentProfileProps) {
   const attendancePct = attendanceStats.percentage
   const attendanceColor = attendancePct >= 75 ? 'var(--coral)' : attendancePct >= 50 ? '#D4AF6A' : '#EF4444'
 
-  const tabs = [
+  const cls = Array.isArray(student.classes) ? student.classes[0] : student.classes
+
+  const tabs: { id: TabType; label: string; icon: any }[] = [
     { id: 'details',    label: 'Details',     icon: UserCircle },
     { id: 'fees',       label: 'Fees',         icon: CreditCard },
     { id: 'progress',   label: 'Progress',     icon: BookOpen },
@@ -149,7 +122,7 @@ export default function StudentProfileClient({ data }: StudentProfileProps) {
                 )}
                 <div className="absolute -bottom-3 -right-3 text-[10px] font-bold px-2 py-1 rounded-lg border border-coral/30 text-coral"
                   style={{ background: 'var(--ink)', boxShadow: '0 0 12px rgba(241,145,125,0.2)' }}>
-                  {student.classes?.class_name}-{student.classes?.section}
+                  {cls?.class_name}-{cls?.section}
                 </div>
               </div>
 
@@ -193,7 +166,7 @@ export default function StudentProfileClient({ data }: StudentProfileProps) {
             {tabs.map(tab => (
               <button
                 key={tab.id}
-                onClick={() => setActiveTab(tab.id as any)}
+                onClick={() => setActiveTab(tab.id)}
                 className={`flex-1 min-w-[100px] flex items-center justify-center gap-2 py-2.5 rounded-xl text-sm font-semibold transition-all ${
                   activeTab === tab.id 
                     ? 'text-ink' 
@@ -287,7 +260,7 @@ export default function StudentProfileClient({ data }: StudentProfileProps) {
                         </tr>
                       </thead>
                       <tbody className="divide-y divide-hairline">
-                        {results.map((res: ResultRecord) => {
+                        {results.map((res) => {
                           const total = res.total_marks || res.max_marks || 1
                           const pct = (res.marks_obtained / total) * 100
                           let calculatedGrade = 'F'

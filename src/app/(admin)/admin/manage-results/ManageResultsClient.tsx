@@ -12,7 +12,7 @@ import MarksheetModal from '@/components/admin/MarksheetModal'
 import PrintPortal from '@/components/admin/PrintPortal'
 
 interface Props {
-  marksheets: (StudentMarksheet & { approvedAt?: string })[]
+  marksheets: StudentMarksheet[]
 }
 
 const EXAM_LABELS: Record<string, string> = {
@@ -41,8 +41,8 @@ export default function ManageResultsClient({ marksheets }: Props) {
   const [search, setSearch]         = useState('')
   const [filterExam, setFilterExam] = useState('all')
   const [expanded, setExpanded]     = useState<Set<string>>(new Set())
-  const [printSheet, setPrintSheet] = useState<(StudentMarksheet & { approvedAt?: string }) | null>(null)
-  const [previewSheet, setPreviewSheet] = useState<(StudentMarksheet & { approvedAt?: string }) | null>(null)
+  const [printSheet, setPrintSheet] = useState<StudentMarksheet | null>(null)
+  const [previewSheet, setPreviewSheet] = useState<StudentMarksheet | null>(null)
 
   const examTypes = Array.from(new Set(marksheets.map((s) => s.examType)))
 
@@ -171,10 +171,10 @@ export default function ManageResultsClient({ marksheets }: Props) {
                                 style={{ background: 'rgba(255,255,255,0.03)' }}>
                                 {examLabel}
                               </span>
-                              {(s as unknown as { approvedAt?: string }).approvedAt && (
+                              {s.approvedAt && (
                                 <span className="text-xs text-mist flex items-center gap-1">
                                   <CheckCircle2 className="w-3 h-3 text-emerald-400" />
-                                  {new Date((s as unknown as { approvedAt: string }).approvedAt).toLocaleDateString('en-IN')}
+                                  {new Date(s.approvedAt).toLocaleDateString('en-IN')}
                                 </span>
                               )}
                             </div>
@@ -234,7 +234,7 @@ export default function ManageResultsClient({ marksheets }: Props) {
         <PrintPortal>
           <MarksheetTemplate
             sheet={printSheet}
-            approvedAt={(printSheet as unknown as { approvedAt?: string }).approvedAt ?? new Date().toISOString()}
+            approvedAt={printSheet.approvedAt ?? new Date().toISOString()}
             printId="marksheet-print-portal"
           />
         </PrintPortal>

@@ -269,8 +269,8 @@ export async function getTeacherDetails(profileId: string) {
         qualification,
         joining_date,
         teacher_classes ( subject, classes ( class_name, section ) ),
-        teacher_attendance ( id, date, status ),
-        teacher_payments ( id, amount, month, payment_date, status, notes )
+        teacher_attendance ( id, date, status, check_in_at, photo_url ),
+        teacher_payments ( id, amount, month, payment_date, status, remarks )
       )
     `)
     .eq('id', profileId)
