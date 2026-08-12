@@ -19,36 +19,62 @@ import {
   Bell, GraduationCap, Award, Zap,
 } from "lucide-react";
 
-/* ─── ANIMATED COUNTER ─── */
+import { ParallaxScrollFeatureSection } from "@/components/ui/parallax-scroll-feature-section";
+
+/* ─── SINGLE ROLLING DIGIT COLUMN ─── */
+function DigitColumn({ digit, delay, isInView }: { digit: number; delay: number; isInView: boolean }) {
+  const targetIndex = digit === 0 ? 10 : digit;
+  const digitsList = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 0];
+
+  return (
+    <span className="relative inline-block h-[1em] overflow-hidden align-baseline">
+      <motion.span
+        initial={{ y: "0%" }}
+        animate={isInView ? { y: `-${(targetIndex / digitsList.length) * 100}%` } : { y: "0%" }}
+        transition={{
+          duration: 2.2,
+          delay,
+          ease: [0.16, 1, 0.3, 1], // Apple & Linear luxury ease-out
+        }}
+        className="flex flex-col text-center"
+      >
+        {digitsList.map((num, idx) => (
+          <span key={idx} className="h-[1em] leading-none flex items-center justify-center">
+            {num}
+          </span>
+        ))}
+      </motion.span>
+    </span>
+  );
+}
+
+/* ─── PREMIUM ROLLING REEL COUNTER ─── */
 function AnimatedCounter({ target, suffix = "" }: { target: number; suffix?: string }) {
   const ref = useRef<HTMLSpanElement>(null);
   const isInView = useInView(ref, { once: true, margin: "0px" });
-  const count = useMotionValue(0);
-  const [display, setDisplay] = useState(0);
 
-  useEffect(() => {
-    if (!isInView) return;
-
-    const controls = animate(count, target, {
-      duration: 2.2,
-      ease: [0.16, 1, 0.3, 1],
-      onUpdate: (latest) => {
-        setDisplay(Math.round(latest));
-      },
-    });
-
-    return () => controls.stop();
-  }, [isInView, target, count]);
+  const digits = target.toString().split("");
 
   return (
     <motion.span
       ref={ref}
-      initial={{ opacity: 0, scale: 0.9, y: 6 }}
-      animate={isInView ? { opacity: 1, scale: 1, y: 0 } : {}}
+      initial={{ opacity: 0, y: 12, scale: 0.95 }}
+      animate={isInView ? { opacity: 1, y: 0, scale: 1 } : {}}
       transition={{ duration: 0.6, ease: [0.21, 0.47, 0.32, 0.98] }}
-      className="inline-block tabular-nums font-display tracking-tight"
+      className="inline-flex items-baseline font-display tabular-nums font-extrabold tracking-tight"
     >
-      {display}{suffix}
+      {digits.map((char, idx) => {
+        const digit = parseInt(char, 10);
+        return (
+          <DigitColumn
+            key={idx}
+            digit={digit}
+            delay={idx * 0.12}
+            isInView={isInView}
+          />
+        );
+      })}
+      {suffix && <span className="inline-block ml-0.5">{suffix}</span>}
     </motion.span>
   );
 }
@@ -101,81 +127,39 @@ function PortalCard({ title, desc, icon: Icon, colorVar, features, link, delay }
   );
 }
 
-/* ─── TESTIMONIAL CAROUSEL ─── */
-function TestimonialCarousel({ testimonials }: {
-  testimonials: { quote: string; name: string; role: string; initial: string; color: string }[];
+/* ─── TESTIMONIAL CARD ─── */
+function TestimonialCard({ quote, name, role, initial, color, delay }: {
+  quote: string; name: string; role: string; initial: string; color: string; delay: number;
 }) {
-  const [current, setCurrent] = useState(0);
-
-  const nextSlide = () => setCurrent((prev) => (prev + 1) % testimonials.length);
-  const prevSlide = () => setCurrent((prev) => (prev - 1 + testimonials.length) % testimonials.length);
-
+  const ref = useRef<HTMLDivElement>(null);
+  const isInView = useInView(ref, { once: true, margin: "-60px" });
   return (
-    <div className="relative max-w-4xl mx-auto px-4">
-      <AnimatePresence mode="wait">
-        <motion.div
-          key={current}
-          initial={{ opacity: 0, x: 20 }}
-          animate={{ opacity: 1, x: 0 }}
-          exit={{ opacity: 0, x: -20 }}
-          transition={{ duration: 0.35, ease: "easeInOut" }}
-          className="surface-card rounded-3xl p-8 md:p-12 border border-hairline shadow-2xl relative overflow-hidden"
-        >
-          <div className="flex gap-1 mb-6">
-            {[...Array(5)].map((_, i) => (
-              <Star key={i} className="w-5 h-5 fill-gold text-gold" />
-            ))}
-          </div>
-          <blockquote className="font-display text-xl md:text-2xl text-parchment font-medium leading-relaxed mb-8 italic">
-            "{testimonials[current].quote}"
-          </blockquote>
-          <div className="flex items-center justify-between border-t border-hairline pt-6">
-            <div className="flex items-center gap-4">
-              <div
-                className="w-12 h-12 rounded-full flex items-center justify-center font-display font-bold text-ink text-base shadow-md"
-                style={{ background: testimonials[current].color }}
-              >
-                {testimonials[current].initial}
-              </div>
-              <div>
-                <p className="font-bold text-parchment text-base">{testimonials[current].name}</p>
-                <p className="text-mist text-xs font-mono">{testimonials[current].role}</p>
-              </div>
-            </div>
-
-            <div className="flex items-center gap-2">
-              <button
-                onClick={prevSlide}
-                aria-label="Previous quote"
-                className="p-3 rounded-xl surface-card border border-hairline hover:border-coral/40 text-mist hover:text-parchment transition-all hover:scale-105"
-              >
-                <ArrowLeft className="w-4 h-4" />
-              </button>
-              <button
-                onClick={nextSlide}
-                aria-label="Next quote"
-                className="p-3 rounded-xl surface-card border border-hairline hover:border-coral/40 text-mist hover:text-parchment transition-all hover:scale-105"
-              >
-                <ArrowRight className="w-4 h-4" />
-              </button>
-            </div>
-          </div>
-        </motion.div>
-      </AnimatePresence>
-
-      <div className="flex items-center justify-center gap-2 mt-6">
-        {testimonials.map((_, idx) => (
-          <button
-            key={idx}
-            onClick={() => setCurrent(idx)}
-            className={`h-2 rounded-full transition-all duration-300 ${
-              current === idx ? "w-8 bg-coral" : "w-2 bg-mist/30 hover:bg-mist/60"
-            }`}
-            aria-label={`Go to slide ${idx + 1}`}
-          />
+    <motion.div
+      ref={ref}
+      initial={{ opacity: 0, y: 24 }}
+      animate={isInView ? { opacity: 1, y: 0 } : {}}
+      transition={{ duration: 0.5, delay }}
+      className="group relative surface-card rounded-3xl p-8 flex flex-col justify-between gap-6 border border-hairline hover:border-coral/30 hover:scale-[1.02] transition-all overflow-hidden"
+    >
+      <div className="flex gap-1">
+        {[...Array(5)].map((_, i) => (
+          <Star key={i} className="w-4 h-4 fill-gold text-gold" />
         ))}
       </div>
-    </div>
+      <p className="text-mist leading-relaxed text-sm flex-1 font-body">"{quote}"</p>
+      <div className="flex items-center gap-3 pt-4 border-t border-hairline/60">
+        <div
+          className="w-10 h-10 rounded-full flex items-center justify-center font-display font-bold text-ink text-sm shrink-0 shadow-md"
+          style={{ background: color }}
+        >
+          {initial}
+        </div>
+        <div>
+          <p className="font-bold text-parchment text-sm">{name}</p>
+          <p className="text-mist text-xs font-mono">{role}</p>
+        </div>
+      </div>
+    </motion.div>
   );
 }
 
@@ -434,6 +418,9 @@ export default function LandingPage({ notices = [] }: {
         </div>
       </div>
 
+      {/* ── PARALLAX SCROLL FEATURE SHOWCASE ── */}
+      <ParallaxScrollFeatureSection />
+
       {/* ── ACADEMIC PILLARS ── */}
       <div id="academics" className="border-t border-hairline">
         <div className="max-w-7xl mx-auto px-6 py-24">
@@ -502,7 +489,11 @@ export default function LandingPage({ notices = [] }: {
       <div className="border-t border-hairline">
         <div className="max-w-7xl mx-auto px-6 py-24">
           <SectionHeader label="What People Say" title="Trusted by Families" subtitle="Real voices from our school community." />
-          <TestimonialCarousel testimonials={testimonials} />
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            {testimonials.map((t, i) => (
+              <TestimonialCard key={t.name} {...t} delay={i * 0.1} />
+            ))}
+          </div>
         </div>
       </div>
 
