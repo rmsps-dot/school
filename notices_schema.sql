@@ -43,6 +43,13 @@ CREATE POLICY "Users Read Targeted Notices"
     target_role::text = public.auth_role()::text
   );
 
+-- Unauthenticated (anon) public visitors can read public notices targeted at 'all'
+CREATE POLICY "Public Read All Notices"
+  ON public.notices
+  FOR SELECT
+  TO anon
+  USING (target_role::text = 'all');
+
 -- 6. Indexes for performance
 CREATE INDEX idx_notices_target_role ON public.notices (target_role);
 CREATE INDEX idx_notices_created_at ON public.notices (created_at DESC);

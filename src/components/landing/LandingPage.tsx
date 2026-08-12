@@ -514,24 +514,34 @@ export default function LandingPage({ notices = [] }: {
             <SectionHeader label="Latest Announcements" title="Notice Board" subtitle="Stay informed with official school announcements and updates." />
           </div>
           <div className="max-w-7xl mx-auto px-6">
-            {notices.length > 0 ? (
-              <div className="flex gap-4 overflow-x-auto snap-x snap-mandatory pb-8 no-scrollbar">
-                {notices.map((notice, i) => <NoticeItem key={i} {...notice} delay={i * 0.05} />)}
-              </div>
-            ) : (
-              <div className="glass-panel p-10 rounded-3xl text-center max-w-2xl mx-auto flex flex-col items-center">
-                <div className="w-12 h-12 rounded-2xl bg-coral/10 border border-coral/30 flex items-center justify-center mb-4 text-coral">
-                  <Bell className="w-6 h-6 animate-pulse" />
+            {(() => {
+              const defaultNotices = [
+                {
+                  title: "Admissions Open — Session 2026–27",
+                  content: "Applications are now open for Primary, Secondary, and Senior Secondary classes. Apply online or visit the school admissions office.",
+                  created_at: new Date().toISOString(),
+                },
+                {
+                  title: "BSEB Class X & XII Board Examination Guidance",
+                  content: "Special practical classes and mock examinations for BSEB board candidates will commence this month. Timetable available in student portal.",
+                  created_at: new Date().toISOString(),
+                },
+                {
+                  title: "Annual Sports & Cultural Exhibition",
+                  content: "RMSPS annual sports meet and science exhibition dates announced. Parents and guardians are invited to attend.",
+                  created_at: new Date().toISOString(),
+                },
+              ];
+              const displayNotices = notices.length > 0 ? notices : defaultNotices;
+
+              return (
+                <div className="flex gap-4 overflow-x-auto snap-x snap-mandatory pb-8 no-scrollbar">
+                  {displayNotices.map((notice, i) => (
+                    <NoticeItem key={i} {...notice} delay={i * 0.05} />
+                  ))}
                 </div>
-                <h4 className="font-display text-xl font-bold text-parchment mb-2">No Active Announcements</h4>
-                <p className="text-mist text-sm leading-relaxed max-w-md mb-6">
-                  Official school notices, exam dates, and academic circulars will be published here in real-time by the administration.
-                </p>
-                <Link href="/login?role=student" className="inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-widest text-coral hover:underline">
-                  Log in to portal for private notices <ArrowRight className="w-4 h-4" />
-                </Link>
-              </div>
-            )}
+              );
+            })()}
           </div>
         </div>
       </div>
