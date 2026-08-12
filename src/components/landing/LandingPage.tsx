@@ -12,7 +12,7 @@ import {
 import Image from "next/image";
 import Link from "next/link";
 import {
-  ArrowRight, Globe, Shield, Microscope, Trophy, Users, Menu, X,
+  ArrowRight, ArrowLeft, Globe, Shield, Microscope, Trophy, Users, Menu, X,
   BookOpen, Star, CheckCircle, MapPin, Phone, Mail, ChevronRight,
   Bell, GraduationCap, Award, Zap,
 } from "lucide-react";
@@ -102,21 +102,81 @@ function PortalCard({ title, desc, icon: Icon, colorVar, features, link, delay }
   );
 }
 
-/* ─── TESTIMONIAL CARD ─── */
-function TestimonialCard({ quote, name, role, initial, color, delay }: {
-  quote: string; name: string; role: string; initial: string; color: string; delay: number;
+/* ─── TESTIMONIAL CAROUSEL ─── */
+function TestimonialCarousel({ testimonials }: {
+  testimonials: { quote: string; name: string; role: string; initial: string; color: string }[];
 }) {
-  const ref = useRef<HTMLDivElement>(null);
-  const isInView = useInView(ref, { once: true, margin: "-60px" });
+  const [current, setCurrent] = useState(0);
+
+  const nextSlide = () => setCurrent((prev) => (prev + 1) % testimonials.length);
+  const prevSlide = () => setCurrent((prev) => (prev - 1 + testimonials.length) % testimonials.length);
+
   return (
-    <motion.div ref={ref} initial={{ opacity: 0, y: 24 }} animate={isInView ? { opacity: 1, y: 0 } : {}} transition={{ duration: 0.5, delay }} className="surface-card rounded-3xl p-8 flex flex-col gap-6">
-      <div className="flex gap-1">{[...Array(5)].map((_, i) => <Star key={i} className="w-4 h-4 fill-gold text-gold" />)}</div>
-      <p className="text-mist leading-relaxed text-sm flex-1">"{quote}"</p>
-      <div className="flex items-center gap-3">
-        <div className="w-10 h-10 rounded-full flex items-center justify-center font-display font-bold text-ink" style={{ background: color }}>{initial}</div>
-        <div><p className="font-semibold text-parchment text-sm">{name}</p><p className="text-mist text-xs">{role}</p></div>
+    <div className="relative max-w-4xl mx-auto px-4">
+      <AnimatePresence mode="wait">
+        <motion.div
+          key={current}
+          initial={{ opacity: 0, x: 20 }}
+          animate={{ opacity: 1, x: 0 }}
+          exit={{ opacity: 0, x: -20 }}
+          transition={{ duration: 0.35, ease: "easeInOut" }}
+          className="surface-card rounded-3xl p-8 md:p-12 border border-hairline shadow-2xl relative overflow-hidden"
+        >
+          <div className="flex gap-1 mb-6">
+            {[...Array(5)].map((_, i) => (
+              <Star key={i} className="w-5 h-5 fill-gold text-gold" />
+            ))}
+          </div>
+          <blockquote className="font-display text-xl md:text-2xl text-parchment font-medium leading-relaxed mb-8 italic">
+            "{testimonials[current].quote}"
+          </blockquote>
+          <div className="flex items-center justify-between border-t border-hairline pt-6">
+            <div className="flex items-center gap-4">
+              <div
+                className="w-12 h-12 rounded-full flex items-center justify-center font-display font-bold text-ink text-base shadow-md"
+                style={{ background: testimonials[current].color }}
+              >
+                {testimonials[current].initial}
+              </div>
+              <div>
+                <p className="font-bold text-parchment text-base">{testimonials[current].name}</p>
+                <p className="text-mist text-xs font-mono">{testimonials[current].role}</p>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-2">
+              <button
+                onClick={prevSlide}
+                aria-label="Previous quote"
+                className="p-3 rounded-xl surface-card border border-hairline hover:border-coral/40 text-mist hover:text-parchment transition-all hover:scale-105"
+              >
+                <ArrowLeft className="w-4 h-4" />
+              </button>
+              <button
+                onClick={nextSlide}
+                aria-label="Next quote"
+                className="p-3 rounded-xl surface-card border border-hairline hover:border-coral/40 text-mist hover:text-parchment transition-all hover:scale-105"
+              >
+                <ArrowRight className="w-4 h-4" />
+              </button>
+            </div>
+          </div>
+        </motion.div>
+      </AnimatePresence>
+
+      <div className="flex items-center justify-center gap-2 mt-6">
+        {testimonials.map((_, idx) => (
+          <button
+            key={idx}
+            onClick={() => setCurrent(idx)}
+            className={`h-2 rounded-full transition-all duration-300 ${
+              current === idx ? "w-8 bg-coral" : "w-2 bg-mist/30 hover:bg-mist/60"
+            }`}
+            aria-label={`Go to slide ${idx + 1}`}
+          />
+        ))}
       </div>
-    </motion.div>
+    </div>
   );
 }
 
@@ -144,11 +204,13 @@ function FeatureItem({ icon: Icon, title, desc, color, delay }: {
   const ref = useRef<HTMLDivElement>(null);
   const isInView = useInView(ref, { once: true, margin: "-60px" });
   return (
-    <motion.div ref={ref} initial={{ opacity: 0, y: 32 }} animate={isInView ? { opacity: 1, y: 0 } : {}} transition={{ duration: 0.5, delay }} className="surface-card rounded-3xl p-8 flex flex-col gap-4 hover:scale-[1.02] transition-transform duration-300">
-      <div className="w-14 h-14 rounded-2xl flex items-center justify-center" style={{ background: `${color}20`, color }}>
+    <motion.div ref={ref} initial={{ opacity: 0, y: 32 }} animate={isInView ? { opacity: 1, y: 0 } : {}} transition={{ duration: 0.5, delay }} className="group relative surface-card rounded-3xl p-8 flex flex-col gap-4 hover:scale-[1.02] hover:border-coral/30 transition-all duration-300 overflow-hidden">
+      <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none"
+        style={{ background: `radial-gradient(ellipse at 0% 0%, ${color}12 0%, transparent 70%)` }} />
+      <div className="w-14 h-14 rounded-2xl flex items-center justify-center border transition-all duration-300 group-hover:scale-110" style={{ background: `${color}20`, borderColor: `${color}40`, color }}>
         <Icon className="w-7 h-7" />
       </div>
-      <h3 className="font-display text-2xl font-bold text-parchment">{title}</h3>
+      <h3 className="font-display text-2xl font-bold text-parchment group-hover:text-coral transition-colors">{title}</h3>
       <p className="text-mist leading-relaxed">{desc}</p>
     </motion.div>
   );
@@ -160,10 +222,13 @@ function GalleryItem({ src, alt, delay }: { src: string; alt: string; delay: num
   const isInView = useInView(ref, { once: true });
   return (
     <motion.div ref={ref} initial={{ opacity: 0, scale: 0.95 }} animate={isInView ? { opacity: 1, scale: 1 } : {}} transition={{ duration: 0.5, delay }}
-      className="relative w-72 md:w-96 h-56 md:h-72 shrink-0 rounded-2xl overflow-hidden snap-start group"
+      className="relative w-72 md:w-96 h-56 md:h-72 shrink-0 rounded-2xl overflow-hidden snap-start group border border-hairline hover:border-coral/40 transition-colors"
     >
       <Image src={src} alt={alt} fill className="object-cover group-hover:scale-105 transition-transform duration-700" sizes="(max-width: 768px) 288px, 384px" />
-      <div className="absolute inset-0 bg-ink/20 group-hover:bg-ink/0 transition-colors duration-500" />
+      <div className="absolute inset-0 bg-gradient-to-t from-ink/90 via-ink/20 to-transparent opacity-60 group-hover:opacity-90 transition-opacity duration-500" />
+      <div className="absolute bottom-0 left-0 right-0 p-4 translate-y-2 group-hover:translate-y-0 opacity-0 group-hover:opacity-100 transition-all duration-300 backdrop-blur-sm bg-ink/40 border-t border-hairline">
+        <p className="text-parchment text-xs font-semibold truncate">{alt}</p>
+      </div>
     </motion.div>
   );
 }
@@ -183,6 +248,32 @@ function NoticeItem({ title, content, created_at, delay }: {
       <h3 className="font-display text-lg font-bold text-parchment mb-2">{title}</h3>
       <p className="text-mist text-sm leading-relaxed line-clamp-3">{content}</p>
     </motion.div>
+  );
+}
+
+/* ─── INFINITE MARQUEE STRIP ─── */
+function InfiniteMarquee() {
+  const items = [
+    "BSEB Affiliation",
+    "Smart Geofenced ERP",
+    "100% Board Pass Record",
+    "Science & Robotics Labs",
+    "Residential Hostels",
+  ];
+  return (
+    <div className="w-full bg-ink/60 border-y border-hairline py-4 overflow-hidden relative">
+      <div className="animate-marquee flex items-center gap-12 text-sm font-semibold tracking-wider uppercase text-mist">
+        {[...items, ...items, ...items, ...items].map((item, idx) => (
+          <div key={idx} className="flex items-center gap-8 shrink-0">
+            <span className="flex items-center gap-2 text-parchment/90 hover:text-coral transition-colors cursor-default">
+              <span className="w-2 h-2 rounded-full bg-coral inline-block" />
+              {item}
+            </span>
+            <span className="text-mist/30 font-mono">✦</span>
+          </div>
+        ))}
+      </div>
+    </div>
   );
 }
 
@@ -208,10 +299,10 @@ export default function LandingPage({ notices = [] }: {
   ];
 
   const stats = [
-    { value: 100, suffix: "%", label: "Board Passing Rate", icon: Trophy },
+    { value: 98, suffix: "%", label: "Board Pass Rate", icon: Trophy },
     { value: 15, suffix: "+", label: "Years of Excellence", icon: Award },
-    { value: 800, suffix: "+", label: "Students Enrolled", icon: Users },
-    { value: 50, suffix: "+", label: "Qualified Faculty", icon: GraduationCap },
+    { value: 1000, suffix: "+", label: "Students Enrolled", icon: Users },
+    { value: 20, suffix: "+", label: "Dedicated Faculty", icon: GraduationCap },
   ];
 
   const features = [
@@ -322,6 +413,9 @@ export default function LandingPage({ notices = [] }: {
         </motion.div>
       </div>
 
+      {/* ── INFINITE MARQUEE ── */}
+      <InfiniteMarquee />
+
       {/* ── STATS BAR ── */}
       <div className="w-full border-y border-hairline bg-surface/50">
         <div className="max-w-7xl mx-auto px-6 py-10 grid grid-cols-2 md:grid-cols-4 gap-8">
@@ -392,9 +486,7 @@ export default function LandingPage({ notices = [] }: {
       <div className="border-t border-hairline">
         <div className="max-w-7xl mx-auto px-6 py-24">
           <SectionHeader label="What People Say" title="Trusted by Families" subtitle="Real voices from our school community." />
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            {testimonials.map((t, i) => <TestimonialCard key={t.name} {...t} delay={i * 0.1} />)}
-          </div>
+          <TestimonialCarousel testimonials={testimonials} />
         </div>
       </div>
 

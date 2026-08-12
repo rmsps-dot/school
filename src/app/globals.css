@@ -87,8 +87,8 @@ h1, h2, h3, h4, h5, h6, .font-display {
 
 /* Targeted Glass (Only for ID Cards & Login Forms) */
 .glass-panel {
-  background: rgba(243, 239, 230, 0.03); /* Parchment tint */
-  border: 1px solid rgba(243, 239, 230, 0.1);
+  background: color-mix(in srgb, var(--parchment) 3%, transparent);
+  border: 1px solid color-mix(in srgb, var(--parchment) 10%, transparent);
   backdrop-filter: blur(24px);
   -webkit-backdrop-filter: blur(24px);
 }
@@ -101,7 +101,7 @@ h1, h2, h3, h4, h5, h6, .font-display {
   font-weight: 600;
 }
 .btn-primary:hover {
-  background: #E67E6B;
+  background: color-mix(in srgb, var(--coral) 90%, black);
   transform: translateY(-1px);
 }
 .btn-primary:active {
@@ -120,11 +120,11 @@ h1, h2, h3, h4, h5, h6, .font-display {
   outline: none;
 }
 .input-glass::placeholder {
-  color: rgba(138, 143, 152, 0.45);
+  color: color-mix(in srgb, var(--mist) 45%, transparent);
 }
 .input-glass:focus {
-  border-color: rgba(241, 145, 125, 0.6);
-  box-shadow: 0 0 0 3px rgba(241, 145, 125, 0.08);
+  border-color: color-mix(in srgb, var(--coral) 60%, transparent);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--coral) 8%, transparent);
 }
 .input-glass option {
   background: var(--ink);
@@ -168,7 +168,7 @@ h1, h2, h3, h4, h5, h6, .font-display {
   position: absolute;
   width: 600px;
   height: 600px;
-  background: radial-gradient(circle, rgba(241, 145, 125, 0.15) 0%, rgba(212, 175, 106, 0.05) 50%, transparent 70%);
+  background: radial-gradient(circle, color-mix(in srgb, var(--coral) 15%, transparent) 0%, color-mix(in srgb, var(--gold) 5%, transparent) 50%, transparent 70%);
   filter: blur(80px);
   border-radius: 50%;
   animation: driftGlow 15s ease-in-out infinite alternate;
@@ -179,6 +179,22 @@ h1, h2, h3, h4, h5, h6, .font-display {
 @keyframes driftGlow {
   0% { transform: translate(0, 0) scale(1); }
   100% { transform: translate(50px, -50px) scale(1.1); }
+}
+
+/* ── Infinite Marquee ── */
+.animate-marquee {
+  display: flex;
+  width: max-content;
+  animation: marqueeTrack 28s linear infinite;
+  will-change: transform;
+}
+.animate-marquee:hover {
+  animation-play-state: paused;
+}
+
+@keyframes marqueeTrack {
+  0% { transform: translate3d(0, 0, 0); }
+  100% { transform: translate3d(-50%, 0, 0); }
 }
 
 /* ── Starfield background ── */
