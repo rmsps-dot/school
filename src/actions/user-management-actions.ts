@@ -421,10 +421,40 @@ export async function getAllParents() {
     full_name: p.profiles?.full_name,
     avatar_url: p.profiles?.avatar_url,
     email: p.profiles?.email,
+    mobile: p.profiles?.mobile,
+    address: p.profiles?.address,
+    dob: p.profiles?.dob,
     parent_students: p.parent_students
   }))
 
   return { data: formattedData, error: null }
+}
+
+export async function updateParentProfile(profileId: string, data: {
+  full_name: string;
+  mobile: string | null;
+  address: string | null;
+  dob: string | null;
+}) {
+  const auth = await requireAdmin()
+  if (!auth.ok) return { error: auth.error }
+  
+  const supabase = await createClient()
+  
+  const { error } = await supabase
+    .from('profiles')
+    .update({
+      full_name: data.full_name,
+      mobile: data.mobile,
+      address: data.address,
+      dob: data.dob
+    })
+    .eq('id', profileId)
+
+  if (error) return { error: error.message }
+  
+  revalidatePath('/admin/parents', 'layout')
+  return { success: true }
 }
 
 export async function deleteParent(profileId: string) {

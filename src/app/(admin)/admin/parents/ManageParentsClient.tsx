@@ -13,6 +13,9 @@ export interface ParentRecord {
   full_name: string | null
   avatar_url: string | null
   email: string | null
+  mobile: string | null
+  address: string | null
+  dob: string | null
   parent_students: {
     students: {
       profile_id: string
@@ -25,6 +28,7 @@ export interface ParentRecord {
 }
 
 import type { StudentRecord } from '../students/ManageStudentsClient'
+import ParentEditModal from '@/components/admin/ParentEditModal'
 
 interface ManageParentsClientProps {
   parents: ParentRecord[]
@@ -41,6 +45,10 @@ export default function ManageParentsClient({ parents: initialParents, students 
   const [isLinkModalOpen, setIsLinkModalOpen] = useState(false)
   const [selectedParentId, setSelectedParentId] = useState('')
   const [selectedStudentId, setSelectedStudentId] = useState('')
+
+  // Edit Parent State
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false)
+  const [selectedParentForEdit, setSelectedParentForEdit] = useState<ParentRecord | null>(null)
 
   const filteredParents = parents.filter(p => 
     p.full_name?.toLowerCase().includes(search.toLowerCase()) ||
@@ -138,6 +146,16 @@ export default function ManageParentsClient({ parents: initialParents, students 
                   title="Send Password Reset"
                 >
                   <Mail className="w-4 h-4" />
+                </button>
+                <button
+                  onClick={() => {
+                    setSelectedParentForEdit(p)
+                    setIsEditModalOpen(true)
+                  }}
+                  className="p-2 text-mist hover:text-coral hover:bg-coral/10 rounded-lg transition-colors"
+                  title="Edit Parent"
+                >
+                  <Users className="w-4 h-4" />
                 </button>
                 <button
                   onClick={() => handleDelete(p.id)}
@@ -239,6 +257,16 @@ export default function ManageParentsClient({ parents: initialParents, students 
           </div>
         )}
       </AnimatePresence>
+
+      {/* Edit Parent Modal */}
+      {selectedParentForEdit && (
+        <ParentEditModal
+          isOpen={isEditModalOpen}
+          onClose={() => setIsEditModalOpen(false)}
+          parent={selectedParentForEdit}
+          onSuccess={() => window.location.reload()}
+        />
+      )}
     </div>
   )
 }
