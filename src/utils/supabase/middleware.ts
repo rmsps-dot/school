@@ -49,6 +49,10 @@ export async function updateSession(request: NextRequest) {
   const isPublicRoute = publicRoutes.some(route => pathname === route || pathname.startsWith(route + '/'))
   
   if (!user && !isPublicRoute) {
+    // Let Server Actions pass through so they can trigger Next.js native redirect()
+    if (request.headers.has('next-action')) {
+      return supabaseResponse
+    }
     const url = request.nextUrl.clone()
     url.pathname = '/login'
     return NextResponse.redirect(url)

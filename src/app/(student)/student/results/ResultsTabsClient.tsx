@@ -39,7 +39,7 @@ export default function ResultsTabsClient({ grouped, profile }: Props) {
     if (printSheet) {
       const timer = setTimeout(() => {
         window.print()
-        setPrintSheet(null)
+        setTimeout(() => setPrintSheet(null), 500)
       }, 150)
       return () => clearTimeout(timer)
     }

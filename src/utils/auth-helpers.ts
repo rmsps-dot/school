@@ -1,5 +1,6 @@
 import { createClient } from './supabase/server'
 import { SupabaseClient } from '@supabase/supabase-js'
+import { redirect } from 'next/navigation'
 
 export type AuthResult<T = unknown> = 
   | { ok: true; profile: { id: string; role: string; full_name?: string | null; mobile?: string | null; address?: string | null; dob?: string | null; profile_photo_url?: string | null; [key: string]: unknown }; data?: T }
@@ -14,7 +15,7 @@ export async function requireAuth(): Promise<AuthResult> {
     const supabase = await createClient()
     const { data: { user } } = await supabase.auth.getUser()
     
-    if (!user) return { ok: false, error: 'Unauthenticated' }
+    if (!user) redirect('/login')
 
     const { data: profile } = await supabase
       .from('profiles')
@@ -22,10 +23,11 @@ export async function requireAuth(): Promise<AuthResult> {
       .eq('id', user.id)
       .single()
 
-    if (!profile) return { ok: false, error: 'Profile not found' }
+    if (!profile) redirect('/login')
 
     return { ok: true, profile }
   } catch (err: any) {
+    if (err.message === 'NEXT_REDIRECT') throw err;
     return { ok: false, error: err.message || 'Authentication failed' }
   }
 }

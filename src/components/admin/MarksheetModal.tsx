@@ -100,7 +100,7 @@ export default function MarksheetModal({ sheet, onClose, onApproved, readOnly }:
 
             {/* White marksheet preview */}
             <div
-              className="rounded-xl overflow-hidden shadow-2xl border border-hairline"
+              className="rounded-xl overflow-x-auto shadow-2xl border border-hairline"
             >
               <div>
                 <MarksheetTemplate sheet={sheet} approvedAt={sheet.approvedAt} />

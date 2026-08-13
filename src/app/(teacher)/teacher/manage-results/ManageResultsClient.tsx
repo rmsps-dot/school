@@ -158,8 +158,7 @@ export default function ManageResultsClient({ initialResults }: Props) {
           <table className="w-full text-left whitespace-nowrap">
             <thead className="bg-surface border-b border-hairline">
               <tr>
-                <th className="p-4 w-8"></th>
-                <th className="p-4 text-xs font-bold text-mist uppercase tracking-widest">Student</th>
+                <th colSpan={2} className="p-4 text-xs font-bold text-mist uppercase tracking-widest">Student</th>
                 <th className="p-4 text-xs font-bold text-mist uppercase tracking-widest">Exam Type</th>
                 <th className="p-4 text-xs font-bold text-mist uppercase tracking-widest">Subject</th>
                 <th className="p-4 text-xs font-bold text-mist uppercase tracking-widest text-center">Marks</th>
