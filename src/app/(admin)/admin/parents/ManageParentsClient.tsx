@@ -3,7 +3,7 @@
 import { useState, useTransition } from 'react'
 import Image from 'next/image'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Search, Users, Trash2, Loader2, UserX, AlertCircle, Link as LinkIcon, Mail, Plus, UserCircle } from 'lucide-react'
+import { Search, Users, Trash2, Loader2, UserX, AlertCircle, Link as LinkIcon, Mail, Plus, UserCircle, Pencil } from 'lucide-react'
 import Link from 'next/link'
 import { deleteParent, sendPasswordResetLink, linkStudentToParent } from '@/actions/user-management-actions'
 
@@ -49,6 +49,9 @@ export default function ManageParentsClient({ parents: initialParents, students 
   // Edit Parent State
   const [isEditModalOpen, setIsEditModalOpen] = useState(false)
   const [selectedParentForEdit, setSelectedParentForEdit] = useState<ParentRecord | null>(null)
+
+  // Image Error State
+  const [imageErrors, setImageErrors] = useState<Record<string, boolean>>({})
 
   const filteredParents = parents.filter(p => 
     p.full_name?.toLowerCase().includes(search.toLowerCase()) ||
@@ -127,10 +130,17 @@ export default function ManageParentsClient({ parents: initialParents, students 
           <div key={p.id} className="glass rounded-2xl border border-hairline overflow-hidden flex flex-col">
             <div className="p-6 flex justify-between items-start border-b border-hairline bg-white/5">
               <Link href={`/admin/parents/${p.id}`} className="flex items-center gap-4 group/link">
-                {p.avatar_url ? (
-                  <Image src={p.avatar_url} alt="Avatar" width={56} height={56} className="w-14 h-14 rounded-full object-cover border border-hairline group-hover/link:ring-2 ring-coral/50 transition-all flex-shrink-0" />
+                {p.avatar_url && !imageErrors[p.id] ? (
+                  <Image 
+                    src={p.avatar_url} 
+                    alt="Avatar" 
+                    width={56} 
+                    height={56} 
+                    className="w-14 h-14 rounded-full object-cover border border-hairline group-hover/link:ring-2 ring-coral/50 transition-all flex-shrink-0" 
+                    onError={() => setImageErrors(prev => ({ ...prev, [p.id]: true }))}
+                  />
                 ) : (
-                  <div className="w-14 h-14 rounded-full bg-pink-500/20 flex items-center justify-center text-pink-400 group-hover/link:ring-2 ring-coral/50 transition-all">
+                  <div className="w-14 h-14 rounded-full bg-pink-500/20 flex items-center justify-center text-pink-400 group-hover/link:ring-2 ring-coral/50 transition-all flex-shrink-0">
                     <Users className="w-6 h-6" />
                   </div>
                 )}
@@ -155,7 +165,7 @@ export default function ManageParentsClient({ parents: initialParents, students 
                   className="p-2 text-mist hover:text-coral hover:bg-coral/10 rounded-lg transition-colors"
                   title="Edit Parent"
                 >
-                  <Users className="w-4 h-4" />
+                  <Pencil className="w-4 h-4" />
                 </button>
                 <button
                   onClick={() => handleDelete(p.id)}

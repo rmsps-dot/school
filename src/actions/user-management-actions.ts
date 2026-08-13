@@ -419,7 +419,7 @@ export async function getAllParents() {
     id: p.profile_id,
     parent_id: p.id,
     full_name: p.profiles?.full_name,
-    avatar_url: p.profiles?.avatar_url,
+    avatar_url: p.profiles?.profile_photo_url,
     email: p.profiles?.email,
     mobile: p.profiles?.mobile,
     address: p.profiles?.address,
