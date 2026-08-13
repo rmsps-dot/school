@@ -9,6 +9,7 @@ import {
   GraduationCap, TrendingUp, CheckCircle2, XCircle, Edit
 } from 'lucide-react'
 import { useRouter } from 'next/navigation'
+import AvatarUpload from '@/components/ui/AvatarUpload'
 import { getStudentProfileData } from '@/actions/class-actions'
 
 type StudentProfileDataPayload = Exclude<Awaited<ReturnType<typeof getStudentProfileData>>['data'], null>
@@ -107,22 +108,12 @@ export default function StudentProfileClient({ data }: StudentProfileProps) {
             <div className="p-6 flex flex-col items-center relative" style={{ transform: 'translateZ(30px)' }}>
               
               <div className="relative mb-5">
-                {profile?.profile_photo_url ? (
-                  <div className="w-28 h-28 relative rounded-2xl overflow-hidden border-2 border-hairline shadow-lg flex-shrink-0">
-                    <Image 
-                      src={profile.profile_photo_url} 
-                      alt="Student Photo" 
-                      fill
-                      sizes="(max-width: 768px) 112px, 112px"
-                      className="object-cover"
-                    />
-                  </div>
-                ) : (
-                  <div className="w-28 h-28 rounded-2xl flex items-center justify-center border border-hairline text-mist"
-                    style={{ background: 'rgba(241,145,125,0.06)' }}>
-                    <UserCircle className="w-16 h-16 text-coral/50" />
-                  </div>
-                )}
+                <AvatarUpload 
+                  currentPhotoUrl={profile?.profile_photo_url} 
+                  userId={profile?.id}
+                  size="xl"
+                  onUploadSuccess={() => router.refresh()}
+                />
                 <div className="absolute -bottom-3 -right-3 text-[10px] font-bold px-2 py-1 rounded-lg border border-coral/30 text-coral"
                   style={{ background: 'var(--ink)', boxShadow: '0 0 12px rgba(241,145,125,0.2)' }}>
                   {cls?.class_name}-{cls?.section}

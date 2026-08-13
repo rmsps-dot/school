@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
+import AvatarUpload from '@/components/ui/AvatarUpload';
 import { motion, AnimatePresence } from "framer-motion";
 import {
   GraduationCap,
@@ -147,15 +148,11 @@ export default function AdminSidebar({ adminName, adminAvatar }: Props) {
       {/* Admin avatar + logout */}
       <div className="border-t border-hairline pt-4 mt-4">
         <div className="flex items-center gap-3 px-2 mb-3">
-          {adminAvatar ? (
-            <div className="w-9 h-9 relative rounded-full overflow-hidden border border-coral/30 flex-shrink-0">
-              <Image src={adminAvatar} alt={adminName} fill sizes="36px" className="object-cover" />
-            </div>
-          ) : (
-            <div className="w-9 h-9 rounded-full bg-coral/20 border border-coral/30 text-coral flex items-center justify-center text-xs font-bold flex-shrink-0">
-              {initials}
-            </div>
-          )}
+          <AvatarUpload 
+            currentPhotoUrl={adminAvatar} 
+            size="xs"
+            onUploadSuccess={() => router.refresh()}
+          />
           <div className="min-w-0">
             <p className="text-parchment text-sm font-medium truncate">{adminName}</p>
             <p className="text-mist text-xs">Administrator</p>

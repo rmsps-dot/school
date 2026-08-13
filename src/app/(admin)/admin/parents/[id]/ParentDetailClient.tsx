@@ -4,6 +4,8 @@ import Image from 'next/image'
 import { motion } from 'framer-motion'
 import { ArrowLeft, UserCircle, Phone, Calendar, MapPin, GraduationCap, Users } from 'lucide-react'
 import Link from 'next/link'
+import { useRouter } from 'next/navigation'
+import AvatarUpload from '@/components/ui/AvatarUpload'
 
 export interface ParentDetailData {
   id: string
@@ -38,6 +40,7 @@ interface Props {
 }
 
 export default function ParentDetailClient({ parent }: Props) {
+  const router = useRouter()
   const profile = parent.profiles || ({} as Partial<NonNullable<ParentDetailData['profiles']>>)
   const children = parent.parent_students || []
 
@@ -65,16 +68,12 @@ export default function ParentDetailClient({ parent }: Props) {
           style={{ background: 'radial-gradient(circle, var(--gold) 0%, transparent 70%)' }} />
 
         <div className="shrink-0 relative z-10">
-          {profile.profile_photo_url ? (
-            <div className="w-24 h-24 relative rounded-2xl overflow-hidden border-2 border-hairline shadow-lg flex-shrink-0">
-              <Image src={profile.profile_photo_url} alt="Profile" fill sizes="(max-width: 768px) 96px, 96px" className="object-cover" />
-            </div>
-          ) : (
-            <div className="w-24 h-24 rounded-2xl flex items-center justify-center border border-hairline shadow-lg"
-              style={{ background: 'rgba(212,175,106,0.08)' }}>
-              <UserCircle className="w-12 h-12 text-gold/50" />
-            </div>
-          )}
+          <AvatarUpload 
+            currentPhotoUrl={profile.profile_photo_url} 
+            userId={parent.id}
+            size="lg"
+            onUploadSuccess={() => router.refresh()}
+          />
         </div>
 
         <div className="flex-1 text-center md:text-left space-y-3 relative z-10">

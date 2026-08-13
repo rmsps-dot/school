@@ -10,12 +10,13 @@ interface AvatarUploadProps {
   currentPhotoUrl?: string | null;
   onUploadSuccess: (url: string) => void;
   userId?: string; // Optional: if an admin is updating another user's profile
-  size?: 'sm' | 'md' | 'lg' | 'xl';
+  size?: 'xs' | 'sm' | 'md' | 'lg' | 'xl';
 }
 
 // Helper to get pixel dimensions based on size prop
 const getSizeClasses = (size: AvatarUploadProps['size']) => {
   switch (size) {
+    case 'xs': return 'w-9 h-9';
     case 'sm': return 'w-12 h-12';
     case 'md': return 'w-16 h-16';
     case 'lg': return 'w-24 h-24';
@@ -26,6 +27,7 @@ const getSizeClasses = (size: AvatarUploadProps['size']) => {
 
 const getPixelSize = (size: AvatarUploadProps['size']) => {
   switch (size) {
+    case 'xs': return 36;
     case 'sm': return 48;
     case 'md': return 64;
     case 'lg': return 96;
