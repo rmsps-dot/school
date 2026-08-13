@@ -1,9 +1,11 @@
 'use client'
 
 import { useState } from 'react'
+import { useRouter } from 'next/navigation'
 import Image from 'next/image'
 import { motion } from 'framer-motion'
 import { UserCircle, MapPin, Phone, Calendar, BookOpen, Mail } from 'lucide-react'
+import AvatarUpload from '@/components/ui/AvatarUpload'
 
 export interface TeacherProfileData {
   teacher_id: string
@@ -22,6 +24,7 @@ interface Props {
 }
 
 export default function TeacherProfileClient({ teacher }: Props) {
+  const router = useRouter()
   const [rotateX, setRotateX] = useState(0)
   const [rotateY, setRotateY] = useState(0)
 
@@ -79,22 +82,11 @@ export default function TeacherProfileClient({ teacher }: Props) {
         {/* ID Card Content */}
         <div className="p-8 flex flex-col items-center relative" style={{ transform: 'translateZ(30px)' }}>
           <div className="relative mb-6">
-            {teacher.profiles?.profile_photo_url ? (
-              <div className="w-32 h-32 relative rounded-2xl overflow-hidden border-2 border-hairline shadow-lg flex-shrink-0">
-                <Image
-                  src={teacher.profiles.profile_photo_url}
-                  alt="Teacher Photo"
-                  fill
-                  sizes="(max-width: 768px) 128px, 128px"
-                  className="object-cover"
-                />
-              </div>
-            ) : (
-              <div className="w-32 h-32 rounded-2xl flex items-center justify-center border border-hairline shadow-lg"
-                style={{ background: 'rgba(62,92,118,0.1)' }}>
-                <UserCircle className="w-20 h-20 text-veena-blue/50" />
-              </div>
-            )}
+            <AvatarUpload 
+              currentPhotoUrl={teacher.profiles?.profile_photo_url} 
+              size="xl"
+              onUploadSuccess={() => router.refresh()}
+            />
             <div className="absolute -bottom-3 -right-3 text-[10px] font-bold px-2.5 py-1 rounded-lg border border-veena-blue/30 text-veena-blue"
               style={{ background: 'var(--ink)', boxShadow: '0 0 12px rgba(62,92,118,0.2)' }}>
               FACULTY
