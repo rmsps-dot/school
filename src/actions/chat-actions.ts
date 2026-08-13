@@ -69,6 +69,7 @@ export async function getContactsForTeacher(tab: string, classId?: string): Prom
         .select('id, full_name, role')
         .eq('role', tab === 'teachers' ? 'teacher' : 'admin')
         .eq('is_active', true)
+        .neq('id', auth.profile.id)
         .order('full_name', { ascending: true })
 
       if (error) throw error
@@ -80,7 +81,7 @@ export async function getContactsForTeacher(tab: string, classId?: string): Prom
       
       const { data, error } = await client
         .from('students')
-        .select('id:student_id, profiles!students_student_id_fkey(full_name, role)')
+        .select('profile_id, profiles!students_profile_id_fkey(full_name, role)')
         .eq('class_id', classId)
 
       if (error) throw error
@@ -88,7 +89,7 @@ export async function getContactsForTeacher(tab: string, classId?: string): Prom
       const formatted = (data || []).map((row) => {
         const prof = Array.isArray(row.profiles) ? row.profiles[0] : row.profiles
         return {
-          id: row.id,
+          id: row.profile_id,
           full_name: prof?.full_name || 'Unknown',
           role: 'student' as const
         }
@@ -103,7 +104,7 @@ export async function getContactsForTeacher(tab: string, classId?: string): Prom
       // Get all students in this class
       const { data: students, error: studErr } = await client
         .from('students')
-        .select('student_id, profiles!students_student_id_fkey(full_name)')
+        .select('student_id, profiles!students_profile_id_fkey(full_name)')
         .eq('class_id', classId)
         
       if (studErr) throw studErr
@@ -124,38 +125,43 @@ export async function getContactsForTeacher(tab: string, classId?: string): Prom
       
       // Fetch parent profiles
       const { data: parents, error: profileErr } = await client
-        .from('profiles')
-        .select('id, full_name, role')
+        .from('parents')
+        .select('id, profile_id, profiles!parents_profile_id_fkey(full_name, role)')
         .in('id', parentIds)
-        .eq('is_active', true)
         
       if (profileErr) throw profileErr
       
-      const formatted = (parents || []).map(parent => {
-        // Find which students this parent is linked to in this class
-        const linkedStudentIds = parentLinks.filter(pl => pl.parent_id === parent.id).map(pl => pl.student_id)
-        const linkedStudentNames = students
-          .filter(s => linkedStudentIds.includes(s.student_id))
-          .map(s => {
-            const prof = Array.isArray(s.profiles) ? s.profiles[0] : s.profiles
-            return prof?.full_name || 'Unknown'
-          })
-          .join(', ')
+      const formatted = (parents || [])
+        .map(parent => {
+          const prof = Array.isArray(parent.profiles) ? parent.profiles[0] : parent.profiles
+          if (!prof) return null
           
-        return {
-          id: parent.id,
-          full_name: parent.full_name,
-          role: 'parent',
-          extraInfo: `Parent of: ${linkedStudentNames}`
-        }
-      }).sort((a, b) => a.full_name.localeCompare(b.full_name))
+          // Find which students this parent is linked to in this class
+          const linkedStudentIds = parentLinks.filter(pl => pl.parent_id === parent.id).map(pl => pl.student_id)
+          const linkedStudentNames = students
+            .filter(s => linkedStudentIds.includes(s.student_id))
+            .map(s => {
+              const sprof = Array.isArray(s.profiles) ? s.profiles[0] : s.profiles
+              return sprof?.full_name || 'Unknown'
+            })
+            .join(', ')
+            
+          return {
+            id: parent.profile_id,
+            full_name: prof.full_name,
+            role: 'parent' as const,
+            extraInfo: `Parent of: ${linkedStudentNames}`
+          }
+        })
+        .filter((item): item is NonNullable<typeof item> => item !== null)
+        .sort((a, b) => a.full_name.localeCompare(b.full_name))
       
       return { data: formatted }
     }
 
     return { data: [] }
-  } catch (err) {
-    return { data: [], error: err instanceof Error ? err.message : 'Unknown error' }
+  } catch (err: any) {
+    return { data: [], error: err?.message || 'Unknown error' }
   }
 }
 
