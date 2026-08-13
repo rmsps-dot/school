@@ -66,7 +66,9 @@ export default function ParentDetailClient({ parent }: Props) {
 
         <div className="shrink-0 relative z-10">
           {profile.profile_photo_url ? (
-            <Image src={profile.profile_photo_url} alt="Profile" width={96} height={96} className="w-24 h-24 rounded-2xl object-cover border-2 border-hairline shadow-lg" />
+            <div className="w-24 h-24 relative rounded-2xl overflow-hidden border-2 border-hairline shadow-lg flex-shrink-0">
+              <Image src={profile.profile_photo_url} alt="Profile" fill sizes="(max-width: 768px) 96px, 96px" className="object-cover" />
+            </div>
           ) : (
             <div className="w-24 h-24 rounded-2xl flex items-center justify-center border border-hairline shadow-lg"
               style={{ background: 'rgba(212,175,106,0.08)' }}>
@@ -128,7 +130,9 @@ export default function ParentDetailClient({ parent }: Props) {
                 >
                   <div className="shrink-0">
                     {sprof.profile_photo_url ? (
-                      <Image src={sprof.profile_photo_url} alt="Student" width={56} height={56} className="w-14 h-14 rounded-full object-cover border-2 border-hairline group-hover:border-coral/40 transition-colors" />
+                      <div className="w-14 h-14 relative rounded-full overflow-hidden border-2 border-hairline group-hover:border-coral/40 transition-colors flex-shrink-0">
+                        <Image src={sprof.profile_photo_url} alt="Student" fill sizes="56px" className="object-cover" />
+                      </div>
                     ) : (
                       <div className="w-14 h-14 rounded-full flex items-center justify-center border border-hairline group-hover:border-coral/40 transition-colors"
                         style={{ background: 'rgba(241,145,125,0.06)' }}>

@@ -211,7 +211,9 @@ export default function ManageStudentsClient({ students: initialStudents, classe
                   onClick={() => router.push(`/admin/students/${s.id}`)}
                 >
                   {s.profiles?.profile_photo_url ? (
-                    <Image src={s.profiles.profile_photo_url} alt="Avatar" width={48} height={48} className="w-12 h-12 rounded-full object-cover border border-hairline flex-shrink-0" />
+                    <div className="w-12 h-12 relative rounded-full overflow-hidden border border-hairline flex-shrink-0">
+                      <Image src={s.profiles.profile_photo_url} alt="Avatar" fill sizes="48px" className="object-cover" />
+                    </div>
                   ) : (
                     <div className="w-12 h-12 rounded-full bg-ink border border-hairline flex items-center justify-center text-mist shrink-0 group-hover:text-coral transition-colors">
                       <UserCircle className="w-6 h-6" />

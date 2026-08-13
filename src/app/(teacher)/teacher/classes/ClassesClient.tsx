@@ -105,7 +105,9 @@ export default function ClassesClient({ classes }: Props) {
               >
                 <div className="flex items-center gap-4">
                   {s.profiles?.[0]?.profile_photo_url ? (
-                    <Image src={s.profiles[0].profile_photo_url} alt="Avatar" width={48} height={48} className="w-12 h-12 rounded-full object-cover border border-hairline flex-shrink-0" />
+                    <div className="w-12 h-12 relative rounded-full overflow-hidden border border-hairline flex-shrink-0">
+                      <Image src={s.profiles[0].profile_photo_url} alt="Avatar" fill sizes="48px" className="object-cover" />
+                    </div>
                   ) : (
                     <div className="w-12 h-12 rounded-full bg-veena-blue/10 flex items-center justify-center text-veena-blue shrink-0">
                       <UserCircle className="w-8 h-8" />

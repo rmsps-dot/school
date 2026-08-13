@@ -108,12 +108,15 @@ export default function StudentProfileClient({ data }: StudentProfileProps) {
               
               <div className="relative mb-5">
                 {profile?.profile_photo_url ? (
-                  <Image 
-                    src={profile.profile_photo_url} 
-                    alt="Student Photo" 
-                    width={112} height={112}
-                    className="w-28 h-28 rounded-2xl object-cover border-2 border-hairline shadow-lg"
-                  />
+                  <div className="w-28 h-28 relative rounded-2xl overflow-hidden border-2 border-hairline shadow-lg flex-shrink-0">
+                    <Image 
+                      src={profile.profile_photo_url} 
+                      alt="Student Photo" 
+                      fill
+                      sizes="(max-width: 768px) 112px, 112px"
+                      className="object-cover"
+                    />
+                  </div>
                 ) : (
                   <div className="w-28 h-28 rounded-2xl flex items-center justify-center border border-hairline text-mist"
                     style={{ background: 'rgba(241,145,125,0.06)' }}>

@@ -80,12 +80,15 @@ export default function TeacherProfileClient({ teacher }: Props) {
         <div className="p-8 flex flex-col items-center relative" style={{ transform: 'translateZ(30px)' }}>
           <div className="relative mb-6">
             {teacher.profiles?.profile_photo_url ? (
-              <Image
-                src={teacher.profiles.profile_photo_url}
-                alt="Teacher Photo"
-                width={128} height={128}
-                className="w-32 h-32 rounded-2xl object-cover border-2 border-hairline shadow-lg"
-              />
+              <div className="w-32 h-32 relative rounded-2xl overflow-hidden border-2 border-hairline shadow-lg flex-shrink-0">
+                <Image
+                  src={teacher.profiles.profile_photo_url}
+                  alt="Teacher Photo"
+                  fill
+                  sizes="(max-width: 768px) 128px, 128px"
+                  className="object-cover"
+                />
+              </div>
             ) : (
               <div className="w-32 h-32 rounded-2xl flex items-center justify-center border border-hairline shadow-lg"
                 style={{ background: 'rgba(62,92,118,0.1)' }}>

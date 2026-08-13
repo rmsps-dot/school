@@ -182,7 +182,9 @@ export default function ClassAttendanceClient({ classes, timeWindow }: Props) {
                     <tr key={s.id} className="border-b border-hairline hover:bg-white/[0.04]">
                       <td className="p-4 font-medium text-parchment flex items-center gap-3">
                         {s.profiles?.profile_photo_url ? (
-                           <Image src={s.profiles.profile_photo_url} alt={s.profiles.full_name || 'Student'} width={32} height={32} className="w-8 h-8 rounded-full object-cover flex-shrink-0" />
+                           <div className="w-8 h-8 relative rounded-full overflow-hidden flex-shrink-0">
+                             <Image src={s.profiles.profile_photo_url} alt={s.profiles.full_name || 'Student'} fill sizes="32px" className="object-cover" />
+                           </div>
                         ) : (
                            <div className="w-8 h-8 rounded-full bg-coral/20" />
                         )}

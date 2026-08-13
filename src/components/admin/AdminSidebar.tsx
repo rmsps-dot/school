@@ -49,9 +49,10 @@ const NAV_ITEMS = [
 
 interface Props {
   adminName: string;
+  adminAvatar?: string | null;
 }
 
-export default function AdminSidebar({ adminName }: Props) {
+export default function AdminSidebar({ adminName, adminAvatar }: Props) {
   const pathname  = usePathname();
   const router    = useRouter();
   const [open, setOpen] = useState(false);
@@ -146,9 +147,15 @@ export default function AdminSidebar({ adminName }: Props) {
       {/* Admin avatar + logout */}
       <div className="border-t border-hairline pt-4 mt-4">
         <div className="flex items-center gap-3 px-2 mb-3">
-          <div className="w-9 h-9 rounded-full bg-coral/20 border border-coral/30 text-coral flex items-center justify-center text-xs font-bold flex-shrink-0">
-            {initials}
-          </div>
+          {adminAvatar ? (
+            <div className="w-9 h-9 relative rounded-full overflow-hidden border border-coral/30 flex-shrink-0">
+              <Image src={adminAvatar} alt={adminName} fill sizes="36px" className="object-cover" />
+            </div>
+          ) : (
+            <div className="w-9 h-9 rounded-full bg-coral/20 border border-coral/30 text-coral flex items-center justify-center text-xs font-bold flex-shrink-0">
+              {initials}
+            </div>
+          )}
           <div className="min-w-0">
             <p className="text-parchment text-sm font-medium truncate">{adminName}</p>
             <p className="text-mist text-xs">Administrator</p>

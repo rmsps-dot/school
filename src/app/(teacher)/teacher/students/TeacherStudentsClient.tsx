@@ -111,7 +111,9 @@ export default function TeacherStudentsClient({ classes }: Props) {
                 className="surface-card hover:bg-white/[0.02] border border-hairline rounded-xl p-4 flex items-center gap-4 cursor-pointer transition-colors"
               >
                 {s.profiles?.profile_photo_url ? (
-                  <Image src={s.profiles.profile_photo_url} alt="Avatar" width={48} height={48} className="w-12 h-12 rounded-full object-cover border border-hairline flex-shrink-0" />
+                  <div className="w-12 h-12 relative rounded-full overflow-hidden border border-hairline flex-shrink-0">
+                    <Image src={s.profiles.profile_photo_url} alt="Avatar" fill sizes="48px" className="object-cover" />
+                  </div>
                 ) : (
                   <div className="w-12 h-12 rounded-full bg-coral/20 flex items-center justify-center text-coral shrink-0">
                     <UserCircle className="w-8 h-8" />
@@ -163,12 +165,15 @@ export default function TeacherStudentsClient({ classes }: Props) {
               <div className="p-6 flex flex-col items-center relative" style={{ transform: 'translateZ(30px)' }}>
                 <div className="relative mb-4">
                 {viewStudent.profiles?.profile_photo_url ? (
-                    <Image 
-                      src={viewStudent.profiles.profile_photo_url} 
-                      alt="Student Photo" 
-                      width={112} height={112}
-                      className="w-28 h-28 rounded-2xl object-cover border border-hairline shadow-lg"
-                    />
+                    <div className="w-28 h-28 relative rounded-2xl overflow-hidden border border-hairline shadow-lg flex-shrink-0">
+                      <Image 
+                        src={viewStudent.profiles.profile_photo_url} 
+                        alt="Student Photo" 
+                        fill
+                        sizes="(max-width: 768px) 112px, 112px"
+                        className="object-cover"
+                      />
+                    </div>
                   ) : (
                     <div className="w-28 h-28 rounded-2xl bg-coral/10 flex items-center justify-center border border-hairline shadow-lg text-coral">
                       <UserCircle className="w-16 h-16" />

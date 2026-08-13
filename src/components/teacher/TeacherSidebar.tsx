@@ -42,9 +42,10 @@ const NAV_ITEMS = [
 
 interface Props {
   teacherName: string;
+  teacherAvatar?: string | null;
 }
 
-export default function TeacherSidebar({ teacherName }: Props) {
+export default function TeacherSidebar({ teacherName, teacherAvatar }: Props) {
   const pathname  = usePathname();
   const router    = useRouter();
   const [open, setOpen] = useState(false);
@@ -136,9 +137,15 @@ export default function TeacherSidebar({ teacherName }: Props) {
       {/* Teacher avatar + logout */}
       <div className="border-t border-hairline pt-4 mt-4">
         <div className="flex items-center gap-3 px-2 mb-3">
-          <div className="w-9 h-9 rounded-full bg-veena-blue/20 border border-veena-blue/30 text-veena-blue flex items-center justify-center text-xs font-bold flex-shrink-0">
-            {initials}
-          </div>
+          {teacherAvatar ? (
+            <div className="w-9 h-9 relative rounded-full overflow-hidden border border-veena-blue/30 flex-shrink-0">
+              <Image src={teacherAvatar} alt={teacherName} fill sizes="36px" className="object-cover" />
+            </div>
+          ) : (
+            <div className="w-9 h-9 rounded-full bg-veena-blue/20 border border-veena-blue/30 text-veena-blue flex items-center justify-center text-xs font-bold flex-shrink-0">
+              {initials}
+            </div>
+          )}
           <div className="min-w-0">
             <p className="text-parchment text-sm font-medium truncate">{teacherName}</p>
             <p className="text-mist text-xs">Teacher Access</p>

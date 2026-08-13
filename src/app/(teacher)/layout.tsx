@@ -17,7 +17,7 @@ export default async function TeacherLayout({
 
   const { data: profile } = await supabase
     .from('profiles')
-    .select('role, full_name')
+    .select('role, full_name, profile_photo_url')
     .eq('id', user.id)
     .single()
 
@@ -25,7 +25,7 @@ export default async function TeacherLayout({
 
   return (
     <div className="relative min-h-screen bg-ink">
-      <TeacherSidebar teacherName={profile.full_name ?? 'Teacher'} />
+      <TeacherSidebar teacherName={profile.full_name ?? 'Teacher'} teacherAvatar={profile.profile_photo_url ?? null} />
       <main className="lg:ml-72 min-h-screen pt-14 lg:pt-0 p-4 sm:p-6 lg:p-8">
         {children}
       </main>
