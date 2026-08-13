@@ -87,13 +87,15 @@ export async function getStudentsByClass(classId?: string) {
       id,
       student_id,
       father_name,
+      mother_name,
       class_id,
       classes (class_name, section),
       profiles (
         id,
         full_name,
         profile_photo_url,
-        mobile
+        mobile,
+        dob
       )
     `)
     .order('created_at', { ascending: false })
