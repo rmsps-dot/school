@@ -58,6 +58,49 @@ async function getAuthUserIdByEmail(email: string): Promise<string | null> {
 }
 
 /* ─────────────────────────────────────────────────────
+   UPDATE REGISTRATION
+   Allows admin to edit a pending registration before approving.
+───────────────────────────────────────────────────── */
+export async function updatePendingRegistration(
+  registrationId: string,
+  data: {
+    student_name: string;
+    student_dob: string | null;
+    student_email: string;
+    student_mobile: string | null;
+    address: string | null;
+    father_name: string | null;
+    mother_name: string | null;
+    parent_mobile: string | null;
+    parent_email: string;
+  }
+): Promise<ActionResult> {
+  const auth = await requireAdmin()
+  if (!auth.ok) return { success: false, error: auth.error }
+
+  const { error } = await supabaseAdmin
+    .from('pending_registrations')
+    .update({
+      student_name: data.student_name,
+      student_dob: data.student_dob,
+      student_email: data.student_email,
+      student_mobile: data.student_mobile,
+      address: data.address,
+      father_name: data.father_name,
+      mother_name: data.mother_name,
+      parent_mobile: data.parent_mobile,
+      parent_email: data.parent_email
+    })
+    .eq('id', registrationId)
+
+  if (error) {
+    return { success: false, error: error.message }
+  }
+
+  return { success: true }
+}
+
+/* ─────────────────────────────────────────────────────
    APPROVE REGISTRATION
    1. Fetch registration from pending_registrations
    2. Get / create student Auth account

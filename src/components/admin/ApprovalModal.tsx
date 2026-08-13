@@ -16,7 +16,7 @@ import {
   AlertCircle,
   Loader2,
 } from "lucide-react";
-import { approveRegistration, rejectRegistration } from "@/actions/admin-actions";
+import { approveRegistration, rejectRegistration, updatePendingRegistration } from "@/actions/admin-actions";
 
 /* ── Types ── */
 interface Registration {
@@ -104,6 +104,56 @@ export default function ApprovalModal({ registration: reg, classes, onClose, onD
   const [toast, setToast] = useState<{ msg: string; type: "error" | "success" } | null>(null);
   const [isPending, startTransition] = useTransition();
 
+  const [isEditing, setIsEditing] = useState(false);
+  const [formData, setFormData] = useState({
+    student_name: reg.student_name,
+    student_dob: reg.student_dob || "",
+    student_email: reg.student_email,
+    student_mobile: reg.student_mobile || "",
+    address: reg.address || "",
+    father_name: reg.father_name || "",
+    mother_name: reg.mother_name || "",
+    parent_mobile: reg.parent_mobile || "",
+    parent_email: reg.parent_email || ""
+  });
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setFormData(prev => ({ ...prev, [e.target.name]: e.target.value }));
+  };
+
+  function handleSaveEdits() {
+    startTransition(async () => {
+      const result = await updatePendingRegistration(reg.id, {
+        student_name: formData.student_name,
+        student_dob: formData.student_dob || null,
+        student_email: formData.student_email,
+        student_mobile: formData.student_mobile || null,
+        address: formData.address || null,
+        father_name: formData.father_name || null,
+        mother_name: formData.mother_name || null,
+        parent_mobile: formData.parent_mobile || null,
+        parent_email: formData.parent_email,
+      });
+
+      if (result.success) {
+        showToast("Registration updated.", "success");
+        setIsEditing(false);
+        // Also update local reg reference directly so UI stays updated if they toggle edit off
+        reg.student_name = formData.student_name;
+        reg.student_dob = formData.student_dob || null;
+        reg.student_email = formData.student_email;
+        reg.student_mobile = formData.student_mobile || null;
+        reg.address = formData.address || null;
+        reg.father_name = formData.father_name || null;
+        reg.mother_name = formData.mother_name || null;
+        reg.parent_mobile = formData.parent_mobile || null;
+        reg.parent_email = formData.parent_email;
+      } else {
+        showToast(result.error ?? "Update failed.", "error");
+      }
+    });
+  }
+
   function showToast(msg: string, type: "error" | "success") {
     setToast({ msg, type });
     setTimeout(() => setToast(null), 4000);
@@ -158,12 +208,33 @@ export default function ApprovalModal({ registration: reg, classes, onClose, onD
               Applied {new Date(reg.created_at).toLocaleDateString("en-IN")}
             </p>
           </div>
-          <button
-            onClick={onClose}
-            className="p-2 rounded-lg text-mist hover:text-parchment transition-colors"
-          >
-            <X className="w-5 h-5" />
-          </button>
+          <div className="flex items-center gap-2">
+            {!isEditing ? (
+              <button
+                onClick={() => setIsEditing(true)}
+                disabled={isPending}
+                className="px-3 py-1.5 rounded-lg text-xs font-bold text-mist border border-hairline hover:text-coral hover:border-coral/30 transition-all disabled:opacity-50"
+              >
+                Edit Data
+              </button>
+            ) : (
+              <button
+                onClick={handleSaveEdits}
+                disabled={isPending}
+                className="px-3 py-1.5 rounded-lg text-xs font-bold text-ink bg-coral hover:bg-coral/90 transition-all flex items-center gap-1 disabled:opacity-50"
+              >
+                {isPending && <Loader2 className="w-3 h-3 animate-spin" />}
+                Save Data
+              </button>
+            )}
+            <button
+              onClick={onClose}
+              disabled={isPending}
+              className="p-2 rounded-lg text-mist hover:text-parchment transition-colors disabled:opacity-50"
+            >
+              <X className="w-5 h-5" />
+            </button>
+          </div>
         </div>
 
         {/* Body */}
@@ -179,11 +250,23 @@ export default function ApprovalModal({ registration: reg, classes, onClose, onD
               Student Information
             </p>
             <div className="surface-card rounded-xl p-4 grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <InfoRow icon={User}     label="Full Name"  value={reg.student_name} />
-              <InfoRow icon={Calendar} label="Date of Birth" value={reg.student_dob ? new Date(reg.student_dob).toLocaleDateString("en-IN") : null} />
-              <InfoRow icon={Mail}     label="Student Email"  value={reg.student_email} />
-              <InfoRow icon={Phone}    label="Mobile"    value={reg.student_mobile} />
-              <InfoRow icon={MapPin}   label="Address"   value={reg.address} />
+              {isEditing ? (
+                <>
+                  <div className="flex flex-col gap-1"><label className="text-xs text-mist">Full Name</label><input name="student_name" value={formData.student_name} onChange={handleChange} className="bg-ink/50 border border-hairline rounded px-2 py-1 text-sm text-parchment" /></div>
+                  <div className="flex flex-col gap-1"><label className="text-xs text-mist">Date of Birth</label><input type="date" name="student_dob" value={formData.student_dob} onChange={handleChange} className="bg-ink/50 border border-hairline rounded px-2 py-1 text-sm text-parchment" /></div>
+                  <div className="flex flex-col gap-1"><label className="text-xs text-mist">Student Email</label><input type="email" name="student_email" value={formData.student_email} onChange={handleChange} className="bg-ink/50 border border-hairline rounded px-2 py-1 text-sm text-parchment" /></div>
+                  <div className="flex flex-col gap-1"><label className="text-xs text-mist">Mobile</label><input name="student_mobile" value={formData.student_mobile} onChange={handleChange} className="bg-ink/50 border border-hairline rounded px-2 py-1 text-sm text-parchment" /></div>
+                  <div className="flex flex-col gap-1 sm:col-span-2"><label className="text-xs text-mist">Address</label><input name="address" value={formData.address} onChange={handleChange} className="bg-ink/50 border border-hairline rounded px-2 py-1 text-sm text-parchment" /></div>
+                </>
+              ) : (
+                <>
+                  <InfoRow icon={User}     label="Full Name"  value={reg.student_name} />
+                  <InfoRow icon={Calendar} label="Date of Birth" value={reg.student_dob ? new Date(reg.student_dob).toLocaleDateString("en-IN") : null} />
+                  <InfoRow icon={Mail}     label="Student Email"  value={reg.student_email} />
+                  <InfoRow icon={Phone}    label="Mobile"    value={reg.student_mobile} />
+                  <InfoRow icon={MapPin}   label="Address"   value={reg.address} />
+                </>
+              )}
             </div>
           </div>
 
@@ -193,10 +276,21 @@ export default function ApprovalModal({ registration: reg, classes, onClose, onD
               Parent / Guardian Information
             </p>
             <div className="surface-card rounded-xl p-4 grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <InfoRow icon={Users} label="Father's Name"  value={reg.father_name} />
-              <InfoRow icon={Users} label="Mother's Name"  value={reg.mother_name} />
-              <InfoRow icon={Phone} label="Parent Mobile"  value={reg.parent_mobile} />
-              <InfoRow icon={Mail}  label="Parent Email"   value={reg.parent_email} />
+              {isEditing ? (
+                <>
+                  <div className="flex flex-col gap-1"><label className="text-xs text-mist">Father's Name</label><input name="father_name" value={formData.father_name} onChange={handleChange} className="bg-ink/50 border border-hairline rounded px-2 py-1 text-sm text-parchment" /></div>
+                  <div className="flex flex-col gap-1"><label className="text-xs text-mist">Mother's Name</label><input name="mother_name" value={formData.mother_name} onChange={handleChange} className="bg-ink/50 border border-hairline rounded px-2 py-1 text-sm text-parchment" /></div>
+                  <div className="flex flex-col gap-1"><label className="text-xs text-mist">Parent Mobile</label><input name="parent_mobile" value={formData.parent_mobile} onChange={handleChange} className="bg-ink/50 border border-hairline rounded px-2 py-1 text-sm text-parchment" /></div>
+                  <div className="flex flex-col gap-1"><label className="text-xs text-mist">Parent Email</label><input type="email" name="parent_email" value={formData.parent_email} onChange={handleChange} className="bg-ink/50 border border-hairline rounded px-2 py-1 text-sm text-parchment" /></div>
+                </>
+              ) : (
+                <>
+                  <InfoRow icon={Users} label="Father's Name"  value={reg.father_name} />
+                  <InfoRow icon={Users} label="Mother's Name"  value={reg.mother_name} />
+                  <InfoRow icon={Phone} label="Parent Mobile"  value={reg.parent_mobile} />
+                  <InfoRow icon={Mail}  label="Parent Email"   value={reg.parent_email} />
+                </>
+              )}
             </div>
           </div>
 
