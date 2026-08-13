@@ -24,9 +24,9 @@ const NAV_ITEMS = [
   { label: 'School Gallery', href: '/parent/gallery',  icon: ImageIcon       },
 ]
 
-interface Props { parentName: string }
+interface Props { parentName: string; parentAvatar?: string | null }
 
-export default function ParentSidebar({ parentName }: Props) {
+export default function ParentSidebar({ parentName, parentAvatar }: Props) {
   const pathname = usePathname()
   const router   = useRouter()
   const [open, setOpen] = useState(false)
@@ -108,9 +108,13 @@ export default function ParentSidebar({ parentName }: Props) {
       {/* Profile & Logout */}
       <div className="border-t border-hairline pt-4 mt-4">
         <div className="flex items-center gap-3 px-2 mb-3">
-          <div className="w-9 h-9 rounded-full bg-gold/20 border border-gold/30 text-gold flex items-center justify-center text-xs font-bold flex-shrink-0">
-            {initials}
-          </div>
+          {parentAvatar ? (
+            <Image src={parentAvatar} alt="Profile" width={36} height={36} className="w-9 h-9 rounded-full object-cover border border-hairline flex-shrink-0" />
+          ) : (
+            <div className="w-9 h-9 rounded-full bg-gold/20 border border-gold/30 text-gold flex items-center justify-center text-xs font-bold flex-shrink-0">
+              {initials}
+            </div>
+          )}
           <div className="min-w-0">
             <p className="text-parchment text-sm font-medium truncate">{parentName}</p>
             <p className="text-mist text-xs">Parent Access</p>

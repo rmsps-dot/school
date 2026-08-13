@@ -24,9 +24,9 @@ const NAV_ITEMS = [
   { label: 'School Gallery',href: '/student/gallery',     icon: ImageIcon       },
 ]
 
-interface Props { studentName: string }
+interface Props { studentName: string; studentAvatar?: string | null }
 
-export default function StudentSidebar({ studentName }: Props) {
+export default function StudentSidebar({ studentName, studentAvatar }: Props) {
   const pathname = usePathname()
   const router   = useRouter()
   const [open, setOpen] = useState(false)
@@ -105,9 +105,13 @@ export default function StudentSidebar({ studentName }: Props) {
 
       <div className="border-t border-hairline pt-4 mt-4">
         <div className="flex items-center gap-3 px-2 mb-3">
-          <div className="w-9 h-9 rounded-full bg-[#81B29A]/20 border border-[#81B29A]/30 text-[#81B29A] flex items-center justify-center text-xs font-bold flex-shrink-0">
-            {initials}
-          </div>
+          {studentAvatar ? (
+            <Image src={studentAvatar} alt="Profile" width={36} height={36} className="w-9 h-9 rounded-full object-cover border border-hairline flex-shrink-0" />
+          ) : (
+            <div className="w-9 h-9 rounded-full bg-[#81B29A]/20 border border-[#81B29A]/30 text-[#81B29A] flex items-center justify-center text-xs font-bold flex-shrink-0">
+              {initials}
+            </div>
+          )}
           <div className="min-w-0">
             <p className="text-parchment text-sm font-medium truncate">{studentName}</p>
             <p className="text-mist text-xs">Student Profile</p>

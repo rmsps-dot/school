@@ -9,7 +9,7 @@ export default async function StudentLayout({ children }: { children: React.Reac
 
   const { data: profile } = await supabase
     .from('profiles')
-    .select('role, full_name')
+    .select('role, full_name, profile_photo_url')
     .eq('id', user.id)
     .single()
 
@@ -17,7 +17,7 @@ export default async function StudentLayout({ children }: { children: React.Reac
 
   return (
     <div className="relative min-h-screen bg-ink">
-      <StudentSidebar studentName={profile.full_name ?? 'Student'} />
+      <StudentSidebar studentName={profile.full_name ?? 'Student'} studentAvatar={profile.profile_photo_url} />
       <main className="lg:ml-72 min-h-screen pt-14 lg:pt-0 p-4 sm:p-6 lg:p-8">
         {children}
       </main>

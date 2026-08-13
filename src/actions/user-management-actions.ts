@@ -408,7 +408,7 @@ export async function getAllParents() {
     .select(`
       *,
       profiles (*),
-      parent_students ( students ( profile_id, student_id, profiles (full_name) ) )
+      parent_students ( students ( profile_id, student_id, profiles (full_name, profile_photo_url) ) )
     `)
     .order('created_at', { ascending: false })
 

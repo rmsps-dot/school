@@ -192,8 +192,12 @@ export default function ManageParentsClient({ parents: initialParents, students 
                 <div className="space-y-2">
                   {p.parent_students!.map((ps: NonNullable<ParentRecord["parent_students"]>[0], i: number) => (
                     <div key={i} className="flex items-center gap-3 bg-white/5 p-2.5 rounded-lg border border-hairline">
-                      <div className="w-8 h-8 rounded-full surface-card flex items-center justify-center text-mist">
-                        <UserCircle className="w-4 h-4" />
+                      <div className="w-8 h-8 rounded-full surface-card flex items-center justify-center text-mist flex-shrink-0 overflow-hidden border border-hairline">
+                        {(ps.students?.profiles as any)?.profile_photo_url ? (
+                          <Image src={(ps.students?.profiles as any).profile_photo_url} alt="Student Avatar" width={32} height={32} className="w-full h-full object-cover" />
+                        ) : (
+                          <UserCircle className="w-4 h-4" />
+                        )}
                       </div>
                       <div>
                         <p className="text-sm font-bold text-white leading-none">{ps.students?.profiles?.full_name}</p>
