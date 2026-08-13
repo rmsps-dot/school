@@ -1,6 +1,7 @@
 'use client';
 
-import React, { useState, useRef, useCallback } from 'react';
+import React, { useState, useRef, useCallback, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import Image from 'next/image';
 import Cropper from 'react-easy-crop';
 import { Camera, Upload, X, Loader2, UserCircle } from 'lucide-react';
@@ -89,6 +90,11 @@ export default function AvatarUpload({ currentPhotoUrl, onUploadSuccess, userId,
   const [crop, setCrop] = useState({ x: 0, y: 0 });
   const [zoom, setZoom] = useState(1);
   const [croppedAreaPixels, setCroppedAreaPixels] = useState<any>(null);
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   const [error, setError] = useState<string | null>(null);
 
@@ -200,8 +206,9 @@ export default function AvatarUpload({ currentPhotoUrl, onUploadSuccess, userId,
       )}
 
       {/* ── Crop Modal ── */}
-      <AnimatePresence>
-        {imageSrc && (
+      {mounted && typeof document !== 'undefined' ? createPortal(
+        <AnimatePresence>
+          {imageSrc && (
           <motion.div 
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
@@ -278,7 +285,9 @@ export default function AvatarUpload({ currentPhotoUrl, onUploadSuccess, userId,
             </div>
           </motion.div>
         )}
-      </AnimatePresence>
+        </AnimatePresence>,
+        document.body
+      ) : null}
     </>
   );
 }
