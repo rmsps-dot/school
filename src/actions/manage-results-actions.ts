@@ -24,15 +24,29 @@ async function requireTeacherRow() {
 export const getTeacherResults = withErrorDetector('getTeacherResults', async () => {
   const { supabase, teacher } = await requireTeacherRow()
 
-  const { data, error } = await supabase
+  const { data: teacherClasses } = await supabase
+    .from('teacher_classes')
+    .select('class_id')
+    .eq('teacher_id', teacher.id)
+
+  const classIds = teacherClasses?.map(tc => tc.class_id) || []
+
+  let query = supabase
     .from('results')
     .select(`
       *,
       students (id, student_id, profiles (full_name)),
       classes (id, class_name, section)
     `)
-    .eq('uploaded_by', teacher.id)
     .order('created_at', { ascending: false })
+
+  if (classIds.length > 0) {
+    query = query.or(`uploaded_by.eq.${teacher.id},class_id.in.(${classIds.join(',')})`)
+  } else {
+    query = query.eq('uploaded_by', teacher.id)
+  }
+
+  const { data, error } = await query
 
   if (error) return { data: null, error: error.message }
   return { data, error: null }
