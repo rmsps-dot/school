@@ -37,6 +37,24 @@ const getPixelSize = (size: AvatarUploadProps['size']) => {
   }
 };
 
+// Allowed hostnames from next.config.ts
+const ALLOWED_HOSTNAMES = [
+  'images.unsplash.com',
+  'i.ibb.co',
+  'i.postimg.cc'
+];
+
+const isValidAvatarUrl = (url: string | null | undefined): boolean => {
+  if (!url) return false;
+  try {
+    const parsed = new URL(url);
+    if (parsed.hostname.endsWith('.supabase.co')) return true;
+    return ALLOWED_HOSTNAMES.includes(parsed.hostname);
+  } catch (e) {
+    return false;
+  }
+};
+
 // --- Canvas helper to crop image ---
 const createImage = (url: string): Promise<HTMLImageElement> =>
   new Promise((resolve, reject) => {
@@ -91,10 +109,15 @@ export default function AvatarUpload({ currentPhotoUrl, onUploadSuccess, userId,
   const [zoom, setZoom] = useState(1);
   const [croppedAreaPixels, setCroppedAreaPixels] = useState<any>(null);
   const [mounted, setMounted] = useState(false);
+  const [imageLoadError, setImageLoadError] = useState(false);
 
   useEffect(() => {
     setMounted(true);
   }, []);
+
+  useEffect(() => {
+    setImageLoadError(false);
+  }, [currentPhotoUrl]);
 
   const [error, setError] = useState<string | null>(null);
 
@@ -178,13 +201,14 @@ export default function AvatarUpload({ currentPhotoUrl, onUploadSuccess, userId,
           </div>
         )}
 
-        {currentPhotoUrl ? (
+        {currentPhotoUrl && isValidAvatarUrl(currentPhotoUrl) && !imageLoadError ? (
           <Image 
             src={currentPhotoUrl} 
             alt="Profile Photo" 
             fill 
             sizes={`${pixelSize}px`} 
-            className="object-cover" 
+            className="object-cover"
+            onError={() => setImageLoadError(true)}
           />
         ) : (
           <div className="w-full h-full bg-veena-blue/10 flex items-center justify-center text-veena-blue/50">
