@@ -403,7 +403,7 @@ export default function ManageResultsClient({ initialResults }: Props) {
       {/* PDF PREVIEW MODAL */}
       {previewSheet && (
         <MarksheetModal
-          sheet={mapGroupToMarksheet(previewSheet)}
+          sheet={previewSheet}
           onClose={() => setPreviewSheet(null)}
           readOnly
         />
@@ -412,7 +412,7 @@ export default function ManageResultsClient({ initialResults }: Props) {
       {/* PRINT PORTAL */}
       {printSheet && (
         <PrintPortal>
-          <MarksheetTemplate sheet={mapGroupToMarksheet(printSheet)} printId="marksheet-print-portal" />
+          <MarksheetTemplate sheet={printSheet} printId="marksheet-print-portal" />
         </PrintPortal>
       )}
     </div>
