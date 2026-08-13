@@ -18,6 +18,7 @@ export interface ParentDetailData {
   created_at?: string
   parent_students: {
     students: {
+      id: string
       profile_id: string
       student_id: string
       profiles: {
@@ -148,7 +149,7 @@ export default function ParentDetailClient({ parent }: Props) {
 
                   <div className="shrink-0">
                     <Link
-                      href={`/admin/students/${student.profile_id}`}
+                      href={`/admin/students/${student.id}`}
                       className="px-3 py-1.5 text-xs font-medium rounded-lg border border-coral/20 text-coral hover:bg-coral/10 transition-colors"
                     >
                       View
