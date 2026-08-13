@@ -1,3 +1,4 @@
+import Image from 'next/image'
 import Link from 'next/link'
 import { BookOpen, CalendarDays, Bell, ArrowRight, GraduationCap, MapPin, Phone, UserCheck } from 'lucide-react'
 import { getStudentProfile, getStudentResults, getStudentAttendance } from '@/actions/portal-actions'
@@ -66,8 +67,12 @@ export default async function StudentDashboard() {
             <div className="absolute inset-0 -translate-x-full group-hover:animate-[shimmer_1.5s_ease-out] bg-gradient-to-r from-transparent via-white/5 to-transparent skew-x-12 pointer-events-none" />
             
             <div className="flex items-center gap-4 mb-6">
-              <div className="w-16 h-16 rounded-full bg-[#81B29A]/20 flex items-center justify-center border border-[#81B29A]/30 text-[#81B29A] font-display text-2xl font-bold">
-                {profile.fullName.charAt(0)}
+              <div className="w-16 h-16 rounded-full bg-[#81B29A]/20 flex items-center justify-center border border-[#81B29A]/30 text-[#81B29A] font-display text-2xl font-bold overflow-hidden flex-shrink-0">
+                {profile.profilePhotoUrl ? (
+                  <Image src={profile.profilePhotoUrl} alt="Avatar" width={64} height={64} className="w-full h-full object-cover" />
+                ) : (
+                  profile.fullName.charAt(0)
+                )}
               </div>
               <div>
                 <p className="font-display text-xl font-bold text-parchment">{profile.fullName}</p>

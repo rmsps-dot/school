@@ -1,3 +1,4 @@
+import Image from 'next/image'
 import Link from 'next/link'
 import { Users, TrendingUp, Wallet, GraduationCap, CalendarDays } from 'lucide-react'
 import { getParentChildren } from '@/actions/portal-actions'
@@ -71,8 +72,12 @@ export default async function ParentDashboard() {
                   
                   <div className="relative z-10 flex items-start justify-between mb-8">
                     <div className="flex items-center gap-4">
-                      <div className="w-16 h-16 rounded-full bg-gold/20 flex items-center justify-center border border-gold/30 text-gold font-display text-2xl font-bold">
-                        {child.fullName.charAt(0)}
+                      <div className="w-16 h-16 rounded-full bg-gold/20 flex items-center justify-center border border-gold/30 text-gold font-display text-2xl font-bold overflow-hidden flex-shrink-0">
+                        {child.profilePhotoUrl ? (
+                          <Image src={child.profilePhotoUrl} alt="Avatar" width={64} height={64} className="w-full h-full object-cover" />
+                        ) : (
+                          child.fullName.charAt(0)
+                        )}
                       </div>
                       <div>
                         <p className="font-display text-2xl font-bold text-parchment">{child.fullName}</p>

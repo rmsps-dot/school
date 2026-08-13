@@ -41,6 +41,7 @@ export interface StudentProfile {
   studentRowId: string
   studentCode: string
   fullName: string
+  profilePhotoUrl: string | null
   fatherName: string | null
   motherName: string | null
   dob: string | null
@@ -55,6 +56,7 @@ export interface ChildInfo {
   studentRowId: string
   studentCode: string
   fullName: string
+  profilePhotoUrl: string | null
   className: string
   section: string
   relation: string
@@ -101,6 +103,7 @@ export async function getStudentProfile(): Promise<{ data: StudentProfile | null
         studentRowId:  student.id,
         studentCode:   student.student_id,
         fullName:      profile.full_name ?? 'Student',
+        profilePhotoUrl: profile.profile_photo_url ?? null,
         fatherName:    student.father_name,
         motherName:    student.mother_name,
         dob:           profile.dob || null,
@@ -220,7 +223,7 @@ export async function getParentChildren(): Promise<{ data: ChildInfo[]; error?: 
 
     const { data, error } = await supabase
       .from('parent_students')
-      .select('relation, students!inner(id, student_id, class_id, classes(class_name, section), profiles!inner(full_name))')
+      .select('relation, students!inner(id, student_id, class_id, classes(class_name, section), profiles!inner(full_name, profile_photo_url))')
       .eq('parent_id', parentRowId)
 
     if (error) return { data: [], error: error.message }
@@ -233,6 +236,7 @@ export async function getParentChildren(): Promise<{ data: ChildInfo[]; error?: 
         studentRowId: student.id,
         studentCode:  student.student_id,
         fullName:     prof?.full_name ?? 'Unknown',
+        profilePhotoUrl: prof?.profile_photo_url ?? null,
         className:    cls?.class_name ?? '—',
         section:      cls?.section ?? '—',
         relation:     row.relation,
