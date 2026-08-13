@@ -110,7 +110,7 @@ export default function StudentProfileClient({ data }: StudentProfileProps) {
               <div className="relative mb-5">
                 <AvatarUpload 
                   currentPhotoUrl={profile?.profile_photo_url} 
-                  userId={profile?.id}
+                  userId={student.profile_id}
                   size="xl"
                   onUploadSuccess={() => router.refresh()}
                 />

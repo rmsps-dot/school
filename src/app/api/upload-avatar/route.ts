@@ -64,7 +64,9 @@ export async function POST(request: Request) {
     const { error: updateError } = await supabase
       .from('profiles')
       .update({ profile_photo_url: liveUrl })
-      .eq('id', targetUserId);
+      .eq('id', targetUserId)
+      .select()
+      .single();
 
     if (updateError) {
       console.error('Supabase Update Error:', updateError);

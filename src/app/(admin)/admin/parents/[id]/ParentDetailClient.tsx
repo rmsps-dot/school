@@ -11,6 +11,7 @@ import ParentEditModal from '@/components/admin/ParentEditModal'
 
 export interface ParentDetailData {
   id: string
+  profile_id: string
   profiles: {
     full_name: string | null
     email: string | null
@@ -74,7 +75,7 @@ export default function ParentDetailClient({ parent }: Props) {
         <div className="shrink-0 relative z-10">
           <AvatarUpload 
             currentPhotoUrl={profile.profile_photo_url} 
-            userId={parent.id}
+            userId={parent.profile_id}
             size="lg"
             onUploadSuccess={() => router.refresh()}
           />
