@@ -28,8 +28,11 @@ export interface TeacherResultRecord {
   students: {
     id: string
     student_id: string
+    father_name: string | null
+    mother_name: string | null
     profiles: {
       full_name: string | null
+      dob: string | null
     } | null
   } | null
   classes: {

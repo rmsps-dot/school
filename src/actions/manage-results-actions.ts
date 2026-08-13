@@ -35,7 +35,7 @@ export const getTeacherResults = withErrorDetector('getTeacherResults', async ()
     .from('results')
     .select(`
       *,
-      students (id, student_id, profiles (full_name)),
+      students (id, student_id, father_name, mother_name, profiles (full_name, dob)),
       classes (id, class_name, section)
     `)
     .order('created_at', { ascending: false })
