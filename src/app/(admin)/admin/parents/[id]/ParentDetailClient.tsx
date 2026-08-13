@@ -1,11 +1,13 @@
 'use client'
 
 import Image from 'next/image'
-import { motion } from 'framer-motion'
-import { ArrowLeft, UserCircle, Phone, Calendar, MapPin, GraduationCap, Users } from 'lucide-react'
+import { motion, AnimatePresence } from 'framer-motion'
+import { ArrowLeft, UserCircle, Phone, Calendar, MapPin, GraduationCap, Users, Edit3 } from 'lucide-react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
+import { useState } from 'react'
 import AvatarUpload from '@/components/ui/AvatarUpload'
+import ParentEditModal from '@/components/admin/ParentEditModal'
 
 export interface ParentDetailData {
   id: string
@@ -44,6 +46,8 @@ export default function ParentDetailClient({ parent }: Props) {
   const profile = parent.profiles || ({} as Partial<NonNullable<ParentDetailData['profiles']>>)
   const children = parent.parent_students || []
 
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false)
+
   const formatDate = (d?: string) => {
     if (!d) return 'N/A'
     return new Date(d).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })
@@ -76,18 +80,28 @@ export default function ParentDetailClient({ parent }: Props) {
           />
         </div>
 
-        <div className="flex-1 text-center md:text-left space-y-3 relative z-10">
-          <div>
-            <h2 className="font-display text-xl md:text-2xl font-bold text-parchment mb-2">{profile.full_name}</h2>
-            <div className="flex flex-wrap items-center justify-center md:justify-start gap-2">
-              <span className="px-3 py-1 text-xs font-bold rounded-lg uppercase tracking-wider text-gold border border-gold/30"
-                style={{ background: 'rgba(212,175,106,0.08)' }}>
-                Parent / Guardian
-              </span>
-              <span className="text-mist text-xs flex items-center gap-1">
-                <Calendar className="w-3.5 h-3.5" /> Joined: {formatDate(parent.created_at)}
-              </span>
+        <div className="flex-1 text-center md:text-left space-y-3 relative z-10 w-full">
+          <div className="flex flex-col md:flex-row md:items-start justify-between gap-4">
+            <div>
+              <h2 className="font-display text-xl md:text-2xl font-bold text-parchment mb-2">{profile.full_name}</h2>
+              <div className="flex flex-wrap items-center justify-center md:justify-start gap-2">
+                <span className="px-3 py-1 text-xs font-bold rounded-lg uppercase tracking-wider text-gold border border-gold/30"
+                  style={{ background: 'rgba(212,175,106,0.08)' }}>
+                  Parent / Guardian
+                </span>
+                <span className="text-mist text-xs flex items-center gap-1">
+                  <Calendar className="w-3.5 h-3.5" /> Joined: {formatDate(parent.created_at)}
+                </span>
+              </div>
             </div>
+            
+            <button
+              onClick={() => setIsEditModalOpen(true)}
+              className="px-4 py-2 rounded-xl border border-hairline hover:border-coral/40 text-mist hover:text-coral transition-all flex items-center justify-center gap-2 text-sm font-bold bg-white/5 mx-auto md:mx-0 shrink-0"
+            >
+              <Edit3 className="w-4 h-4" />
+              Edit Profile
+            </button>
           </div>
 
           <div className="flex flex-wrap gap-3 justify-center md:justify-start text-sm">
@@ -168,6 +182,22 @@ export default function ParentDetailClient({ parent }: Props) {
           </div>
         )}
       </div>
+      
+      {/* Edit Parent Modal */}
+      {profile && (
+        <ParentEditModal
+          isOpen={isEditModalOpen}
+          onClose={() => setIsEditModalOpen(false)}
+          parent={{
+            id: parent.id,
+            full_name: profile.full_name || null,
+            mobile: profile.mobile || null,
+            address: profile.address || null,
+            dob: profile.dob || null
+          }}
+          onSuccess={() => router.refresh()}
+        />
+      )}
     </div>
   )
 }
