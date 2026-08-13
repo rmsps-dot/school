@@ -22,6 +22,31 @@ export type ChatMessage = Database['public']['Tables']['messages']['Row']
    ACTIONS
 ════════════════════════════════════════════════════════════ */
 
+/**
+ * Hard Delete Conversation
+ * Permanently deletes all messages between the authenticated user and the selected user.
+ */
+export async function deleteConversation(otherUserId: string): Promise<{ success: boolean; error?: string }> {
+  try {
+    const auth = await requireAuth()
+    if (!auth.ok) return { success: false, error: auth.error }
+    const myId = auth.profile.id
+
+    const client = await createClient()
+    
+    // Delete messages where (sender=me AND receiver=other) OR (sender=other AND receiver=me)
+    const { error } = await client
+      .from('messages')
+      .delete()
+      .or(`and(sender_id.eq.${myId},receiver_id.eq.${otherUserId}),and(sender_id.eq.${otherUserId},receiver_id.eq.${myId})`)
+
+    if (error) throw error
+    return { success: true }
+  } catch (err: any) {
+    console.error('deleteConversation error:', err)
+    return { success: false, error: err.message || 'Failed to delete conversation' }
+  }
+}
 
 
 /**

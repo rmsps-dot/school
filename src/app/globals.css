@@ -113,7 +113,6 @@ h1, h2, h3, h4, h5, h6, .font-display {
   background: var(--ink);
   border: 1px solid var(--border-hairline);
   border-radius: 0.75rem;
-  padding: 0.625rem 1rem;
   color: var(--parchment);
   font-size: 0.875rem;
   transition: border-color 0.2s ease, box-shadow 0.2s ease;

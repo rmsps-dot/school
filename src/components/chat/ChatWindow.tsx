@@ -1,17 +1,18 @@
 'use client'
 
 import { useState, useEffect, useRef, useTransition } from 'react'
-import { Send, Loader2, MessageSquare, Check, CheckCheck } from 'lucide-react'
+import { Send, Loader2, MessageSquare, Check, CheckCheck, Trash2 } from 'lucide-react'
 import { supabase } from '@/utils/supabase/client'
-import { getMessageHistory, sendMessageAction } from '@/actions/chat-actions'
+import { getMessageHistory, sendMessageAction, deleteConversation } from '@/actions/chat-actions'
 import type { ChatMessage, ChatContact } from '@/actions/chat-actions'
 
 interface Props {
   currentUserId: string
   recipient: ChatContact | null
+  onClearRecipient?: () => void
 }
 
-export default function ChatWindow({ currentUserId, recipient }: Props) {
+export default function ChatWindow({ currentUserId, recipient, onClearRecipient }: Props) {
   const [messages, setMessages] = useState<ChatMessage[]>([])
   const [isLoading, setIsLoading] = useState(false)
   const [inputValue, setInputValue] = useState('')
@@ -107,6 +108,20 @@ export default function ChatWindow({ currentUserId, recipient }: Props) {
     })
   }
 
+  const handleDeleteConversation = async () => {
+    if (!recipient) return
+    if (!window.confirm('This will permanently delete this conversation for both users. This cannot be undone.')) {
+      return
+    }
+
+    const { success, error } = await deleteConversation(recipient.id)
+    if (success) {
+      if (onClearRecipient) onClearRecipient()
+    } else {
+      alert(error || 'Failed to delete conversation')
+    }
+  }
+
   if (!recipient) {
     return (
       <div className="flex-1 surface-card border-hairline rounded-[2rem] p-8 flex flex-col items-center justify-center text-center h-full min-h-[500px] shadow-2xl">
@@ -124,16 +139,26 @@ export default function ChatWindow({ currentUserId, recipient }: Props) {
   return (
     <div className="flex-1 surface-card border-hairline rounded-[2rem] flex flex-col h-full min-h-[500px] max-h-[800px] overflow-hidden shadow-2xl">
       {/* ── Header ── */}
-      <div className="p-6 border-b border-hairline flex items-center gap-5 bg-surface shrink-0">
-        <div className="w-12 h-12 rounded-full bg-veena-blue/10 border border-veena-blue/20 flex items-center justify-center text-veena-blue font-bold text-lg shrink-0 shadow-inner">
-          {recipient.full_name.charAt(0).toUpperCase()}
-        </div>
-        <div>
-          <h2 className="font-display text-xl font-bold text-parchment leading-tight">{recipient.full_name}</h2>
-          <div className="text-[10px] font-mono text-mist uppercase tracking-widest mt-1">
-            {recipient.role} {recipient.extraInfo && ` • ${recipient.extraInfo}`}
+      <div className="p-6 border-b border-hairline flex items-center justify-between bg-surface shrink-0">
+        <div className="flex items-center gap-5">
+          <div className="w-12 h-12 rounded-full bg-veena-blue/10 border border-veena-blue/20 flex items-center justify-center text-veena-blue font-bold text-lg shrink-0 shadow-inner">
+            {recipient.full_name.charAt(0).toUpperCase()}
+          </div>
+          <div>
+            <h2 className="font-display text-xl font-bold text-parchment leading-tight">{recipient.full_name}</h2>
+            <div className="text-[10px] font-mono text-mist uppercase tracking-widest mt-1">
+              {recipient.role} {recipient.extraInfo && ` • ${recipient.extraInfo}`}
+            </div>
           </div>
         </div>
+        
+        <button
+          onClick={handleDeleteConversation}
+          title="Delete Conversation"
+          className="p-2 text-mist hover:text-red-400 hover:bg-red-500/10 rounded-xl transition-colors"
+        >
+          <Trash2 className="w-5 h-5" />
+        </button>
       </div>
 
       {/* ── Chat Area ── */}

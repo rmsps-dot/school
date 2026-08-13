@@ -155,7 +155,7 @@ export default function AdminChatClient({ currentUserId }: Props) {
 
       {/* ── Right Sidebar (Chat Window) ── */}
       <div className="flex-1 min-w-0">
-        <ChatWindow currentUserId={currentUserId} recipient={selectedContact} />
+        <ChatWindow currentUserId={currentUserId} recipient={selectedContact} onClearRecipient={() => setSelectedContact(null)} />
       </div>
 
     </div>
