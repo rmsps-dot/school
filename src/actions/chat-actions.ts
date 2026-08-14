@@ -32,10 +32,8 @@ export async function deleteConversation(otherUserId: string): Promise<{ success
     if (!auth.ok) return { success: false, error: auth.error }
     const myId = auth.profile.id
 
-    const client = await createClient()
-    
     // Delete messages where (sender=me AND receiver=other) OR (sender=other AND receiver=me)
-    const { error } = await client
+    const { error } = await supabaseAdmin
       .from('messages')
       .delete()
       .or(`and(sender_id.eq.${myId},receiver_id.eq.${otherUserId}),and(sender_id.eq.${otherUserId},receiver_id.eq.${myId})`)
