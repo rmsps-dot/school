@@ -79,10 +79,15 @@ export async function getContactsForTeacher(tab: string, classId?: string): Prom
     if (tab === 'students') {
       if (!classId) return { data: [] }
       
-      const { data, error } = await client
+      let query = client
         .from('students')
         .select('profile_id, profiles!students_profile_id_fkey(full_name, role)')
-        .eq('class_id', classId)
+        
+      if (classId !== 'all') {
+        query = query.eq('class_id', classId)
+      }
+      
+      const { data, error } = await query
 
       if (error) throw error
       
@@ -101,11 +106,16 @@ export async function getContactsForTeacher(tab: string, classId?: string): Prom
     if (tab === 'parents') {
       if (!classId) return { data: [] }
       
-      // Get all students in this class
-      const { data: students, error: studErr } = await client
+      // Get all students in this class (or all classes if 'all')
+      let query = client
         .from('students')
         .select('id, student_id, profiles!students_profile_id_fkey(full_name)')
-        .eq('class_id', classId)
+        
+      if (classId !== 'all') {
+        query = query.eq('class_id', classId)
+      }
+      
+      const { data: students, error: studErr } = await query
         
       if (studErr) throw studErr
       if (!students || students.length === 0) return { data: [] }

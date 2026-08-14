@@ -28,7 +28,7 @@ const TABS = [
 
 export default function TeacherChatClient({ currentUserId, schoolClasses }: Props) {
   const [activeTab, setActiveTab] = useState('teachers')
-  const [selectedClassId, setSelectedClassId] = useState<string>(schoolClasses[0]?.id || '')
+  const [selectedClassId, setSelectedClassId] = useState<string>('all')
   
   const [contacts, setContacts] = useState<ChatContact[]>([])
   const [isLoading, setIsLoading] = useState(false)
@@ -114,6 +114,7 @@ export default function TeacherChatClient({ currentUserId, schoolClasses }: Prop
                   onChange={(e) => setSelectedClassId(e.target.value)}
                   className="w-full bg-ink border border-hairline rounded-lg px-3 py-2 text-parchment text-sm focus:outline-none focus:border-coral/60 cursor-pointer"
                 >
+                  <option value="all">All Classes</option>
                   {schoolClasses.map(cls => (
                     <option key={cls.id} value={cls.id}>
                       Class {cls.class_name} — Sec {cls.section}
