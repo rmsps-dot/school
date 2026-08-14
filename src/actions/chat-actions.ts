@@ -62,9 +62,9 @@ export async function getContactsForTeacher(tab: string, classId?: string): Prom
     }
     const client = await createClient()
 
-    // Teachers/Admins list: use RLS client — teacher can see other staff profiles
+    // Teachers/Admins list: use Admin client to bypass RLS (teachers can't read other staff profiles by default)
     if (tab === 'teachers' || tab === 'admin') {
-      const { data, error } = await client
+      const { data, error } = await supabaseAdmin
         .from('profiles')
         .select('id, full_name, role')
         .eq('role', tab === 'teachers' ? 'teacher' : 'admin')
@@ -104,19 +104,19 @@ export async function getContactsForTeacher(tab: string, classId?: string): Prom
       // Get all students in this class
       const { data: students, error: studErr } = await client
         .from('students')
-        .select('student_id, profiles!students_profile_id_fkey(full_name)')
+        .select('id, student_id, profiles!students_profile_id_fkey(full_name)')
         .eq('class_id', classId)
         
       if (studErr) throw studErr
       if (!students || students.length === 0) return { data: [] }
       
-      const studentIds = students.map(s => s.student_id)
+      const studentUuids = students.map(s => s.id)
       
       // Find parents linked to these students
       const { data: parentLinks, error: parentErr } = await client
         .from('parent_students')
         .select('parent_id, student_id')
-        .in('student_id', studentIds)
+        .in('student_id', studentUuids)
         
       if (parentErr) throw parentErr
       if (!parentLinks || parentLinks.length === 0) return { data: [] }
