@@ -33,6 +33,7 @@ export interface TeacherResultRecord {
     profiles: {
       full_name: string | null
       dob: string | null
+      address: string | null
     } | null
   } | null
   classes: {
@@ -53,8 +54,8 @@ export default function ManageResultsClient({ initialResults }: Props) {
   const [editResult, setEditResult] = useState<TeacherResultRecord | null>(null)
   const [errorMsg, setErrorMsg] = useState('')
   const [expandedRows, setExpandedRows] = useState<Set<string>>(new Set())
-  const [printSheet, setPrintSheet] = useState<any>(null)
-  const [previewSheet, setPreviewSheet] = useState<any>(null)
+  const [printSheet, setPrintSheet] = useState<StudentMarksheet | null>(null)
+  const [previewSheet, setPreviewSheet] = useState<StudentMarksheet | null>(null)
 
   useEffect(() => {
     if (printSheet) {
@@ -66,7 +67,7 @@ export default function ManageResultsClient({ initialResults }: Props) {
     }
   }, [printSheet])
 
-  const mapGroupToMarksheet = (group: { totalObtained: number, grandTotal: number, student_id: string, class_id: string, exam_type: Database['public']['Enums']['exam_type'], students: any, classes: any, subjectsList: TeacherResultRecord[] }): StudentMarksheet => {
+  const mapGroupToMarksheet = (group: { totalObtained: number, grandTotal: number, student_id: string, class_id: string, exam_type: Database['public']['Enums']['exam_type'], students: TeacherResultRecord['students'], classes: TeacherResultRecord['classes'], subjectsList: TeacherResultRecord[] }): StudentMarksheet => {
     const totalObtained = group.totalObtained
     const grandTotal = group.grandTotal
     const percentage = grandTotal > 0 ? (totalObtained / grandTotal) * 100 : 0

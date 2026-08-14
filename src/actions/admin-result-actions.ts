@@ -336,7 +336,27 @@ export async function fetchApprovedResults(): Promise<{
   }
 }
 
-export async function fetchModificationRequests() {
+export interface ModificationRequestView {
+  id: string;
+  exam_type: Database['public']['Enums']['exam_type'];
+  subject: string;
+  marks_obtained: number;
+  total_marks: number;
+  edit_request: any;
+  delete_request: boolean | null;
+  students: {
+    student_id: string;
+    profiles: {
+      full_name: string | null;
+    } | null;
+  } | null;
+  classes: {
+    class_name: string;
+    section: string;
+  } | null;
+}
+
+export async function fetchModificationRequests(): Promise<{ data: ModificationRequestView[], error?: string }> {
   try {
     const auth = await requireAdmin()
     if (!auth.ok) return { data: [], error: auth.error }
@@ -370,9 +390,34 @@ export async function fetchModificationRequests() {
     // Merge and deduplicate by ID
     const merged = [...(editData || []), ...(deleteData || [])]
     const uniqueMap = new Map(merged.map(item => [item.id, item]))
-    const data = Array.from(uniqueMap.values())
+    
+    const mappedData: ModificationRequestView[] = Array.from(uniqueMap.values()).map((req: any) => {
+      const student = Array.isArray(req.students) ? req.students[0] : req.students;
+      const profile = Array.isArray(student?.profiles) ? student.profiles[0] : student?.profiles;
+      const cls = Array.isArray(req.classes) ? req.classes[0] : req.classes;
+      
+      return {
+        id: req.id,
+        exam_type: req.exam_type,
+        subject: req.subject,
+        marks_obtained: req.marks_obtained,
+        total_marks: req.total_marks,
+        edit_request: req.edit_request,
+        delete_request: req.delete_request,
+        students: student ? {
+          student_id: student.student_id,
+          profiles: profile ? {
+            full_name: profile.full_name
+          } : null
+        } : null,
+        classes: cls ? {
+          class_name: cls.class_name,
+          section: cls.section
+        } : null
+      }
+    })
 
-    return { data }
+    return { data: mappedData }
   } catch (err) {
     return { data: [], error: err instanceof Error ? err.message : 'Unknown error' }
   }

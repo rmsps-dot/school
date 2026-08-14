@@ -49,7 +49,7 @@ export default function ClassesClient({ classes }: Props) {
   }, [selectedClass])
 
   const filteredStudents = students.filter(s => 
-    s.profiles?.[0]?.full_name?.toLowerCase().includes(search.toLowerCase()) ||
+    s.profiles?.full_name?.toLowerCase().includes(search.toLowerCase()) ||
     s.student_id?.toLowerCase().includes(search.toLowerCase())
   )
 
@@ -104,9 +104,9 @@ export default function ClassesClient({ classes }: Props) {
                 style={{ animationDelay: `${i * 0.03}s` }}
               >
                 <div className="flex items-center gap-4">
-                  {s.profiles?.[0]?.profile_photo_url ? (
+                  {s.profiles?.profile_photo_url ? (
                     <div className="w-12 h-12 relative rounded-full overflow-hidden border border-hairline flex-shrink-0">
-                      <Image src={s.profiles[0].profile_photo_url} alt="Avatar" fill sizes="48px" className="object-cover" />
+                      <Image src={s.profiles.profile_photo_url} alt="Avatar" fill sizes="48px" className="object-cover" />
                     </div>
                   ) : (
                     <div className="w-12 h-12 rounded-full bg-veena-blue/10 flex items-center justify-center text-veena-blue shrink-0">
@@ -114,10 +114,10 @@ export default function ClassesClient({ classes }: Props) {
                     </div>
                   )}
                   <div className="flex-1 min-w-0">
-                    <h3 className="font-bold text-parchment truncate">{s.profiles?.[0]?.full_name}</h3>
+                    <h3 className="font-bold text-parchment truncate">{s.profiles?.full_name}</h3>
                     <p className="text-[10px] text-mist font-mono tracking-widest mt-1">{s.student_id}</p>
                     <p className="text-xs text-veena-blue truncate mt-0.5">
-                      {s.classes?.[0]?.class_name} {s.classes?.[0]?.section !== '-' ? `(${s.classes?.[0]?.section})` : ''}
+                      {s.classes?.class_name} {s.classes?.section !== '-' ? `(${s.classes?.section})` : ''}
                     </p>
                   </div>
                 </div>

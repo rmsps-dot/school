@@ -5,6 +5,7 @@ import Image from 'next/image'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Search, Users, UserCircle, Loader2, GraduationCap, ArrowLeft, Plus } from 'lucide-react'
 import { getStudentsByClass } from '@/actions/class-actions'
+import type { StudentViewRecord } from '@/actions/class-actions'
 import type { ClassWithSubject } from '@/actions/result-actions'
 
 interface Props {
@@ -13,12 +14,12 @@ interface Props {
 
 export default function TeacherStudentsClient({ classes }: Props) {
   const [selectedClass, setSelectedClass] = useState<string>('')
-  const [students, setStudents] = useState<any[]>([])
+  const [students, setStudents] = useState<StudentViewRecord[]>([])
   const [isPending, startTransition] = useTransition()
   const [search, setSearch] = useState('')
 
   // 3D ID Card State
-  const [viewStudent, setViewStudent] = useState<any>(null)
+  const [viewStudent, setViewStudent] = useState<StudentViewRecord | null>(null)
   const [rotateX, setRotateX] = useState(0)
   const [rotateY, setRotateY] = useState(0)
 
@@ -194,7 +195,7 @@ export default function TeacherStudentsClient({ classes }: Props) {
                 <div className="w-full space-y-3 text-xs">
                   <div className="flex justify-between border-b border-hairline pb-2">
                     <span className="text-mist">D.O.B</span>
-                    <span className="text-parchment font-medium font-mono">{formatDate(viewStudent.profiles?.dob)}</span>
+                    <span className="text-sm text-parchment font-medium font-mono">{formatDate(viewStudent.profiles?.dob || '')}</span>
                   </div>
                   <div className="flex justify-between border-b border-hairline pb-2">
                     <span className="text-mist">FATHER</span>

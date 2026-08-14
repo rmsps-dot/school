@@ -5,6 +5,7 @@ import Image from 'next/image'
 import { motion } from 'framer-motion'
 import { Calendar, Save, CheckCircle2, XCircle, AlertCircle, Loader2, Users } from 'lucide-react'
 import { getStudentsByClass } from '@/actions/class-actions'
+import type { StudentViewRecord } from '@/actions/class-actions'
 import { getStudentAttendance, markStudentAttendance } from '@/actions/attendance-actions'
 import type { ClassWithSubject } from '@/actions/result-actions'
 import DateInput from '@/components/shared/DateInput'
@@ -19,7 +20,7 @@ import type { Database } from '@/types/supabase'
 export default function ClassAttendanceClient({ classes, timeWindow }: Props) {
   const [selectedClass, setSelectedClass] = useState('')
   const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0])
-  const [students, setStudents] = useState<any[]>([])
+  const [students, setStudents] = useState<StudentViewRecord[]>([])
   const [attendance, setAttendance] = useState<Record<string, Database['public']['Enums']['attendance_status']>>({})
   
   const [isPending, startTransition] = useTransition()

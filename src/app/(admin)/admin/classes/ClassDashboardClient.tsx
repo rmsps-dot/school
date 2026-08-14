@@ -376,9 +376,9 @@ export default function ClassDashboardClient({ classes: initialClasses }: ClassD
                         className="ledger-row surface-card hover:border-coral/40 border-hairline rounded-2xl p-4 flex items-center gap-4 cursor-pointer transition-all group"
                         style={{ animationDelay: `${i * 0.05}s` }}
                       >
-                        {s.profiles?.[0]?.profile_photo_url ? (
+                        {s.profiles?.profile_photo_url ? (
                           <div className="w-12 h-12 relative rounded-full overflow-hidden border border-hairline flex-shrink-0">
-                            <Image src={s.profiles[0].profile_photo_url} alt="Avatar" fill sizes="48px" className="object-cover" />
+                            <Image src={s.profiles.profile_photo_url} alt="Avatar" fill sizes="48px" className="object-cover" />
                           </div>
                         ) : (
                           <div className="w-12 h-12 rounded-full bg-ink border border-hairline flex items-center justify-center text-mist group-hover:text-coral transition-colors">
@@ -386,10 +386,10 @@ export default function ClassDashboardClient({ classes: initialClasses }: ClassD
                           </div>
                         )}
                         <div className="flex-1 min-w-0">
-                          <h3 className="font-semibold text-parchment truncate group-hover:text-coral transition-colors">{s.profiles?.[0]?.full_name}</h3>
+                          <h3 className="font-semibold text-parchment truncate group-hover:text-coral transition-colors">{s.profiles?.full_name}</h3>
                           <p className="text-[10px] font-mono text-mist tracking-widest uppercase mt-1">ID: {s.student_id}</p>
-                          {!selectedClass && s.classes?.[0] && (
-                            <p className="text-xs text-coral truncate mt-0.5">{s.classes[0].class_name} {s.classes[0].section !== '-' ? `(${s.classes[0].section})` : ''}</p>
+                          {!selectedClass && s.classes && (
+                            <p className="text-xs text-coral truncate mt-0.5">{s.classes.class_name} {s.classes.section !== '-' ? `(${s.classes.section})` : ''}</p>
                           )}
                         </div>
                         <ArrowRight className="w-5 h-5 text-mist group-hover:text-coral transition-colors" />

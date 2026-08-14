@@ -35,7 +35,7 @@ const EXAM_COLORS: Record<string, string> = {
 
 export default function ResultsClient({ marksheets: initial, modRequests: initialModReqs = [] }: Props) {
   const [sheets, setSheets]         = useState<StudentMarksheet[]>(initial)
-  const [modReqs, setModReqs]       = useState<any[]>(initialModReqs)
+  const [modReqs, setModReqs]       = useState<ModificationRequest[]>(initialModReqs)
   const [activeModal, setActiveModal] = useState<StudentMarksheet | null>(null)
   const [expanded, setExpanded]     = useState<Set<string>>(new Set())
   const [search, setSearch]         = useState('')
@@ -174,15 +174,15 @@ export default function ResultsClient({ marksheets: initial, modRequests: initia
 
               modReqs.forEach((req: ModificationRequest) => {
                 const type = req.delete_request ? 'delete' : 'edit'
-                const key = `${req.students?.[0]?.student_id}_${req.exam_type}_${type}`
+                const key = `${req.students?.student_id}_${req.exam_type}_${type}`
                 
                 if (!groupedMods.has(key)) {
                   groupedMods.set(key, {
                     type,
-                    studentName: req.students?.[0]?.profiles?.[0]?.full_name || 'Unknown',
-                    studentId: req.students?.[0]?.student_id || 'Unknown',
-                    className: req.classes?.[0]?.class_name || '',
-                    section: req.classes?.[0]?.section || '',
+                    studentName: req.students?.profiles?.full_name || 'Unknown',
+                    studentId: req.students?.student_id || 'Unknown',
+                    className: req.classes?.class_name || '',
+                    section: req.classes?.section || '',
                     examType: req.exam_type,
                     requests: []
                   })

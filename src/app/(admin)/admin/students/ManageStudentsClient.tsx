@@ -15,6 +15,8 @@ export interface StudentRecord {
   student_id: string
   profile_id: string
   father_name: string | null
+  mother_name: string | null
+  class_id: string
   profiles: {
     full_name: string | null
     profile_photo_url: string | null
@@ -47,7 +49,7 @@ export default function ManageStudentsClient({ students: initialStudents, classe
   const [addSuccess, setAddSuccess] = useState('')
 
   const [isEditModalOpen, setIsEditModalOpen] = useState(false)
-  const [editingStudent, setEditingStudent] = useState<any>(null)
+  const [editingStudent, setEditingStudent] = useState<StudentRecord | null>(null)
   const [editDob, setEditDob] = useState('')
   const [editError, setEditError] = useState('')
   const [editSuccess, setEditSuccess] = useState('')
@@ -436,11 +438,11 @@ export default function ManageStudentsClient({ students: initialStudents, classe
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                     <div className="space-y-2">
                       <label className="text-xs font-semibold text-mist uppercase tracking-wider">Full Name</label>
-                      <input required type="text" name="fullName" defaultValue={editingStudent.profiles?.full_name} className="w-full input-glass rounded-xl px-4 py-3 text-sm text-parchment focus:outline-none focus:border-coral" />
+                      <input required type="text" name="fullName" defaultValue={editingStudent.profiles?.full_name || ''} className="w-full input-glass rounded-xl px-4 py-3 text-sm text-parchment focus:outline-none focus:border-coral" />
                     </div>
                     <div className="space-y-2">
                       <label className="text-xs font-semibold text-mist uppercase tracking-wider">Student ID / Roll No</label>
-                      <input required type="text" name="studentId" defaultValue={editingStudent.student_id} className="w-full input-glass rounded-xl px-4 py-3 text-sm text-parchment focus:outline-none focus:border-coral" />
+                      <input required type="text" name="studentId" defaultValue={editingStudent.student_id || ''} className="w-full input-glass rounded-xl px-4 py-3 text-sm text-parchment focus:outline-none focus:border-coral" />
                     </div>
                     <div className="space-y-2">
                       <label className="text-xs font-semibold text-mist uppercase tracking-wider">Class</label>
@@ -463,19 +465,19 @@ export default function ManageStudentsClient({ students: initialStudents, classe
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                     <div className="space-y-2">
                       <label className="text-xs font-semibold text-mist uppercase tracking-wider">Father's Name</label>
-                      <input type="text" name="fatherName" defaultValue={editingStudent.father_name} className="w-full input-glass rounded-xl px-4 py-3 text-sm text-parchment focus:outline-none focus:border-coral" />
+                      <input type="text" name="fatherName" defaultValue={editingStudent.father_name || ''} className="w-full input-glass rounded-xl px-4 py-3 text-sm text-parchment focus:outline-none focus:border-coral" />
                     </div>
                     <div className="space-y-2">
                       <label className="text-xs font-semibold text-mist uppercase tracking-wider">Mother's Name</label>
-                      <input type="text" name="motherName" defaultValue={editingStudent.mother_name} className="w-full input-glass rounded-xl px-4 py-3 text-sm text-parchment focus:outline-none focus:border-coral" />
+                      <input type="text" name="motherName" defaultValue={editingStudent.mother_name || ''} className="w-full input-glass rounded-xl px-4 py-3 text-sm text-parchment focus:outline-none focus:border-coral" />
                     </div>
                     <div className="space-y-2">
                       <label className="text-xs font-semibold text-mist uppercase tracking-wider">Contact Number</label>
-                      <input type="tel" name="phone" defaultValue={editingStudent.profiles?.mobile} className="w-full input-glass rounded-xl px-4 py-3 text-sm text-parchment focus:outline-none focus:border-coral" />
+                      <input type="tel" name="phone" defaultValue={editingStudent.profiles?.mobile || ''} className="w-full input-glass rounded-xl px-4 py-3 text-sm text-parchment focus:outline-none focus:border-coral" />
                     </div>
                     <div className="space-y-2">
                       <label className="text-xs font-semibold text-mist uppercase tracking-wider">Address</label>
-                      <input type="text" name="address" defaultValue={editingStudent.profiles?.address} className="w-full input-glass rounded-xl px-4 py-3 text-sm text-parchment focus:outline-none focus:border-coral" />
+                      <input type="text" name="address" defaultValue={editingStudent.profiles?.address || ''} className="w-full input-glass rounded-xl px-4 py-3 text-sm text-parchment focus:outline-none focus:border-coral" />
                     </div>
                   </div>
                 </div>

@@ -72,7 +72,27 @@ export async function deleteClass(classId: string) {
   return { success: true }
 }
 
-export async function getStudentsByClass(classId?: string) {
+export interface StudentViewRecord {
+  id: string
+  student_id: string
+  class_id: string
+  father_name: string | null
+  mother_name: string | null
+  profiles: {
+    id: string
+    full_name: string | null
+    profile_photo_url: string | null
+    mobile: string | null
+    dob: string | null
+    address: string | null
+  } | null
+  classes: {
+    class_name: string
+    section: string
+  } | null
+}
+
+export async function getStudentsByClass(classId?: string): Promise<{ data: StudentViewRecord[] | null, error: string | null }> {
   const auth = await requireAuth()
   if (!auth.ok) return { data: null, error: auth.error }
   if (auth.profile.role !== 'admin' && auth.profile.role !== 'teacher') {
@@ -95,7 +115,8 @@ export async function getStudentsByClass(classId?: string) {
         full_name,
         profile_photo_url,
         mobile,
-        dob
+        dob,
+        address
       )
     `)
     .order('created_at', { ascending: false })
@@ -107,7 +128,32 @@ export async function getStudentsByClass(classId?: string) {
   const { data, error } = await query
 
   if (error) return { data: null, error: error.message }
-  return { data, error: null }
+  
+  const mappedData: StudentViewRecord[] = (data || []).map(s => {
+    const p = Array.isArray(s.profiles) ? s.profiles[0] : s.profiles;
+    const c = Array.isArray(s.classes) ? s.classes[0] : s.classes;
+    return {
+      id: s.id,
+      student_id: s.student_id,
+      class_id: s.class_id,
+      father_name: s.father_name,
+      mother_name: s.mother_name,
+      profiles: p ? {
+        id: p.id,
+        full_name: p.full_name,
+        profile_photo_url: p.profile_photo_url,
+        mobile: p.mobile,
+        dob: p.dob,
+        address: p.address
+      } : null,
+      classes: c ? {
+        class_name: c.class_name,
+        section: c.section
+      } : null
+    }
+  });
+
+  return { data: mappedData, error: null }
 }
 
 export async function getAdminClassAttendance(classId: string | undefined, date: string) {
