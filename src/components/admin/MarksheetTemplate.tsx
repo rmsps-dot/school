@@ -114,36 +114,51 @@ export default function MarksheetTemplate({ sheet, approvedAt, printId = 'marksh
         MARK SHEET — {examLabel.toUpperCase()}
       </div>
 
-      {/* ═══ STUDENT DETAILS GRID ═══ */}
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0', border: '1px solid #555', marginBottom: '16px' }}>
-        {[
-          ['Student Name',      sheet.studentName],
-          ['Roll No. / ID',     sheet.studentCode],
-          ["Father's Name",     sheet.fatherName ?? '—'],
-          ["Mother's Name",     sheet.motherName ?? '—'],
-          ['Date of Birth',     fmtDate(sheet.dob)],
-          ['Class & Section',   `${sheet.className} — Section ${sheet.section}`],
-          ['Academic Year',     new Date().getFullYear() + '–' + (new Date().getFullYear() + 1)],
-          ['Exam Name',         examLabel],
-        ].map(([label, value], i) => (
-          <div
-            key={label}
-            style={{
-              padding:      '7px 12px',
-              borderBottom: i < 6 ? '1px solid #bbb' : 'none',
-              borderRight:  i % 2 === 0 ? '1px solid #bbb' : 'none',
-              background:   i % 2 === 0 && Math.floor(i / 2) % 2 === 0 ? '#fafafa' : '#fff',
-            }}
-          >
-            <span style={{ fontWeight: '700', fontSize: '11px', color: '#555', display: 'block' }}>
-              {label}
-            </span>
-            <span style={{ fontWeight: '600', fontSize: '13px' }}>
-              {value}
-            </span>
-          </div>
-        ))}
-      </div>
+      {/* ═══ STUDENT DETAILS TABLE ═══ */}
+      <table style={{ width: '100%', borderCollapse: 'collapse', border: '1px solid #555', marginBottom: '16px' }}>
+        <tbody>
+          {[
+            [
+              ['Student Name', sheet.studentName],
+              ['Roll No. / ID', sheet.studentCode]
+            ],
+            [
+              ["Father's Name", sheet.fatherName ?? '—'],
+              ["Mother's Name", sheet.motherName ?? '—']
+            ],
+            [
+              ['Date of Birth', fmtDate(sheet.dob)],
+              ['Class & Section', `${sheet.className} — Section ${sheet.section}`]
+            ],
+            [
+              ['Academic Year', new Date().getFullYear() + '–' + (new Date().getFullYear() + 1)],
+              ['Exam Name', examLabel]
+            ]
+          ].map(([leftItem, rightItem], rowIndex) => (
+            <tr key={rowIndex}>
+              <td style={{
+                padding: '7px 12px',
+                borderBottom: rowIndex < 3 ? '1px solid #bbb' : 'none',
+                borderRight: '1px solid #bbb',
+                width: '50%',
+                background: rowIndex % 2 === 0 ? '#fafafa' : '#fff'
+              }}>
+                <span style={{ fontWeight: '700', fontSize: '11px', color: '#555', display: 'block' }}>{leftItem[0]}</span>
+                <span style={{ fontWeight: '600', fontSize: '13px' }}>{leftItem[1]}</span>
+              </td>
+              <td style={{
+                padding: '7px 12px',
+                borderBottom: rowIndex < 3 ? '1px solid #bbb' : 'none',
+                width: '50%',
+                background: '#fff'
+              }}>
+                <span style={{ fontWeight: '700', fontSize: '11px', color: '#555', display: 'block' }}>{rightItem[0]}</span>
+                <span style={{ fontWeight: '600', fontSize: '13px' }}>{rightItem[1]}</span>
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
 
       {/* ═══ MARKS TABLE ═══ */}
       <table style={{ width: '100%', borderCollapse: 'collapse', marginBottom: '16px', fontSize: '12px' }}>
