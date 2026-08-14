@@ -123,7 +123,7 @@ export async function getContactsForTeacher(tab: string, classId?: string): Prom
       const studentUuids = students.map(s => s.id)
       
       // Find parents linked to these students
-      const { data: parentLinks, error: parentErr } = await client
+      const { data: parentLinks, error: parentErr } = await supabaseAdmin
         .from('parent_students')
         .select('parent_id, student_id')
         .in('student_id', studentUuids)
@@ -134,7 +134,7 @@ export async function getContactsForTeacher(tab: string, classId?: string): Prom
       const parentIds = [...new Set(parentLinks.map(p => p.parent_id))]
       
       // Fetch parent profiles
-      const { data: parents, error: profileErr } = await client
+      const { data: parents, error: profileErr } = await supabaseAdmin
         .from('parents')
         .select('id, profile_id, profiles!parents_profile_id_fkey(full_name, role)')
         .in('id', parentIds)
@@ -149,7 +149,7 @@ export async function getContactsForTeacher(tab: string, classId?: string): Prom
           // Find which students this parent is linked to in this class
           const linkedStudentIds = parentLinks.filter(pl => pl.parent_id === parent.id).map(pl => pl.student_id)
           const linkedStudentNames = students
-            .filter(s => linkedStudentIds.includes(s.student_id))
+            .filter(s => linkedStudentIds.includes(s.id))
             .map(s => {
               const sprof = Array.isArray(s.profiles) ? s.profiles[0] : s.profiles
               return sprof?.full_name || 'Unknown'
