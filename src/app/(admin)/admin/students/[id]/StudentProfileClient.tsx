@@ -56,7 +56,7 @@ export default function StudentProfileClient({ data }: StudentProfileProps) {
 
   const cls = Array.isArray(student.classes) ? student.classes[0] : student.classes
 
-  const tabs: { id: TabType; label: string; icon: any }[] = [
+  const tabs: { id: TabType; label: string; icon: React.ElementType }[] = [
     { id: 'details',    label: 'Details',     icon: UserCircle },
     { id: 'fees',       label: 'Fees',         icon: CreditCard },
     { id: 'progress',   label: 'Progress',     icon: BookOpen },

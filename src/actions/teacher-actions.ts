@@ -100,8 +100,11 @@ export async function getTeacherProfile() {
     }
 
     return { data: teacherProfile, error: null }
-  } catch (err: any) {
-    return { data: null, error: err.message }
+  } catch (err: unknown) {
+    if (err instanceof Error) {
+      return { data: null, error: err.message }
+    }
+    return { data: null, error: 'Failed to fetch teacher profile' }
   }
 }
 

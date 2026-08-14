@@ -243,8 +243,12 @@ export default function LoginPage() {
 
       router.push(ROLE_ROUTES[selectedRole]);
       
-    } catch (err: any) {
-      setError(err.message || "Invalid login credentials.");
+    } catch (err: unknown) {
+      if (err instanceof Error) {
+        setError(err.message || "Invalid login credentials.");
+      } else {
+        setError("Invalid login credentials.");
+      }
       setLoading(false);
     }
   };

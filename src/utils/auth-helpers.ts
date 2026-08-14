@@ -26,9 +26,12 @@ export async function requireAuth(): Promise<AuthResult> {
     if (!profile) redirect('/login')
 
     return { ok: true, profile }
-  } catch (err: any) {
-    if (err.message === 'NEXT_REDIRECT') throw err;
-    return { ok: false, error: err.message || 'Authentication failed' }
+  } catch (err: unknown) {
+    if (err instanceof Error) {
+      if (err.message === 'NEXT_REDIRECT') throw err;
+      return { ok: false, error: err.message || 'Authentication failed' }
+    }
+    return { ok: false, error: 'Authentication failed' }
   }
 }
 

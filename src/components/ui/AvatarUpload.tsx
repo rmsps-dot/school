@@ -107,7 +107,7 @@ export default function AvatarUpload({ currentPhotoUrl, onUploadSuccess, userId,
   // Cropper State
   const [crop, setCrop] = useState({ x: 0, y: 0 });
   const [zoom, setZoom] = useState(1);
-  const [croppedAreaPixels, setCroppedAreaPixels] = useState<any>(null);
+  const [croppedAreaPixels, setCroppedAreaPixels] = useState<{width: number, height: number, x: number, y: number} | null>(null);
   const [mounted, setMounted] = useState(false);
   const [imageLoadError, setImageLoadError] = useState(false);
 
@@ -121,7 +121,7 @@ export default function AvatarUpload({ currentPhotoUrl, onUploadSuccess, userId,
 
   const [error, setError] = useState<string | null>(null);
 
-  const onCropComplete = useCallback((croppedArea: any, croppedAreaPixels: any) => {
+  const onCropComplete = useCallback((croppedArea: {width: number, height: number, x: number, y: number}, croppedAreaPixels: {width: number, height: number, x: number, y: number}) => {
     setCroppedAreaPixels(croppedAreaPixels);
   }, []);
 
@@ -173,8 +173,12 @@ export default function AvatarUpload({ currentPhotoUrl, onUploadSuccess, userId,
       setImageSrc(null);
       if (fileInputRef.current) fileInputRef.current.value = '';
 
-    } catch (error: any) {
-      setError(error.message || "Failed to update profile photo");
+    } catch (error: unknown) {
+      if (error instanceof Error) {
+        setError(error.message || "Failed to update profile photo");
+      } else {
+        setError("Failed to update profile photo");
+      }
     } finally {
       setIsUploading(false);
     }

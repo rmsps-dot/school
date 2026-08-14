@@ -42,9 +42,9 @@ export async function deleteConversation(otherUserId: string): Promise<{ success
 
     if (error) throw error
     return { success: true }
-  } catch (err: any) {
+  } catch (err: unknown) {
     console.error('deleteConversation error:', err)
-    return { success: false, error: err.message || 'Failed to delete conversation' }
+    return { success: false, error: err instanceof Error ? err.message : 'Failed to delete conversation' }
   }
 }
 
@@ -170,8 +170,11 @@ export async function getContactsForTeacher(tab: string, classId?: string): Prom
     }
 
     return { data: [] }
-  } catch (err: any) {
-    return { data: [], error: err?.message || 'Unknown error' }
+  } catch (err: unknown) {
+    if (err instanceof Error) {
+      return { data: [], error: err.message }
+    }
+    return { data: [], error: 'Unknown error' }
   }
 }
 

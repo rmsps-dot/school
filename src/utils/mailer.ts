@@ -59,8 +59,11 @@ export async function sendParentCredentials(
   try {
     await transporter.sendMail(mailOptions);
     return { success: true };
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Error sending email:', error);
-    return { success: false, error: error.message };
+    if (error instanceof Error) {
+      return { success: false, error: error.message };
+    }
+    return { success: false, error: 'Failed to send email' };
   }
 }

@@ -12,29 +12,33 @@ export const POSTGRES_ERROR_CODES: Record<string, string> = {
   '22P02': 'Data Error: Invalid text representation. Ensure numbers and UUIDs are formatted correctly.',
 }
 
-export function parseError(err: any): string {
+export function parseError(err: unknown): string {
   if (typeof err === 'string') return err
-  if (err?.code && POSTGRES_ERROR_CODES[err.code]) {
-    return POSTGRES_ERROR_CODES[err.code]
-  }
-  if (err?.message) {
-    // Catch common Supabase JS RLS block messages which sometimes hide behind generic errors
-    if (err.message.includes('Row Level Security')) return POSTGRES_ERROR_CODES['PGRST116']
-    return err.message
+  if (typeof err === 'object' && err !== null) {
+    const errorObj = err as { code?: string, message?: string, stack?: string };
+    if (errorObj.code && POSTGRES_ERROR_CODES[errorObj.code]) {
+      return POSTGRES_ERROR_CODES[errorObj.code]
+    }
+    if (errorObj.message) {
+      if (errorObj.message.includes('Row Level Security')) return POSTGRES_ERROR_CODES['PGRST116']
+      return errorObj.message
+    }
   }
   return 'An unknown internal error occurred.'
 }
 
-export async function logErrorToSystem(err: any, context: string = 'Unknown Context') {
+export async function logErrorToSystem(err: unknown, context: string = 'Unknown Context') {
   const timestamp = new Date().toISOString()
   const humanReadableMessage = parseError(err)
+  
+  const errorObj = (typeof err === 'object' && err !== null) ? err as { code?: string, stack?: string } : {};
   
   const logData = {
     timestamp,
     context,
     userMessage: humanReadableMessage,
     rawError: err,
-    stack: err?.stack || 'No stack trace available'
+    stack: errorObj.stack || 'No stack trace available'
   }
 
   // 1. Log beautifully to Terminal
@@ -42,7 +46,7 @@ export async function logErrorToSystem(err: any, context: string = 'Unknown Cont
   console.error(`[TIME]:    ${timestamp}`)
   console.error(`[CONTEXT]: ${context}`)
   console.error(`[MESSAGE]: ${humanReadableMessage}`)
-  if (err?.code) console.error(`[DB CODE]: ${err.code}`)
+  if (errorObj.code) console.error(`[DB CODE]: ${errorObj.code}`)
   console.error('==================================================================\n')
 
   // 2. Append to physical log file for the AI/Developer to inspect
@@ -51,11 +55,11 @@ export async function logErrorToSystem(err: any, context: string = 'Unknown Cont
  * Higher-Order Function wrapper for Server Actions.
  * Catches all errors, logs them explicitly, and returns a standard { error: string } object for the UI.
  */
-export function withErrorDetector<T extends (...args: any[]) => Promise<any>>(
+export function withErrorDetector<T extends (...args: never[]) => Promise<unknown>>(
   actionName: string,
   fn: T
 ): (...args: Parameters<T>) => Promise<Awaited<ReturnType<T>> | { error: string }> {
-  return async (...args: Parameters<T>) => {
+  return async (...args: Parameters<T>): Promise<Awaited<ReturnType<T>> | { error: string }> => {
     try {
       const result = await fn(...args)
       
@@ -66,8 +70,8 @@ export function withErrorDetector<T extends (...args: any[]) => Promise<any>>(
         return { ...result, error: parseError(result.error) }
       }
       
-      return result
-    } catch (err: any) {
+      return result as Awaited<ReturnType<T>>
+    } catch (err: unknown) {
       await logErrorToSystem(err, `Server Action Exception: ${actionName}`)
       return { error: parseError(err) }
     }

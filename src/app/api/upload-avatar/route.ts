@@ -76,8 +76,11 @@ export async function POST(request: Request) {
     // 6. Return Success
     return NextResponse.json({ url: liveUrl }, { status: 200 });
 
-  } catch (error: any) {
-    console.error('Avatar Upload Exception:', error);
-    return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
+  } catch (error: unknown) {
+    console.error('Avatar upload error:', error);
+    if (error instanceof Error) {
+      return NextResponse.json({ error: error.message }, { status: 500 });
+    }
+    return NextResponse.json({ error: 'Failed to upload avatar' }, { status: 500 });
   }
 }

@@ -54,7 +54,7 @@ export default function TeacherDetailClient({ teacher }: Props) {
     })
   }
 
-  const tabs: { id: TabType; label: string; icon: any }[] = [
+  const tabs: { id: TabType; label: string; icon: React.ElementType }[] = [
     { id: 'overview',    label: 'Overview',       icon: BookOpen },
     { id: 'attendance',  label: 'Attendance Log',  icon: Clock },
     { id: 'payments',    label: 'Payments',         icon: IndianRupee },

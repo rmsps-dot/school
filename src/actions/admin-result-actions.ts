@@ -342,7 +342,7 @@ export interface ModificationRequestView {
   subject: string;
   marks_obtained: number;
   total_marks: number;
-  edit_request: any;
+  edit_request: { marks_obtained: number; total_marks: number; reason: string } | null;
   delete_request: boolean | null;
   students: {
     student_id: string;
@@ -391,7 +391,7 @@ export async function fetchModificationRequests(): Promise<{ data: ModificationR
     const merged = [...(editData || []), ...(deleteData || [])]
     const uniqueMap = new Map(merged.map(item => [item.id, item]))
     
-    const mappedData: ModificationRequestView[] = Array.from(uniqueMap.values()).map((req: any) => {
+    const mappedData: ModificationRequestView[] = Array.from(uniqueMap.values()).map((req) => {
       const student = Array.isArray(req.students) ? req.students[0] : req.students;
       const profile = Array.isArray(student?.profiles) ? student.profiles[0] : student?.profiles;
       const cls = Array.isArray(req.classes) ? req.classes[0] : req.classes;

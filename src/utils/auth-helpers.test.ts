@@ -29,7 +29,7 @@ describe('Auth Helpers RBAC', () => {
     mockSelect.mockReturnValue({ eq: mockEq })
     mockEq.mockReturnValue({ single: mockSingle, eq: mockEq })
 
-    ;(createClient as any).mockResolvedValue(mockSupabase)
+    ;(createClient as unknown as ReturnType<typeof vi.fn>).mockResolvedValue(mockSupabase)
   })
 
   it('requireAdmin allows admin and blocks others', async () => {
