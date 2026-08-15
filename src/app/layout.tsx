@@ -33,6 +33,9 @@ export const metadata: Metadata = {
   description:
     "Residential Maa Saraswati Public School (RMSPS) is a premier BSEB-affiliated residential institution in Bihar, delivering holistic education and leadership.",
   keywords: "RMSPS, Maa Saraswati, school, residential school, education, admission, BSEB Bihar, RMS Public School",
+  verification: {
+    google: "hlRuq76hobi9HME8SpSlOu0ybtEOYmTxMwin9y5c1qU",
+  },
   openGraph: {
     title: "RMSPS — Residential Maa Saraswati Public School",
     description:
