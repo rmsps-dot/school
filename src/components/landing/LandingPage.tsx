@@ -600,7 +600,7 @@ export default function LandingPage({ notices = [] }: {
               </div>
             </div>
             <div>
-              <h4 className="font-display font-bold text-parchment mb-6 text-sm uppercase tracking-widest">Portals</h4>
+              <h3 className="font-display font-bold text-parchment mb-6 text-sm uppercase tracking-widest">Portals</h3>
               <ul className="space-y-3">
                 {[
                   ["Admin Portal", "/login?role=admin"],
@@ -613,7 +613,7 @@ export default function LandingPage({ notices = [] }: {
               </ul>
             </div>
             <div>
-              <h4 className="font-display font-bold text-parchment mb-6 text-sm uppercase tracking-widest">School</h4>
+              <h3 className="font-display font-bold text-parchment mb-6 text-sm uppercase tracking-widest">School</h3>
               <ul className="space-y-3">
                 {[["Admissions", "/register"], ["Academic Info", "#academics"], ["Notice Board", "#notices"], ["Contact Us", "#admissions"]].map(([label, href]) => (
                   <li key={label}><a href={href} className="text-mist text-sm hover:text-parchment flex items-center gap-2 transition-colors group"><ChevronRight className="w-3 h-3 group-hover:translate-x-1 transition-transform" />{label}</a></li>

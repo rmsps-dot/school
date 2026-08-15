@@ -23,7 +23,7 @@ export const ParallaxScrollFeatureSection = () => {
             description: "Hands-on practical learning equipped with modern physics, chemistry, biology equipment, and STEM robotics kits for experiential education.",
             imageUrl: 'https://images.unsplash.com/photo-1509062522246-3755977927d7?q=80&w=800',
             reverse: true,
-            color: '#3E5C76'
+            color: '#7EA8C9'
         },
         {
             id: 3,
