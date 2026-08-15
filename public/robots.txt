@@ -1,0 +1,9 @@
+User-agent: *
+Allow: /
+Disallow: /admin/
+Disallow: /teacher/
+Disallow: /student/
+Disallow: /parent/
+Disallow: /api/
+
+Sitemap: https://rmsps.vercel.app/sitemap.xml

@@ -35,7 +35,20 @@ export async function updateSession(request: NextRequest) {
   const pathname = request.nextUrl.pathname
 
   // Public routes that should not be protected
-  const publicRoutes = ['/', '/login', '/register', '/forgot-password', '/reset-password', '/manifest.webmanifest']
+  const publicRoutes = [
+    '/',
+    '/login',
+    '/register',
+    '/forgot-password',
+    '/reset-password',
+    '/manifest.webmanifest',
+    '/sitemap.xml',
+    '/robots.txt',
+    '/icon.png',
+    '/apple-icon.png',
+    '/opengraph-image',
+    '/twitter-image',
+  ]
   
   // Exclude the cron route exactly — do not use startsWith to avoid accidentally
   // bypassing auth for any future /api/cron-* routes.
@@ -60,8 +73,7 @@ export async function updateSession(request: NextRequest) {
 
   // Prevent browser from caching protected pages
   // This stops the back-button-after-logout bypass
-  const isPublicPath = ['/', '/login', '/register', '/forgot-password', '/reset-password', '/manifest.webmanifest']
-    .some(p => pathname === p || pathname.startsWith(p + '/'))
+  const isPublicPath = publicRoutes.some(p => pathname === p || pathname.startsWith(p + '/'))
 
   if (!isPublicPath) {
     supabaseResponse.headers.set('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate')
