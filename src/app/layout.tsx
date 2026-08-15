@@ -46,6 +46,31 @@ export const metadata: Metadata = {
   },
 };
 
+const jsonLd = {
+  "@context": "https://schema.org",
+  "@type": "School",
+  "name": "Residential Maa Saraswati Public School",
+  "alternateName": "RMSPS",
+  "url": "https://rmsps.vercel.app",
+  "logo": "https://rmsps.vercel.app/icon-192.png",
+  "image": "https://rmsps.vercel.app/opengraph-image",
+  "description":
+    "Residential Maa Saraswati Public School (RMSPS) is a premier BSEB-affiliated residential institution in Bihar, delivering holistic education and leadership.",
+  "address": {
+    "@type": "PostalAddress",
+    "streetAddress": "Kating Chowk, Maheshpur road",
+    "addressLocality": "Pipra",
+    "addressRegion": "Bihar",
+    "postalCode": "852109",
+    "addressCountry": "IN",
+  },
+  "telephone": "+919546536279",
+  "email": "srzsurazzrajput@gmail.com",
+  "sameAs": [
+    "https://rmsps.vercel.app",
+  ],
+};
+
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -53,6 +78,12 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" className={`${syne.variable} ${dmSans.variable} ${jetbrainsMono.variable} h-full`}>
+      <head>
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+        />
+      </head>
       <body className="min-h-full flex flex-col antialiased font-body">{children}</body>
     </html>
   );
