@@ -1,13 +1,14 @@
 'use client'
 
 import { useState, useTransition } from 'react'
-import Image from 'next/image'
+import { useRouter } from 'next/navigation'
 import { motion, AnimatePresence } from 'framer-motion'
-import { ArrowLeft, UserCircle, Phone, Calendar, MapPin, IndianRupee, CheckCircle2, AlertCircle, Loader2, BookOpen, Clock, FileText } from 'lucide-react'
+import { ArrowLeft, Phone, Calendar, MapPin, IndianRupee, CheckCircle2, AlertCircle, Loader2, BookOpen, Clock, FileText } from 'lucide-react'
 import Link from 'next/link'
 import { recordTeacherPayment } from '@/actions/admin-details-actions'
 import { getTeacherDetails } from '@/actions/user-management-actions'
 import DateInput from '@/components/shared/DateInput'
+import AvatarUpload from '@/components/ui/AvatarUpload'
 
 export type TeacherDetailData = Exclude<Awaited<ReturnType<typeof getTeacherDetails>>['data'], null>
 
@@ -18,6 +19,7 @@ interface Props {
 }
 
 export default function TeacherDetailClient({ teacher }: Props) {
+  const router = useRouter()
   const [activeTab, setActiveTab] = useState<'overview' | 'attendance' | 'payments'>('overview')
   const [isPending, startTransition] = useTransition()
   const [errorMsg, setErrorMsg] = useState('')
@@ -80,14 +82,12 @@ export default function TeacherDetailClient({ teacher }: Props) {
 
         <div className="flex flex-col md:flex-row gap-8 items-center md:items-start relative z-10">
           <div className="shrink-0">
-            {profile.avatar_url ? (
-              <Image src={profile.avatar_url} alt="Profile" width={128} height={128} className="rounded-2xl border-4 border-ink object-cover" />
-            ) : (
-              <div className="w-32 h-32 rounded-2xl flex items-center justify-center border border-hairline shadow-xl"
-                style={{ background: 'rgba(62,92,118,0.12)' }}>
-                <UserCircle className="w-20 h-20 text-veena-blue/60" />
-              </div>
-            )}
+            <AvatarUpload 
+              currentPhotoUrl={profile.avatar_url} 
+              userId={teacher.profile_id}
+              size="xl"
+              onUploadSuccess={() => router.refresh()}
+            />
           </div>
 
           <div className="flex-1 text-center md:text-left space-y-4">
