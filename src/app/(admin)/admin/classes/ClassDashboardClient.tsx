@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useTransition, useEffect } from 'react'
+import { flushSync } from 'react-dom'
 import Image from 'next/image'
 import { motion, AnimatePresence } from 'framer-motion'
 import { BookOpen, Users, CalendarDays, Loader2, Save, ArrowRight, UserCircle, Plus, Trash2, Edit, AlertCircle, FileSpreadsheet, ListChecks, CheckSquare, ChevronDown, X } from 'lucide-react'
@@ -54,41 +55,24 @@ export default function ClassDashboardClient({ classes: initialClasses }: ClassD
   const [printSheet, setPrintSheet] = useState<GroupedResult | null>(null)
   const [previewSheet, setPreviewSheet] = useState<GroupedResult | null>(null)
 
-  useEffect(() => {
-    if (!printSheet) return
-
-    let cleanedUp = false
-    const cleanup = () => {
-      if (cleanedUp) return
-      cleanedUp = true
-      setPrintSheet(null)
-    }
+  function handleGeneratePDF(group: GroupedResult) {
+    flushSync(() => {
+      setPrintSheet(group)
+    })
 
     const handleAfterPrint = () => {
-      cleanup()
+      setPrintSheet(null)
+      window.removeEventListener('afterprint', handleAfterPrint)
     }
-
     window.addEventListener('afterprint', handleAfterPrint)
 
-    const timer = setTimeout(() => {
-      try {
-        window.print()
-      } catch (err) {
-        console.error('Print failed:', err)
-        cleanup()
-      }
-    }, 250)
-
-    const fallbackTimer = setTimeout(() => {
-      cleanup()
-    }, 10000)
-
-    return () => {
-      window.removeEventListener('afterprint', handleAfterPrint)
-      clearTimeout(timer)
-      clearTimeout(fallbackTimer)
+    try {
+      window.print()
+    } catch (err) {
+      console.error('Print failed:', err)
+      setPrintSheet(null)
     }
-  }, [printSheet])
+  }
 
   const mapGroupToMarksheet = (group: GroupedResult): StudentMarksheet => {
     const totalObtained = group.totalObtained
@@ -695,7 +679,7 @@ export default function ClassDashboardClient({ classes: initialClasses }: ClassD
                                     <button 
                                       onClick={(e) => {
                                         e.stopPropagation()
-                                        setPrintSheet(group)
+                                        handleGeneratePDF(group)
                                       }}
                                       className="flex items-center gap-1.5 text-xs font-bold text-veena-blue hover:text-coral p-2 rounded-lg hover:bg-veena-blue/10 transition-colors"
                                       title="Download PDF"

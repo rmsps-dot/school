@@ -22,13 +22,15 @@ const EXAM_LABELS: Record<string, string> = {
 }
 
 function fmtDate(iso: string | null | undefined): string {
-  if (!iso) return '—'
+  if (!iso || iso === 'N/A' || iso === '—' || iso === 'Invalid Date') return '—'
   try {
-    return new Date(iso).toLocaleDateString('en-IN', {
+    const d = new Date(iso)
+    if (isNaN(d.getTime())) return '—'
+    return d.toLocaleDateString('en-IN', {
       day: '2-digit', month: 'long', year: 'numeric',
     })
   } catch {
-    return iso
+    return '—'
   }
 }
 

@@ -324,8 +324,11 @@ export async function getClassResults(classId?: string) {
       *,
       students (
         student_id,
-        profiles ( full_name )
-      )
+        father_name,
+        mother_name,
+        profiles ( full_name, dob, address )
+      ),
+      classes ( class_name, section )
     `)
     .order('created_at', { ascending: false })
 

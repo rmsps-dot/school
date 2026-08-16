@@ -1,6 +1,7 @@
 'use client'
 
-import { useState, useTransition, useEffect } from 'react'
+import { useState, useTransition } from 'react'
+import { flushSync } from 'react-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import { BookOpen, Users, CalendarDays, Loader2, Save, ArrowRight, UserCircle, Plus, Trash2, Edit, AlertCircle, FileSpreadsheet, ListChecks, CheckSquare, ChevronDown, FileText, CheckCircle2, X } from 'lucide-react'
 import React from 'react'
@@ -57,41 +58,24 @@ export default function ManageResultsClient({ initialResults }: Props) {
   const [printSheet, setPrintSheet] = useState<StudentMarksheet | null>(null)
   const [previewSheet, setPreviewSheet] = useState<StudentMarksheet | null>(null)
 
-  useEffect(() => {
-    if (!printSheet) return
-
-    let cleanedUp = false
-    const cleanup = () => {
-      if (cleanedUp) return
-      cleanedUp = true
-      setPrintSheet(null)
-    }
+  function handleGeneratePDF(sheet: StudentMarksheet) {
+    flushSync(() => {
+      setPrintSheet(sheet)
+    })
 
     const handleAfterPrint = () => {
-      cleanup()
+      setPrintSheet(null)
+      window.removeEventListener('afterprint', handleAfterPrint)
     }
-
     window.addEventListener('afterprint', handleAfterPrint)
 
-    const timer = setTimeout(() => {
-      try {
-        window.print()
-      } catch (err) {
-        console.error('Print failed:', err)
-        cleanup()
-      }
-    }, 250)
-
-    const fallbackTimer = setTimeout(() => {
-      cleanup()
-    }, 10000)
-
-    return () => {
-      window.removeEventListener('afterprint', handleAfterPrint)
-      clearTimeout(timer)
-      clearTimeout(fallbackTimer)
+    try {
+      window.print()
+    } catch (err) {
+      console.error('Print failed:', err)
+      setPrintSheet(null)
     }
-  }, [printSheet])
+  }
 
   const mapGroupToMarksheet = (group: { totalObtained: number, grandTotal: number, student_id: string, class_id: string, exam_type: Database['public']['Enums']['exam_type'], students: TeacherResultRecord['students'], classes: TeacherResultRecord['classes'], subjectsList: TeacherResultRecord[] }): StudentMarksheet => {
     const totalObtained = group.totalObtained
@@ -308,7 +292,7 @@ export default function ManageResultsClient({ initialResults }: Props) {
                             <button 
                               onClick={(e) => {
                                 e.stopPropagation()
-                                setPrintSheet(mapGroupToMarksheet(group))
+                                handleGeneratePDF(mapGroupToMarksheet(group))
                               }}
                               className="flex items-center gap-1.5 text-xs font-bold text-veena-blue hover:text-coral p-2 rounded-lg hover:bg-veena-blue/10 transition-colors"
                               title="Download PDF"

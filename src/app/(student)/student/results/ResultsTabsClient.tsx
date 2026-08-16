@@ -1,6 +1,7 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
+import { flushSync } from 'react-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import type { ApprovedResult, StudentProfile } from '@/actions/portal-actions'
 import { calcGrade } from '@/utils/helpers'
@@ -35,42 +36,26 @@ export default function ResultsTabsClient({ grouped, profile }: Props) {
   const [previewSheet, setPreviewSheet] = useState<StudentMarksheet | null>(null)
   const [printSheet, setPrintSheet] = useState<StudentMarksheet | null>(null)
 
-  useEffect(() => {
-    if (!printSheet) return
-
-    let cleanedUp = false
-    const cleanup = () => {
-      if (cleanedUp) return
-      cleanedUp = true
-      setPrintSheet(null)
-    }
+  function handleDownloadPDF() {
+    const sheet = buildMarksheet()
+    flushSync(() => {
+      setPrintSheet(sheet)
+    })
 
     const handleAfterPrint = () => {
-      cleanup()
+      setPrintSheet(null)
+      window.removeEventListener('afterprint', handleAfterPrint)
     }
-
     window.addEventListener('afterprint', handleAfterPrint)
 
-    const timer = setTimeout(() => {
-      try {
-        window.print()
-      } catch (err) {
-        console.error('Print failed:', err)
-        cleanup()
-      }
-    }, 250)
-
-    const fallbackTimer = setTimeout(() => {
-      cleanup()
-    }, 10000)
-
-    return () => {
-      window.removeEventListener('afterprint', handleAfterPrint)
-      clearTimeout(timer)
-      clearTimeout(fallbackTimer)
+    try {
+      window.print()
+    } catch (err) {
+      console.error('Print failed:', err)
+      setPrintSheet(null)
     }
-  }, [printSheet])
-  
+  }
+
   if (grouped.length === 0) return null
   
   const current = grouped[active]
@@ -149,7 +134,7 @@ export default function ResultsTabsClient({ grouped, profile }: Props) {
                 Preview
               </button>
               <button 
-                onClick={() => setPrintSheet(buildMarksheet())}
+                onClick={handleDownloadPDF}
                 className="flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold text-veena-blue bg-veena-blue/10 hover:bg-veena-blue/20 transition-colors border border-veena-blue/30"
               >
                 Download PDF

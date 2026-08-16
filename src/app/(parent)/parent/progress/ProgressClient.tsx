@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect, useTransition } from 'react'
+import { flushSync } from 'react-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
   ChevronDown, BookOpen, CalendarDays, Award, TrendingUp,
@@ -82,41 +83,26 @@ export default function ProgressClient({ children, defaultId }: Props) {
   const [printSheet, setPrintSheet] = useState<StudentMarksheet | null>(null)
   const selectedChild = children.find(c => c.studentRowId === selectedId)
 
-  useEffect(() => {
-    if (!printSheet) return
-
-    let cleanedUp = false
-    const cleanup = () => {
-      if (cleanedUp) return
-      cleanedUp = true
-      setPrintSheet(null)
-    }
+  function handleDownloadPDF(idx: number) {
+    const sheet = buildMarksheet(idx)
+    if (!sheet) return
+    flushSync(() => {
+      setPrintSheet(sheet)
+    })
 
     const handleAfterPrint = () => {
-      cleanup()
+      setPrintSheet(null)
+      window.removeEventListener('afterprint', handleAfterPrint)
     }
-
     window.addEventListener('afterprint', handleAfterPrint)
 
-    const timer = setTimeout(() => {
-      try {
-        window.print()
-      } catch (err) {
-        console.error('Print failed:', err)
-        cleanup()
-      }
-    }, 250)
-
-    const fallbackTimer = setTimeout(() => {
-      cleanup()
-    }, 10000)
-
-    return () => {
-      window.removeEventListener('afterprint', handleAfterPrint)
-      clearTimeout(timer)
-      clearTimeout(fallbackTimer)
+    try {
+      window.print()
+    } catch (err) {
+      console.error('Print failed:', err)
+      setPrintSheet(null)
     }
-  }, [printSheet])
+  }
 
   // Load data when child or tab changes
   useEffect(() => {
@@ -165,16 +151,16 @@ export default function ProgressClient({ children, defaultId }: Props) {
     // Parent portal currently doesn't fetch full student profiles for marksheet,
     // but we can piece it together.
     return {
-      studentRowId: selectedChild.studentRowId, // Fixed property name
+      studentRowId: selectedChild.studentRowId,
       studentCode: selectedChild.studentCode,
       studentName: selectedChild.fullName,
-      fatherName: 'Father', // We might not have this in childInfo, fallback
-      motherName: 'Mother', // Fallback
-      dob: 'N/A',
-      address: 'N/A',
-      classId: 'N/A', // Fixed property name
-      className: currentRows[0].class_name || selectedChild.className, // Fixed property access
-      section: currentRows[0].section || selectedChild.section, // Fixed property access
+      fatherName: selectedChild.fatherName ?? null,
+      motherName: selectedChild.motherName ?? null,
+      dob: selectedChild.dob ?? null,
+      address: selectedChild.address ?? null,
+      classId: 'N/A',
+      className: currentRows[0].class_name || selectedChild.className,
+      section: currentRows[0].section || selectedChild.section,
       examType: currentRows[0].exam_type,
       teacherName: 'School Admin',
       subjects: currentRows.map(r => ({
@@ -324,10 +310,7 @@ export default function ProgressClient({ children, defaultId }: Props) {
                       Preview Marksheet
                     </button>
                     <button 
-                      onClick={() => {
-                        const sheet = buildMarksheet(examTab)
-                        if (sheet) setPrintSheet(sheet)
-                      }}
+                      onClick={() => handleDownloadPDF(examTab)}
                       className="flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold text-gold bg-gold/10 hover:bg-gold/20 transition-colors border border-gold/30"
                     >
                       Download PDF

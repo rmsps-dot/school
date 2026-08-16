@@ -57,6 +57,10 @@ export interface ChildInfo {
   studentCode: string
   fullName: string
   profilePhotoUrl: string | null
+  fatherName: string | null
+  motherName: string | null
+  dob: string | null
+  address: string | null
   className: string
   section: string
   relation: string
@@ -223,7 +227,7 @@ export async function getParentChildren(): Promise<{ data: ChildInfo[]; error?: 
 
     const { data, error } = await supabase
       .from('parent_students')
-      .select('relation, students!inner(id, student_id, class_id, classes(class_name, section), profiles!inner(full_name, profile_photo_url))')
+      .select('relation, students!inner(id, student_id, class_id, father_name, mother_name, classes(class_name, section), profiles!inner(full_name, dob, address, profile_photo_url))')
       .eq('parent_id', parentRowId)
 
     if (error) return { data: [], error: error.message }
@@ -237,6 +241,10 @@ export async function getParentChildren(): Promise<{ data: ChildInfo[]; error?: 
         studentCode:  student.student_id,
         fullName:     prof?.full_name ?? 'Unknown',
         profilePhotoUrl: prof?.profile_photo_url ?? null,
+        fatherName:   student?.father_name ?? null,
+        motherName:   student?.mother_name ?? null,
+        dob:          prof?.dob ?? null,
+        address:      prof?.address ?? null,
         className:    cls?.class_name ?? '—',
         section:      cls?.section ?? '—',
         relation:     row.relation,

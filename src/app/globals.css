@@ -219,7 +219,14 @@ h1, h2, h3, h4, h5, h6, .font-display {
    - Reset body to clean white for sharp PDF output
 ─────────────────────────────────────────────────────────────── */
 .print-portal-wrapper {
-  display: none;
+  position: fixed;
+  left: -9999px;
+  top: 0;
+  width: 210mm;
+  visibility: hidden;
+  opacity: 0;
+  pointer-events: none;
+  z-index: -9999;
 }
 
 @media print {
@@ -236,10 +243,16 @@ h1, h2, h3, h4, h5, h6, .font-display {
 
   .print-portal-wrapper {
     display: block !important;
+    position: static !important;
+    left: 0 !important;
+    top: 0 !important;
     width: 100% !important;
+    visibility: visible !important;
+    opacity: 1 !important;
     background: #fff !important;
     margin: 0 !important;
     padding: 0 !important;
+    z-index: auto !important;
   }
 
   /* Reset page margins to prevent browser default headers/footers and extra blank pages */
