@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import {
   Search, Printer, User, BookOpen, Calendar, TrendingUp, Award,
   ChevronDown, ChevronUp, CheckCircle2, Eye,
@@ -64,6 +64,42 @@ export default function ManageResultsClient({ marksheets }: Props) {
     byClass.get(key)!.push(s)
   }
 
+  useEffect(() => {
+    if (!printSheet) return
+
+    let cleanedUp = false
+    const cleanup = () => {
+      if (cleanedUp) return
+      cleanedUp = true
+      setPrintSheet(null)
+    }
+
+    const handleAfterPrint = () => {
+      cleanup()
+    }
+
+    window.addEventListener('afterprint', handleAfterPrint)
+
+    const timer = setTimeout(() => {
+      try {
+        window.print()
+      } catch (err) {
+        console.error('Print failed:', err)
+        cleanup()
+      }
+    }, 250)
+
+    const fallbackTimer = setTimeout(() => {
+      cleanup()
+    }, 10000)
+
+    return () => {
+      window.removeEventListener('afterprint', handleAfterPrint)
+      clearTimeout(timer)
+      clearTimeout(fallbackTimer)
+    }
+  }, [printSheet])
+
   function toggleExpand(key: string) {
     setExpanded((prev) => {
       const next = new Set(prev)
@@ -74,12 +110,6 @@ export default function ManageResultsClient({ marksheets }: Props) {
 
   function handleGeneratePDF(sheet: typeof filtered[number]) {
     setPrintSheet(sheet)
-    // Wait for DOM to render the print area, then print
-    setTimeout(() => {
-      window.print()
-      // After print dialog closes, clear state
-      setTimeout(() => setPrintSheet(null), 500)
-    }, 150)
   }
 
   return (

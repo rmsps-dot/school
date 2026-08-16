@@ -101,8 +101,9 @@ export default function MarksheetModal({ sheet, onClose, onApproved, readOnly }:
             {/* White marksheet preview */}
             <div
               className="rounded-xl overflow-x-auto shadow-2xl border border-hairline"
+              style={{ WebkitOverflowScrolling: 'touch' }}
             >
-              <div>
+              <div className="w-max min-w-full flex justify-center">
                 <MarksheetTemplate sheet={sheet} approvedAt={sheet.approvedAt} />
               </div>
             </div>

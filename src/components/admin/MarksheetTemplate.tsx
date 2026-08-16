@@ -57,6 +57,8 @@ export default function MarksheetTemplate({ sheet, approvedAt, printId = 'marksh
         color:           '#000',
         background:      '#fff',
         padding:         '16px 24px',
+        width:           '100%',
+        minWidth:        '210mm',
         maxWidth:        '210mm',
         margin:          '0 auto',
         fontSize:        '12px',

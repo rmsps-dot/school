@@ -3,12 +3,27 @@
 import { useEffect, useState } from 'react'
 import { createPortal } from 'react-dom'
 
-export default function PrintPortal({ children }: { children: React.ReactNode }) {
+export default function PrintPortal({
+  children,
+  onReady,
+}: {
+  children: React.ReactNode
+  onReady?: () => void
+}) {
   const [mounted, setMounted] = useState(false)
 
   useEffect(() => {
     setMounted(true)
   }, [])
+
+  useEffect(() => {
+    if (mounted && onReady) {
+      const raf = requestAnimationFrame(() => {
+        onReady()
+      })
+      return () => cancelAnimationFrame(raf)
+    }
+  }, [mounted, onReady])
 
   if (!mounted || typeof document === 'undefined') return null
 
