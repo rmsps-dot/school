@@ -207,13 +207,13 @@ export async function saveAdminClassAttendance(date: string, records: { student_
     class_id: r.class_id,
     student_id: r.student_id,
     date,
-    status: r.status,
+    status: r.status as Database['public']['Enums']['attendance_status'],
     marked_by: user.id
   }))
 
   const { error } = await supabase
     .from('student_attendance')
-    .upsert(upserts, { onConflict: 'student_id, date' })
+    .upsert(upserts, { onConflict: 'student_id,date' })
 
   if (error) return { error: error.message }
   

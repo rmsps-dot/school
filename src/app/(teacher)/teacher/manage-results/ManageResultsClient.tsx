@@ -1,16 +1,12 @@
-'use client'
-
 import { useState, useTransition } from 'react'
-import { flushSync } from 'react-dom'
 import { motion, AnimatePresence } from 'framer-motion'
-import { BookOpen, Users, CalendarDays, Loader2, Save, ArrowRight, UserCircle, Plus, Trash2, Edit, AlertCircle, FileSpreadsheet, ListChecks, CheckSquare, ChevronDown, FileText, CheckCircle2, X } from 'lucide-react'
+import { BookOpen, Users, CalendarDays, Loader2, Save, ArrowRight, UserCircle, Plus, Trash2, Edit, AlertCircle, FileSpreadsheet, ListChecks, CheckSquare, ChevronDown, FileText, CheckCircle2, X, Download } from 'lucide-react'
 import React from 'react'
 import { updateTeacherResult, deleteTeacherResult } from '@/actions/manage-results-actions'
 import MarksheetModal from '@/components/admin/MarksheetModal'
-import MarksheetTemplate from '@/components/admin/MarksheetTemplate'
-import PrintPortal from '@/components/admin/PrintPortal'
 import type { StudentMarksheet } from '@/actions/admin-result-actions'
 import type { Database } from '@/types/supabase'
+import { downloadMarksheetPDF } from '@/utils/download-marksheet-pdf'
 
 export interface TeacherResultRecord {
   id: string
@@ -55,25 +51,18 @@ export default function ManageResultsClient({ initialResults }: Props) {
   const [editResult, setEditResult] = useState<TeacherResultRecord | null>(null)
   const [errorMsg, setErrorMsg] = useState('')
   const [expandedRows, setExpandedRows] = useState<Set<string>>(new Set())
-  const [printSheet, setPrintSheet] = useState<StudentMarksheet | null>(null)
+  const [downloadingKey, setDownloadingKey] = useState<string | null>(null)
   const [previewSheet, setPreviewSheet] = useState<StudentMarksheet | null>(null)
 
-  function handleGeneratePDF(sheet: StudentMarksheet) {
-    flushSync(() => {
-      setPrintSheet(sheet)
-    })
-
-    const handleAfterPrint = () => {
-      setPrintSheet(null)
-      window.removeEventListener('afterprint', handleAfterPrint)
-    }
-    window.addEventListener('afterprint', handleAfterPrint)
-
+  async function handleGeneratePDF(sheet: StudentMarksheet) {
+    const key = `${sheet.studentRowId}-${sheet.examType}`
+    setDownloadingKey(key)
     try {
-      window.print()
+      await downloadMarksheetPDF(sheet, sheet.approvedAt ?? new Date().toISOString())
     } catch (err) {
-      console.error('Print failed:', err)
-      setPrintSheet(null)
+      console.error('PDF Download failed:', err)
+    } finally {
+      setDownloadingKey(null)
     }
   }
 
@@ -294,10 +283,21 @@ export default function ManageResultsClient({ initialResults }: Props) {
                                 e.stopPropagation()
                                 handleGeneratePDF(mapGroupToMarksheet(group))
                               }}
-                              className="flex items-center gap-1.5 text-xs font-bold text-veena-blue hover:text-coral p-2 rounded-lg hover:bg-veena-blue/10 transition-colors"
+                              disabled={downloadingKey === `${group.student_id}-${group.exam_type}`}
+                              className="flex items-center gap-1.5 text-xs font-bold text-veena-blue hover:text-coral p-2 rounded-lg hover:bg-veena-blue/10 disabled:opacity-50 transition-colors"
                               title="Download PDF"
                             >
-                              Generate PDF
+                              {downloadingKey === `${group.student_id}-${group.exam_type}` ? (
+                                <>
+                                  <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                                  Downloading...
+                                </>
+                              ) : (
+                                <>
+                                  <Download className="w-3.5 h-3.5" />
+                                  Download PDF
+                                </>
+                              )}
                             </button>
                             {!hasMultiple && <div className="ml-2 pl-2 border-l border-hairline"><ActionButtons r={group.subjectsList[0]} /></div>}
                             {hasMultiple && (
@@ -421,13 +421,6 @@ export default function ManageResultsClient({ initialResults }: Props) {
           onClose={() => setPreviewSheet(null)}
           readOnly
         />
-      )}
-
-      {/* PRINT PORTAL */}
-      {printSheet && (
-        <PrintPortal>
-          <MarksheetTemplate sheet={printSheet} printId="marksheet-print-portal" />
-        </PrintPortal>
       )}
     </div>
   )

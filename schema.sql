@@ -206,7 +206,7 @@ create table if not exists public.student_attendance (
   class_id    uuid              not null references public.classes(id)  on delete restrict,
   date        date              not null default current_date,
   status      attendance_status not null default 'present',
-  marked_by   uuid              references public.teachers(id) on delete set null,
+  marked_by   uuid              references public.profiles(id) on delete set null,
   remarks     text,
   created_at  timestamptz       not null default now(),
   updated_at  timestamptz       not null default now(),

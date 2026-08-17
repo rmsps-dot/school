@@ -1,10 +1,11 @@
 'use client'
 
 import { useState, useTransition } from 'react'
-import { X, CheckCircle2, Loader2, AlertCircle, FileText } from 'lucide-react'
+import { X, CheckCircle2, Loader2, AlertCircle, FileText, Download } from 'lucide-react'
 import type { StudentMarksheet } from '@/actions/admin-result-actions'
 import { approveStudentResults } from '@/actions/admin-result-actions'
-import MarksheetTemplate from './MarksheetTemplate'
+import MarksheetPreview from './MarksheetPreview'
+import { downloadMarksheetPDF } from '@/utils/download-marksheet-pdf'
 
 interface Props {
   sheet: StudentMarksheet
@@ -24,6 +25,7 @@ const EXAM_LABELS: Record<string, string> = {
 export default function MarksheetModal({ sheet, onClose, onApproved, readOnly }: Props) {
   const [error, setError]           = useState('')
   const [isPending, startTransition] = useTransition()
+  const [isDownloading, setIsDownloading] = useState(false)
 
   /* ── Approve only (no auto-print) ── */
   function handleApprove() {
@@ -40,6 +42,18 @@ export default function MarksheetModal({ sheet, onClose, onApproved, readOnly }:
       onApproved?.()
       onClose()
     })
+  }
+
+  async function handleDownload() {
+    setIsDownloading(true)
+    try {
+      await downloadMarksheetPDF(sheet, sheet.approvedAt)
+    } catch (err) {
+      console.error('Download failed:', err)
+      setError('Failed to download PDF')
+    } finally {
+      setIsDownloading(false)
+    }
   }
 
   const examLabel = EXAM_LABELS[sheet.examType] ?? sheet.examType
@@ -74,7 +88,7 @@ export default function MarksheetModal({ sheet, onClose, onApproved, readOnly }:
             <button
               id="marksheet-modal-close"
               onClick={onClose}
-              disabled={isPending}
+              disabled={isPending || isDownloading}
               className="w-8 h-8 rounded-lg text-mist hover:text-parchment transition-colors"
             >
               <X className="w-5 h-5" />
@@ -104,7 +118,7 @@ export default function MarksheetModal({ sheet, onClose, onApproved, readOnly }:
               style={{ WebkitOverflowScrolling: 'touch' }}
             >
               <div className="w-max min-w-full flex justify-center">
-                <MarksheetTemplate sheet={sheet} approvedAt={sheet.approvedAt} />
+                <MarksheetPreview sheet={sheet} approvedAt={sheet.approvedAt} />
               </div>
             </div>
           </div>
@@ -121,8 +135,25 @@ export default function MarksheetModal({ sheet, onClose, onApproved, readOnly }:
 
             <div className="flex gap-3">
               <button
+                onClick={handleDownload}
+                disabled={isPending || isDownloading}
+                className="px-5 py-2.5 rounded-xl font-bold text-sm flex items-center gap-2 text-veena-blue bg-veena-blue/10 hover:bg-veena-blue/20 transition-colors border border-veena-blue/30 disabled:opacity-50"
+              >
+                {isDownloading ? (
+                  <>
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                    Downloading...
+                  </>
+                ) : (
+                  <>
+                    <Download className="w-4 h-4" />
+                    Download PDF
+                  </>
+                )}
+              </button>
+              <button
                 onClick={onClose}
-                disabled={isPending}
+                disabled={isPending || isDownloading}
                 className="px-5 py-2.5 rounded-xl surface-card text-sm font-bold text-parchment disabled:opacity-50 transition-colors hover:text-parchment"
               >
                 {readOnly ? 'Close' : 'Cancel'}
@@ -131,7 +162,7 @@ export default function MarksheetModal({ sheet, onClose, onApproved, readOnly }:
                 <button
                   id="approve-btn"
                   onClick={handleApprove}
-                  disabled={isPending}
+                  disabled={isPending || isDownloading}
                   className="px-6 py-2.5 rounded-xl font-bold text-sm flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed text-ink transition-all"
                   style={{ background: 'var(--coral)' }}
                 >

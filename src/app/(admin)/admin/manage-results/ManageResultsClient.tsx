@@ -1,16 +1,12 @@
-'use client'
-
 import { useState } from 'react'
-import { flushSync } from 'react-dom'
 import {
-  Search, Printer, User, BookOpen, Calendar, TrendingUp, Award,
+  Search, Download, Loader2, User, BookOpen, Calendar, TrendingUp, Award,
   ChevronDown, ChevronUp, CheckCircle2, Eye,
 } from 'lucide-react'
 import { AnimatePresence } from 'framer-motion'
 import type { StudentMarksheet } from '@/actions/admin-result-actions'
-import MarksheetTemplate from '@/components/admin/MarksheetTemplate'
 import MarksheetModal from '@/components/admin/MarksheetModal'
-import PrintPortal from '@/components/admin/PrintPortal'
+import { downloadMarksheetPDF } from '@/utils/download-marksheet-pdf'
 
 interface Props {
   marksheets: StudentMarksheet[]
@@ -39,11 +35,11 @@ const EXAM_COLORS: Record<string, string> = {
 }
 
 export default function ManageResultsClient({ marksheets }: Props) {
-  const [search, setSearch]         = useState('')
-  const [filterExam, setFilterExam] = useState('all')
-  const [expanded, setExpanded]     = useState<Set<string>>(new Set())
-  const [printSheet, setPrintSheet] = useState<StudentMarksheet | null>(null)
-  const [previewSheet, setPreviewSheet] = useState<StudentMarksheet | null>(null)
+  const [search, setSearch]                 = useState('')
+  const [filterExam, setFilterExam]         = useState('all')
+  const [expanded, setExpanded]             = useState<Set<string>>(new Set())
+  const [downloadingKey, setDownloadingKey] = useState<string | null>(null)
+  const [previewSheet, setPreviewSheet]     = useState<StudentMarksheet | null>(null)
 
   const examTypes = Array.from(new Set(marksheets.map((s) => s.examType)))
 
@@ -73,22 +69,15 @@ export default function ManageResultsClient({ marksheets }: Props) {
     })
   }
 
-  function handleGeneratePDF(sheet: typeof filtered[number]) {
-    flushSync(() => {
-      setPrintSheet(sheet)
-    })
-
-    const handleAfterPrint = () => {
-      setPrintSheet(null)
-      window.removeEventListener('afterprint', handleAfterPrint)
-    }
-    window.addEventListener('afterprint', handleAfterPrint)
-
+  async function handleGeneratePDF(sheet: typeof filtered[number]) {
+    const key = `${sheet.studentRowId}-${sheet.examType}`
+    setDownloadingKey(key)
     try {
-      window.print()
+      await downloadMarksheetPDF(sheet, sheet.approvedAt ?? new Date().toISOString())
     } catch (err) {
-      console.error('Print failed:', err)
-      setPrintSheet(null)
+      console.error('PDF Download failed:', err)
+    } finally {
+      setDownloadingKey(null)
     }
   }
 
@@ -222,11 +211,21 @@ export default function ManageResultsClient({ marksheets }: Props) {
                           </button>
                           <button
                             onClick={() => handleGeneratePDF(s)}
-                            className="flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-semibold whitespace-nowrap flex-shrink-0 transition-all text-ink hover:scale-[1.02]"
+                            disabled={downloadingKey === `${s.studentRowId}-${s.examType}`}
+                            className="flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-semibold whitespace-nowrap flex-shrink-0 transition-all text-ink hover:scale-[1.02] disabled:opacity-50"
                             style={{ background: 'var(--veena-blue, #4e7cf6)' }}
                           >
-                            <Printer className="w-3.5 h-3.5" />
-                            Generate PDF
+                            {downloadingKey === `${s.studentRowId}-${s.examType}` ? (
+                              <>
+                                <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                                Downloading...
+                              </>
+                            ) : (
+                              <>
+                                <Download className="w-3.5 h-3.5" />
+                                Download PDF
+                              </>
+                            )}
                           </button>
                         </div>
                       </div>
@@ -238,17 +237,6 @@ export default function ManageResultsClient({ marksheets }: Props) {
           )
         })}
       </div>
-
-      {/* Hidden print area — rendered outside any modal so it prints correctly */}
-      {printSheet && (
-        <PrintPortal>
-          <MarksheetTemplate
-            sheet={printSheet}
-            approvedAt={printSheet.approvedAt ?? new Date().toISOString()}
-            printId="marksheet-print-portal"
-          />
-        </PrintPortal>
-      )}
 
       {/* Preview modal */}
       <AnimatePresence>

@@ -1,16 +1,12 @@
-'use client'
-
 import { useState } from 'react'
-import { flushSync } from 'react-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import type { ApprovedResult, StudentProfile } from '@/actions/portal-actions'
 import { calcGrade } from '@/utils/helpers'
-import { FileSpreadsheet } from 'lucide-react'
+import { FileSpreadsheet, Download, Loader2 } from 'lucide-react'
 import MarksheetModal from '@/components/admin/MarksheetModal'
-import MarksheetTemplate from '@/components/admin/MarksheetTemplate'
-import PrintPortal from '@/components/admin/PrintPortal'
 import type { Database } from '@/types/supabase'
 import type { StudentMarksheet } from '@/actions/admin-result-actions'
+import { downloadMarksheetPDF } from '@/utils/download-marksheet-pdf'
 
 interface ExamGroup {
   examType: Database['public']['Enums']['exam_type']
@@ -34,25 +30,17 @@ function gradeColor(pct: number) {
 export default function ResultsTabsClient({ grouped, profile }: Props) {
   const [active, setActive] = useState(0)
   const [previewSheet, setPreviewSheet] = useState<StudentMarksheet | null>(null)
-  const [printSheet, setPrintSheet] = useState<StudentMarksheet | null>(null)
+  const [isDownloading, setIsDownloading] = useState(false)
 
-  function handleDownloadPDF() {
+  async function handleDownloadPDF() {
     const sheet = buildMarksheet()
-    flushSync(() => {
-      setPrintSheet(sheet)
-    })
-
-    const handleAfterPrint = () => {
-      setPrintSheet(null)
-      window.removeEventListener('afterprint', handleAfterPrint)
-    }
-    window.addEventListener('afterprint', handleAfterPrint)
-
+    setIsDownloading(true)
     try {
-      window.print()
+      await downloadMarksheetPDF(sheet)
     } catch (err) {
-      console.error('Print failed:', err)
-      setPrintSheet(null)
+      console.error('PDF Download failed:', err)
+    } finally {
+      setIsDownloading(false)
     }
   }
 
@@ -135,9 +123,20 @@ export default function ResultsTabsClient({ grouped, profile }: Props) {
               </button>
               <button 
                 onClick={handleDownloadPDF}
-                className="flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold text-veena-blue bg-veena-blue/10 hover:bg-veena-blue/20 transition-colors border border-veena-blue/30"
+                disabled={isDownloading}
+                className="flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold text-veena-blue bg-veena-blue/10 hover:bg-veena-blue/20 transition-colors border border-veena-blue/30 disabled:opacity-50"
               >
-                Download PDF
+                {isDownloading ? (
+                  <>
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                    Downloading...
+                  </>
+                ) : (
+                  <>
+                    <Download className="w-4 h-4" />
+                    Download PDF
+                  </>
+                )}
               </button>
             </div>
           </div>
@@ -202,13 +201,6 @@ export default function ResultsTabsClient({ grouped, profile }: Props) {
           onClose={() => setPreviewSheet(null)}
           readOnly
         />
-      )}
-
-      {/* PRINT PORTAL */}
-      {printSheet && (
-        <PrintPortal>
-          <MarksheetTemplate sheet={printSheet} printId="marksheet-print-portal" />
-        </PrintPortal>
       )}
     </div>
   )

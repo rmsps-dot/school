@@ -1,19 +1,15 @@
-'use client'
-
 import { useState, useEffect, useTransition } from 'react'
-import { flushSync } from 'react-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
   ChevronDown, BookOpen, CalendarDays, Award, TrendingUp,
-  CheckCircle2, XCircle, Clock, Minus, Loader2, FileSpreadsheet,
+  CheckCircle2, XCircle, Clock, Minus, Loader2, FileSpreadsheet, Download,
 } from 'lucide-react'
 import MarksheetModal from '@/components/admin/MarksheetModal'
-import MarksheetTemplate from '@/components/admin/MarksheetTemplate'
-import PrintPortal from '@/components/admin/PrintPortal'
 import type { StudentMarksheet } from '@/actions/admin-result-actions'
 import type { ChildInfo, ApprovedResult, AttendanceSummary } from '@/actions/portal-actions'
 import { getChildResults, getChildAttendance } from '@/actions/portal-actions'
 import { calcGrade } from '@/utils/helpers'
+import { downloadMarksheetPDF } from '@/utils/download-marksheet-pdf'
 
 /* ── Sub-types ── */
 type TabType = 'results' | 'attendance'
@@ -80,27 +76,19 @@ export default function ProgressClient({ children, defaultId }: Props) {
   const [isPending, startTransition] = useTransition()
   
   const [previewSheet, setPreviewSheet] = useState<StudentMarksheet | null>(null)
-  const [printSheet, setPrintSheet] = useState<StudentMarksheet | null>(null)
+  const [isDownloading, setIsDownloading] = useState(false)
   const selectedChild = children.find(c => c.studentRowId === selectedId)
 
-  function handleDownloadPDF(idx: number) {
+  async function handleDownloadPDF(idx: number) {
     const sheet = buildMarksheet(idx)
     if (!sheet) return
-    flushSync(() => {
-      setPrintSheet(sheet)
-    })
-
-    const handleAfterPrint = () => {
-      setPrintSheet(null)
-      window.removeEventListener('afterprint', handleAfterPrint)
-    }
-    window.addEventListener('afterprint', handleAfterPrint)
-
+    setIsDownloading(true)
     try {
-      window.print()
+      await downloadMarksheetPDF(sheet)
     } catch (err) {
-      console.error('Print failed:', err)
-      setPrintSheet(null)
+      console.error('PDF Download failed:', err)
+    } finally {
+      setIsDownloading(false)
     }
   }
 
@@ -311,9 +299,20 @@ export default function ProgressClient({ children, defaultId }: Props) {
                     </button>
                     <button 
                       onClick={() => handleDownloadPDF(examTab)}
-                      className="flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold text-gold bg-gold/10 hover:bg-gold/20 transition-colors border border-gold/30"
+                      disabled={isDownloading}
+                      className="flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold text-gold bg-gold/10 hover:bg-gold/20 transition-colors border border-gold/30 disabled:opacity-50"
                     >
-                      Download PDF
+                      {isDownloading ? (
+                        <>
+                          <Loader2 className="w-4 h-4 animate-spin" />
+                          Downloading...
+                        </>
+                      ) : (
+                        <>
+                          <Download className="w-4 h-4" />
+                          Download PDF
+                        </>
+                      )}
                     </button>
                   </div>
                 )}
@@ -410,13 +409,6 @@ export default function ProgressClient({ children, defaultId }: Props) {
           onClose={() => setPreviewSheet(null)}
           readOnly
         />
-      )}
-
-      {/* PRINT PORTAL */}
-      {printSheet && (
-        <PrintPortal>
-          <MarksheetTemplate sheet={printSheet} printId="marksheet-print-portal" />
-        </PrintPortal>
       )}
     </div>
   )

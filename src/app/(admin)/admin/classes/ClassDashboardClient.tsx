@@ -1,19 +1,17 @@
 'use client'
 
 import { useState, useTransition, useEffect } from 'react'
-import { flushSync } from 'react-dom'
 import Image from 'next/image'
 import { motion, AnimatePresence } from 'framer-motion'
-import { BookOpen, Users, CalendarDays, Loader2, Save, ArrowRight, UserCircle, Plus, Trash2, Edit, AlertCircle, FileSpreadsheet, ListChecks, CheckSquare, ChevronDown, X } from 'lucide-react'
+import { BookOpen, Users, CalendarDays, Loader2, Save, ArrowRight, UserCircle, Plus, Trash2, Edit, AlertCircle, FileSpreadsheet, ListChecks, CheckSquare, ChevronDown, X, Download } from 'lucide-react'
 import React from 'react'
 import { getStudentsByClass, getAdminClassAttendance, saveAdminClassAttendance, createClass, deleteClass, uploadStudentResult, getClassResults, deleteStudentResult, getManageAttendanceRecords, deleteAttendanceRecord, updateAttendanceRecordStatus, type SchoolClass } from '@/actions/class-actions'
 import MarksheetModal from '@/components/admin/MarksheetModal'
-import MarksheetTemplate from '@/components/admin/MarksheetTemplate'
-import PrintPortal from '@/components/admin/PrintPortal'
 import ResultUploadModal from '@/components/teacher/ResultUploadModal'
 import { useRouter } from 'next/navigation'
 import DateInput from '@/components/shared/DateInput'
 import type { StudentMarksheet } from '@/actions/admin-result-actions'
+import { downloadMarksheetPDF } from '@/utils/download-marksheet-pdf'
 
 type StudentType = Exclude<Awaited<ReturnType<typeof getStudentsByClass>>['data'], null>[number]
 type AttendanceType = Exclude<Awaited<ReturnType<typeof getAdminClassAttendance>>['data'], null>[number]
@@ -51,26 +49,23 @@ export default function ClassDashboardClient({ classes: initialClasses }: ClassD
   // Manage Result State
   const [results, setResults] = useState<ResultType[]>([])
   const [expandedRows, setExpandedRows] = useState<Set<string>>(new Set())
-  const [editResult, setEditResult] = useState<ResultType | null>(null)
-  const [printSheet, setPrintSheet] = useState<GroupedResult | null>(null)
+  const [downloadingKey, setDownloadingKey] = useState<string | null>(null)
   const [previewSheet, setPreviewSheet] = useState<GroupedResult | null>(null)
 
-  function handleGeneratePDF(group: GroupedResult) {
-    flushSync(() => {
-      setPrintSheet(group)
-    })
-
-    const handleAfterPrint = () => {
-      setPrintSheet(null)
-      window.removeEventListener('afterprint', handleAfterPrint)
-    }
-    window.addEventListener('afterprint', handleAfterPrint)
-
+  async function handleGeneratePDF(group: GroupedResult) {
+    const key = `${group.student_id}-${group.exam_type}`
+    setDownloadingKey(key)
     try {
-      window.print()
+      const sheet = mapGroupToMarksheet(group)
+      const res = await downloadMarksheetPDF(sheet)
+      if (!res.success && res.error) {
+        setError(res.error)
+      }
     } catch (err) {
-      console.error('Print failed:', err)
-      setPrintSheet(null)
+      console.error('PDF Download failed:', err)
+      setError('Failed to generate PDF')
+    } finally {
+      setDownloadingKey(null)
     }
   }
 
@@ -681,10 +676,21 @@ export default function ClassDashboardClient({ classes: initialClasses }: ClassD
                                         e.stopPropagation()
                                         handleGeneratePDF(group)
                                       }}
-                                      className="flex items-center gap-1.5 text-xs font-bold text-veena-blue hover:text-coral p-2 rounded-lg hover:bg-veena-blue/10 transition-colors"
+                                      disabled={downloadingKey === key}
+                                      className="flex items-center gap-1.5 text-xs font-bold text-veena-blue hover:text-coral p-2 rounded-lg hover:bg-veena-blue/10 disabled:opacity-50 transition-colors"
                                       title="Download PDF"
                                     >
-                                      Generate PDF
+                                      {downloadingKey === key ? (
+                                        <>
+                                          <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                                          Downloading...
+                                        </>
+                                      ) : (
+                                        <>
+                                          <Download className="w-3.5 h-3.5" />
+                                          Download PDF
+                                        </>
+                                      )}
                                     </button>
                                     {!hasMultiple && <div className="ml-2 pl-2 border-l border-hairline"><ActionButtons r={group.subjectsList[0]} /></div>}
                                     {hasMultiple && (
@@ -835,13 +841,6 @@ export default function ClassDashboardClient({ classes: initialClasses }: ClassD
                 onClose={() => setPreviewSheet(null)}
                 readOnly
               />
-            )}
-
-            {/* PRINT PORTAL */}
-            {printSheet && (
-              <PrintPortal>
-                <MarksheetTemplate sheet={mapGroupToMarksheet(printSheet)} printId="marksheet-print-portal" />
-              </PrintPortal>
             )}
           </div>
       </div>
