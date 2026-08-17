@@ -106,23 +106,45 @@ export default async function StudentAttendancePage() {
         </div>
       ) : (
         <div className="surface-card border-hairline rounded-[2rem] overflow-hidden shadow-2xl">
-          <div className="grid grid-cols-[1fr_120px_1fr] gap-6 px-8 py-5 bg-surface border-b border-hairline text-[10px] font-bold text-veena-blue uppercase tracking-widest">
-            <span>Date</span>
-            <span className="text-center">Status</span>
-            <span>Remarks</span>
-          </div>
-          <div className="divide-y divide-hairline max-h-[500px] overflow-y-auto styled-scroll">
+          {/* ── Mobile Layout (Below sm: breakpoint) ── */}
+          <div className="sm:hidden divide-y divide-hairline max-h-[500px] overflow-y-auto styled-scroll">
             {data.records.map((r, i) => (
-              <div key={r.id} className="ledger-row grid grid-cols-[1fr_120px_1fr] gap-6 px-8 py-5 items-center hover:bg-surface/50 transition-colors" style={{ animationDelay: `${i * 0.03}s` }}>
-                <p className="text-sm text-parchment font-bold">
-                  {new Date(r.date).toLocaleDateString('en-IN', { weekday: 'short', day: '2-digit', month: 'short', year: 'numeric' })}
-                </p>
-                <div className="flex justify-center">
+              <div key={r.id} className="p-4 space-y-2" style={{ animationDelay: `${i * 0.02}s` }}>
+                <div className="flex items-center justify-between">
+                  <span className="text-sm text-parchment font-bold">
+                    {new Date(r.date).toLocaleDateString('en-IN', { weekday: 'short', day: '2-digit', month: 'short', year: 'numeric' })}
+                  </span>
                   <StatusBadge status={r.status} />
                 </div>
-                <p className="text-[10px] font-mono text-mist uppercase tracking-widest">{r.remarks || '—'}</p>
+                {r.remarks && (
+                  <p className="text-[10px] font-mono text-mist uppercase tracking-widest pt-1 border-t border-hairline/50">
+                    Remarks: {r.remarks}
+                  </p>
+                )}
               </div>
             ))}
+          </div>
+
+          {/* ── Desktop Table Layout (sm: and up) ── */}
+          <div className="hidden sm:block">
+            <div className="grid grid-cols-[1fr_120px_1fr] gap-6 px-8 py-5 bg-surface border-b border-hairline text-[10px] font-bold text-veena-blue uppercase tracking-widest">
+              <span>Date</span>
+              <span className="text-center">Status</span>
+              <span>Remarks</span>
+            </div>
+            <div className="divide-y divide-hairline max-h-[500px] overflow-y-auto styled-scroll">
+              {data.records.map((r, i) => (
+                <div key={r.id} className="ledger-row grid grid-cols-[1fr_120px_1fr] gap-6 px-8 py-5 items-center hover:bg-surface/50 transition-colors" style={{ animationDelay: `${i * 0.03}s` }}>
+                  <p className="text-sm text-parchment font-bold">
+                    {new Date(r.date).toLocaleDateString('en-IN', { weekday: 'short', day: '2-digit', month: 'short', year: 'numeric' })}
+                  </p>
+                  <div className="flex justify-center">
+                    <StatusBadge status={r.status} />
+                  </div>
+                  <p className="text-[10px] font-mono text-mist uppercase tracking-widest">{r.remarks || '—'}</p>
+                </div>
+              ))}
+            </div>
           </div>
         </div>
       )}
