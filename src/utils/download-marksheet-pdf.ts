@@ -19,7 +19,7 @@ export async function downloadMarksheetPDF(
       sheet,
       approvedAt,
       logoUrl,
-    })
+    }) as Parameters<typeof pdf>[0]
 
     const blob = await pdf(docElement).toBlob()
 
