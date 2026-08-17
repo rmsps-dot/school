@@ -54,7 +54,11 @@ interface Props {
 /* ─── Base64 → Blob ─── */
 function dataURLtoBlob(dataURL: string): Blob {
   const [header, data] = dataURL.split(",");
-  const mime = header.match(/:(.*?);/)![1];
+  const mimeMatch = header.match(/:(.*?);/);
+  if (!mimeMatch) {
+    throw new Error('Invalid dataURL format: could not extract MIME type');
+  }
+  const mime = mimeMatch[1];
   const binary = atob(data);
   const array = new Uint8Array(binary.length);
   for (let i = 0; i < binary.length; i++) array[i] = binary.charCodeAt(i);

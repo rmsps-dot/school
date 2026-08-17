@@ -13,6 +13,16 @@ interface Props {
 }
 
 export default function ParentHomeworkClient({ childrenData, homeworkData, defaultId }: Props) {
+  // Explicitly guard against empty children array
+  if (!childrenData || childrenData.length === 0) {
+    return (
+      <div className="text-center text-mist py-12">
+        <BookOpen className="w-12 h-12 mx-auto mb-4 opacity-50" />
+        <p className="text-sm">No children found. Please contact support.</p>
+      </div>
+    )
+  }
+
   const defaultChild = childrenData.find(c => c.studentRowId === defaultId) || childrenData[0]
   const [activeChild, setActiveChild] = useState<ChildInfo>(defaultChild)
 
