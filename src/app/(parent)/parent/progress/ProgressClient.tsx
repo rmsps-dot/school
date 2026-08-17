@@ -323,31 +323,74 @@ export default function ProgressClient({ children, defaultId }: Props) {
                 {/* Marks table */}
                 {examGroups[examTab] && (
                   <div className="surface-card border-hairline rounded-[2rem] overflow-hidden shadow-2xl">
-                    <div className="grid grid-cols-[1fr_80px_80px_80px_80px_90px] gap-4 px-8 py-5 bg-surface border-b border-hairline text-[10px] font-bold text-gold uppercase tracking-widest">
-                      <span>Subject</span><span className="text-center">Max</span>
-                      <span className="text-center">Pass</span><span className="text-center">Obtained</span>
-                      <span className="text-center">Grade</span><span className="text-center">Status</span>
-                    </div>
-                    <div className="divide-y divide-hairline">
+                    {/* ── Mobile Layout (Below sm: breakpoint) ── */}
+                    <div className="sm:hidden divide-y divide-hairline">
                       {examGroups[examTab].rows.map((r, i) => {
                         const pct   = r.total_marks > 0 ? (r.marks_obtained / r.total_marks) * 100 : 0
                         const pass  = Math.ceil(r.total_marks * 0.33)
                         const ok    = r.marks_obtained >= pass
+
                         return (
-                          <div key={r.id} className="ledger-row grid grid-cols-[1fr_80px_80px_80px_80px_90px] gap-4 px-8 py-5 items-center transition-colors hover:bg-surface/50" style={{ animationDelay: `${i * 0.05}s` }}>
-                            <p className="text-sm font-bold text-parchment">{r.subject}</p>
-                            <p className="text-center text-[10px] font-mono text-mist">{r.total_marks}</p>
-                            <p className="text-center text-[10px] font-mono text-mist">{pass}</p>
-                            <p className="text-center text-sm font-bold text-parchment drop-shadow-sm">{r.marks_obtained}</p>
-                            <p className={`text-center text-sm font-bold drop-shadow-sm ${gradeColor(pct)}`}>{calcGrade(pct)}</p>
-                            <div className="flex justify-center">
-                              <span className={`text-[10px] font-bold px-3 py-1 rounded-full uppercase tracking-widest border ${ok ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' : 'bg-red-500/10 text-red-400 border-red-500/20'}`}>
-                                {ok ? 'PASS' : 'FAIL'}
-                              </span>
+                          <div key={r.id} className="p-4 space-y-3" style={{ animationDelay: `${i * 0.03}s` }}>
+                            <div className="flex items-start justify-between gap-2">
+                              <p className="text-sm font-bold text-parchment">{r.subject}</p>
+                              <div className="flex items-center gap-2">
+                                <span className={`text-xs font-bold ${gradeColor(pct)}`}>{calcGrade(pct)}</span>
+                                <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider border ${
+                                  ok ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' : 'bg-red-500/10 text-red-400 border-red-500/20'
+                                }`}>
+                                  {ok ? 'PASS' : 'FAIL'}
+                                </span>
+                              </div>
+                            </div>
+
+                            <div className="grid grid-cols-3 gap-2 pt-2 border-t border-hairline/60 text-center">
+                              <div className="p-2 rounded-xl bg-surface/50 border border-hairline/40">
+                                <p className="text-[9px] font-mono text-mist uppercase tracking-wider">Obtained</p>
+                                <p className="text-sm font-bold text-parchment font-mono mt-0.5">{r.marks_obtained}</p>
+                              </div>
+                              <div className="p-2 rounded-xl bg-surface/50 border border-hairline/40">
+                                <p className="text-[9px] font-mono text-mist uppercase tracking-wider">Max Marks</p>
+                                <p className="text-sm font-bold text-mist font-mono mt-0.5">{r.total_marks}</p>
+                              </div>
+                              <div className="p-2 rounded-xl bg-surface/50 border border-hairline/40">
+                                <p className="text-[9px] font-mono text-mist uppercase tracking-wider">Pass Mark</p>
+                                <p className="text-sm font-bold text-mist font-mono mt-0.5">{pass}</p>
+                              </div>
                             </div>
                           </div>
                         )
                       })}
+                    </div>
+
+                    {/* ── Desktop Table Layout (sm: and up) ── */}
+                    <div className="hidden sm:block">
+                      <div className="grid grid-cols-[1fr_80px_80px_80px_80px_90px] gap-4 px-8 py-5 bg-surface border-b border-hairline text-[10px] font-bold text-gold uppercase tracking-widest">
+                        <span>Subject</span><span className="text-center">Max</span>
+                        <span className="text-center">Pass</span><span className="text-center">Obtained</span>
+                        <span className="text-center">Grade</span><span className="text-center">Status</span>
+                      </div>
+                      <div className="divide-y divide-hairline">
+                        {examGroups[examTab].rows.map((r, i) => {
+                          const pct   = r.total_marks > 0 ? (r.marks_obtained / r.total_marks) * 100 : 0
+                          const pass  = Math.ceil(r.total_marks * 0.33)
+                          const ok    = r.marks_obtained >= pass
+                          return (
+                            <div key={r.id} className="ledger-row grid grid-cols-[1fr_80px_80px_80px_80px_90px] gap-4 px-8 py-5 items-center transition-colors hover:bg-surface/50" style={{ animationDelay: `${i * 0.05}s` }}>
+                              <p className="text-sm font-bold text-parchment">{r.subject}</p>
+                              <p className="text-center text-[10px] font-mono text-mist">{r.total_marks}</p>
+                              <p className="text-center text-[10px] font-mono text-mist">{pass}</p>
+                              <p className="text-center text-sm font-bold text-parchment drop-shadow-sm">{r.marks_obtained}</p>
+                              <p className={`text-center text-sm font-bold drop-shadow-sm ${gradeColor(pct)}`}>{calcGrade(pct)}</p>
+                              <div className="flex justify-center">
+                                <span className={`text-[10px] font-bold px-3 py-1 rounded-full uppercase tracking-widest border ${ok ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' : 'bg-red-500/10 text-red-400 border-red-500/20'}`}>
+                                  {ok ? 'PASS' : 'FAIL'}
+                                </span>
+                              </div>
+                            </div>
+                          )
+                        })}
+                      </div>
                     </div>
                   </div>
                 )}
@@ -385,19 +428,41 @@ export default function ProgressClient({ children, defaultId }: Props) {
               </div>
             ) : (
               <div className="surface-card border-hairline rounded-[2rem] overflow-hidden shadow-2xl">
-                <div className="grid grid-cols-[1fr_120px_1fr] gap-6 px-8 py-5 bg-surface border-b border-hairline text-[10px] font-bold text-gold uppercase tracking-widest">
-                  <span>Date</span><span className="text-center">Status</span><span>Remarks</span>
-                </div>
-                <div className="divide-y divide-hairline max-h-[500px] overflow-y-auto styled-scroll">
+                {/* ── Mobile Layout (Below sm: breakpoint) ── */}
+                <div className="sm:hidden divide-y divide-hairline max-h-[500px] overflow-y-auto styled-scroll">
                   {attendance.records.map((r, i) => (
-                    <div key={r.id} className="ledger-row grid grid-cols-[1fr_120px_1fr] gap-6 px-8 py-5 items-center hover:bg-surface/50 transition-colors" style={{ animationDelay: `${i * 0.03}s` }}>
-                      <p className="text-sm text-parchment font-bold">
-                        {new Date(r.date).toLocaleDateString('en-IN', { weekday: 'short', day: '2-digit', month: 'short', year: 'numeric' })}
-                      </p>
-                      <div className="flex justify-center"><StatusBadge status={r.status} /></div>
-                      <p className="text-[10px] font-mono text-mist uppercase tracking-widest">{r.remarks || '—'}</p>
+                    <div key={r.id} className="p-4 space-y-2" style={{ animationDelay: `${i * 0.02}s` }}>
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm text-parchment font-bold">
+                          {new Date(r.date).toLocaleDateString('en-IN', { weekday: 'short', day: '2-digit', month: 'short', year: 'numeric' })}
+                        </span>
+                        <StatusBadge status={r.status} />
+                      </div>
+                      {r.remarks && (
+                        <p className="text-[10px] font-mono text-mist uppercase tracking-widest pt-1 border-t border-hairline/50">
+                          Remarks: {r.remarks}
+                        </p>
+                      )}
                     </div>
                   ))}
+                </div>
+
+                {/* ── Desktop Table Layout (sm: and up) ── */}
+                <div className="hidden sm:block">
+                  <div className="grid grid-cols-[1fr_120px_1fr] gap-6 px-8 py-5 bg-surface border-b border-hairline text-[10px] font-bold text-gold uppercase tracking-widest">
+                    <span>Date</span><span className="text-center">Status</span><span>Remarks</span>
+                  </div>
+                  <div className="divide-y divide-hairline max-h-[500px] overflow-y-auto styled-scroll">
+                    {attendance.records.map((r, i) => (
+                      <div key={r.id} className="ledger-row grid grid-cols-[1fr_120px_1fr] gap-6 px-8 py-5 items-center hover:bg-surface/50 transition-colors" style={{ animationDelay: `${i * 0.03}s` }}>
+                        <p className="text-sm text-parchment font-bold">
+                          {new Date(r.date).toLocaleDateString('en-IN', { weekday: 'short', day: '2-digit', month: 'short', year: 'numeric' })}
+                        </p>
+                        <div className="flex justify-center"><StatusBadge status={r.status} /></div>
+                        <p className="text-[10px] font-mono text-mist uppercase tracking-widest">{r.remarks || '—'}</p>
+                      </div>
+                    ))}
+                  </div>
                 </div>
               </div>
             )}
