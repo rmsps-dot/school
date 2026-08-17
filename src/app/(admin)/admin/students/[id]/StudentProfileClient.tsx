@@ -243,48 +243,88 @@ export default function StudentProfileClient({ data }: StudentProfileProps) {
                     <p className="text-mist text-sm max-w-md">No exam or test results have been uploaded for this student yet.</p>
                   </div>
                 ) : (
-                  <div className="overflow-x-auto">
-                    <table className="w-full text-left">
-                      <thead>
-                        <tr className="border-b border-hairline">
-                          <th className="pb-3 text-xs font-bold text-mist uppercase tracking-wider">Exam / Test</th>
-                          <th className="pb-3 text-xs font-bold text-mist uppercase tracking-wider">Subject</th>
-                          <th className="pb-3 text-xs font-bold text-mist uppercase tracking-wider text-center">Marks</th>
-                          <th className="pb-3 text-xs font-bold text-mist uppercase tracking-wider text-center">Grade</th>
-                        </tr>
-                      </thead>
-                      <tbody className="divide-y divide-hairline">
-                        {results.map((res) => {
-                          const total = res.total_marks || res.max_marks || 1
-                          const pct = (res.marks_obtained / total) * 100
-                          let calculatedGrade = 'F'
-                          if (pct >= 90) calculatedGrade = 'A+'
-                          else if (pct >= 80) calculatedGrade = 'A'
-                          else if (pct >= 70) calculatedGrade = 'B+'
-                          else if (pct >= 60) calculatedGrade = 'B'
-                          else if (pct >= 50) calculatedGrade = 'C'
-                          else if (pct >= 40) calculatedGrade = 'D'
-                          
-                          const gradeColor = pct >= 75 ? 'text-emerald-400 border-emerald-500/30' : pct >= 50 ? 'text-gold border-gold/30' : 'text-red-400 border-red-500/30'
-                          return (
-                            <tr key={res.id} className="hover:bg-white/[0.01] transition-colors">
-                              <td className="py-3 pr-4 text-sm text-parchment font-medium capitalize">{res.exam_type.replace('_', ' ')}</td>
-                              <td className="py-3 pr-4 text-sm text-mist">{res.subject}</td>
-                              <td className="py-3 text-sm text-parchment text-center font-bold font-mono">
-                                {res.marks_obtained} <span className="text-mist font-normal">/ {res.total_marks || res.max_marks}</span>
-                              </td>
-                              <td className="py-3 text-center">
-                                <span className={`text-xs font-bold px-3 py-1 rounded-lg border ${gradeColor}`}
-                                  style={{ background: 'rgba(255,255,255,0.03)' }}>
-                                  {calculatedGrade}
-                                </span>
-                              </td>
-                            </tr>
-                          )
-                        })}
-                      </tbody>
-                    </table>
-                  </div>
+                  <>
+                    {/* ── Mobile Layout (Below sm: breakpoint) ── */}
+                    <div className="sm:hidden space-y-3">
+                      {results.map((res) => {
+                        const total = res.total_marks || res.max_marks || 1
+                        const pct = (res.marks_obtained / total) * 100
+                        let calculatedGrade = 'F'
+                        if (pct >= 90) calculatedGrade = 'A+'
+                        else if (pct >= 80) calculatedGrade = 'A'
+                        else if (pct >= 70) calculatedGrade = 'B+'
+                        else if (pct >= 60) calculatedGrade = 'B'
+                        else if (pct >= 50) calculatedGrade = 'C'
+                        else if (pct >= 40) calculatedGrade = 'D'
+                        
+                        const gradeColor = pct >= 75 ? 'text-emerald-400 border-emerald-500/30' : pct >= 50 ? 'text-gold border-gold/30' : 'text-red-400 border-red-500/30'
+                        return (
+                          <div key={res.id} className="surface-card rounded-2xl border border-hairline p-4 space-y-2">
+                            <div className="flex items-start justify-between gap-2">
+                              <div>
+                                <span className="font-semibold text-parchment text-sm capitalize">{res.exam_type.replace('_', ' ')}</span>
+                                <p className="text-xs text-mist mt-0.5">{res.subject}</p>
+                              </div>
+                              <span className={`text-xs font-bold px-2.5 py-0.5 rounded-lg border ${gradeColor}`}
+                                style={{ background: 'rgba(255,255,255,0.03)' }}>
+                                {calculatedGrade}
+                              </span>
+                            </div>
+                            <div className="pt-1.5 border-t border-hairline flex items-center justify-between text-xs">
+                              <span className="text-mist uppercase tracking-wider text-[10px] font-mono">Score:</span>
+                              <span className="font-bold font-mono text-parchment">
+                                {res.marks_obtained} <span className="text-mist font-normal">/ {res.total_marks || res.max_marks} ({pct.toFixed(1)}%)</span>
+                              </span>
+                            </div>
+                          </div>
+                        )
+                      })}
+                    </div>
+
+                    {/* ── Desktop Table Layout (sm: and up) ── */}
+                    <div className="hidden sm:block overflow-x-auto">
+                      <table className="w-full text-left">
+                        <thead>
+                          <tr className="border-b border-hairline">
+                            <th className="pb-3 text-xs font-bold text-mist uppercase tracking-wider">Exam / Test</th>
+                            <th className="pb-3 text-xs font-bold text-mist uppercase tracking-wider">Subject</th>
+                            <th className="pb-3 text-xs font-bold text-mist uppercase tracking-wider text-center">Marks</th>
+                            <th className="pb-3 text-xs font-bold text-mist uppercase tracking-wider text-center">Grade</th>
+                          </tr>
+                        </thead>
+                        <tbody className="divide-y divide-hairline">
+                          {results.map((res) => {
+                            const total = res.total_marks || res.max_marks || 1
+                            const pct = (res.marks_obtained / total) * 100
+                            let calculatedGrade = 'F'
+                            if (pct >= 90) calculatedGrade = 'A+'
+                            else if (pct >= 80) calculatedGrade = 'A'
+                            else if (pct >= 70) calculatedGrade = 'B+'
+                            else if (pct >= 60) calculatedGrade = 'B'
+                            else if (pct >= 50) calculatedGrade = 'C'
+                            else if (pct >= 40) calculatedGrade = 'D'
+                            
+                            const gradeColor = pct >= 75 ? 'text-emerald-400 border-emerald-500/30' : pct >= 50 ? 'text-gold border-gold/30' : 'text-red-400 border-red-500/30'
+                            return (
+                              <tr key={res.id} className="hover:bg-white/[0.01] transition-colors">
+                                <td className="py-3 pr-4 text-sm text-parchment font-medium capitalize">{res.exam_type.replace('_', ' ')}</td>
+                                <td className="py-3 pr-4 text-sm text-mist">{res.subject}</td>
+                                <td className="py-3 text-sm text-parchment text-center font-bold font-mono">
+                                  {res.marks_obtained} <span className="text-mist font-normal">/ {res.total_marks || res.max_marks}</span>
+                                </td>
+                                <td className="py-3 text-center">
+                                  <span className={`text-xs font-bold px-3 py-1 rounded-lg border ${gradeColor}`}
+                                    style={{ background: 'rgba(255,255,255,0.03)' }}>
+                                    {calculatedGrade}
+                                  </span>
+                                </td>
+                              </tr>
+                            )
+                          })}
+                        </tbody>
+                      </table>
+                    </div>
+                  </>
                 )}
               </motion.div>
             )}
