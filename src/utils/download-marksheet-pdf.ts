@@ -1,4 +1,3 @@
-import React from 'react'
 import type { StudentMarksheet } from '@/actions/admin-result-actions'
 import MarksheetPDFDocument from '@/components/shared/MarksheetPDFDocument'
 
@@ -15,7 +14,8 @@ export async function downloadMarksheetPDF(
       logoUrl = `${window.location.origin}/icon-192.png`
     }
 
-    const docElement = React.createElement(MarksheetPDFDocument, {
+    // Call the component function directly to get the Document element
+    const docElement = MarksheetPDFDocument({
       sheet,
       approvedAt,
       logoUrl,
