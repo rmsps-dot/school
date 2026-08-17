@@ -110,19 +110,40 @@ export default function ParentFeesClient({ children }: { children: ChildInfo[] }
                   const st = statusMap[fee.status] || statusMap['due']
 
                   return (
-                    <div key={fee.id} className="ledger-row px-8 py-5 flex items-center gap-6 hover:bg-surface/50 transition-colors" style={{ animationDelay: `${i * 0.05}s` }}>
-                      <div className="w-12 h-12 rounded-full bg-surface border border-hairline flex items-center justify-center flex-shrink-0 shadow-inner">
-                        <CreditCard className="w-5 h-5 text-mist" />
+                    <div key={fee.id} className="ledger-row p-4 sm:px-8 sm:py-5 flex flex-col sm:flex-row sm:items-center gap-4 sm:gap-6 hover:bg-surface/50 transition-colors" style={{ animationDelay: `${i * 0.05}s` }}>
+                      <div className="flex items-center justify-between sm:justify-start gap-4">
+                        <div className="flex items-center gap-3 min-w-0">
+                          <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-surface border border-hairline flex items-center justify-center flex-shrink-0 shadow-inner">
+                            <CreditCard className="w-5 h-5 text-mist" />
+                          </div>
+                          <div className="min-w-0 sm:hidden">
+                            <p className="text-sm font-bold text-parchment truncate">{fee.fee_name}</p>
+                            <p className="text-[10px] font-mono text-mist uppercase tracking-widest mt-0.5">Due: {new Date(fee.due_date).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })}</p>
+                          </div>
+                        </div>
+                        <span className={`sm:hidden flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest border flex-shrink-0 ${st.cls}`}>
+                          <st.Icon className="w-3.5 h-3.5" />
+                          {st.label}
+                        </span>
                       </div>
-                      <div className="flex-1 min-w-0">
+
+                      {/* Desktop name container */}
+                      <div className="hidden sm:block flex-1 min-w-0">
                         <p className="text-base font-bold text-parchment">{fee.fee_name}</p>
                         <p className="text-[10px] font-mono text-mist uppercase tracking-widest mt-1">Due: {new Date(fee.due_date).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })}</p>
                       </div>
-                      <div className="text-right mr-4">
-                        <p className="text-lg font-bold text-parchment drop-shadow-sm">₹{Number(fee.amount).toLocaleString('en-IN')}</p>
-                        {Number(fee.paid_amount) > 0 && <p className="text-[10px] font-mono text-mist uppercase tracking-widest mt-1">Paid ₹{Number(fee.paid_amount).toLocaleString('en-IN')}</p>}
+
+                      {/* Amount */}
+                      <div className="flex items-center justify-between sm:block sm:text-right sm:mr-4 pt-2 sm:pt-0 border-t border-hairline/50 sm:border-0">
+                        <span className="sm:hidden text-xs text-mist font-mono uppercase tracking-wider">Fee Amount</span>
+                        <div>
+                          <p className="text-base sm:text-lg font-bold text-parchment drop-shadow-sm text-right">₹{Number(fee.amount).toLocaleString('en-IN')}</p>
+                          {Number(fee.paid_amount) > 0 && <p className="text-[10px] font-mono text-mist uppercase tracking-widest mt-0.5 sm:mt-1 text-right">Paid ₹{Number(fee.paid_amount).toLocaleString('en-IN')}</p>}
+                        </div>
                       </div>
-                      <span className={`flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest border flex-shrink-0 ${st.cls}`}>
+
+                      {/* Desktop status pill */}
+                      <span className={`hidden sm:flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest border flex-shrink-0 ${st.cls}`}>
                         <st.Icon className="w-3.5 h-3.5" />
                         {st.label}
                       </span>
@@ -134,7 +155,7 @@ export default function ParentFeesClient({ children }: { children: ChildInfo[] }
 
             {/* Pay now CTA */}
             {totalDue > 0 && (
-              <div className="px-8 py-6 bg-surface border-t border-hairline flex items-center justify-between">
+              <div className="p-4 sm:px-8 sm:py-6 bg-surface border-t border-hairline flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                 <div>
                   <p className="text-[10px] font-mono text-mist uppercase tracking-widest mb-1">Total amount due</p>
                   <p className="text-2xl font-display font-black text-red-400">₹{totalDue.toLocaleString('en-IN')}</p>
@@ -142,7 +163,7 @@ export default function ParentFeesClient({ children }: { children: ChildInfo[] }
                 <button
                   id="pay-now-btn"
                   disabled
-                  className="flex items-center gap-2 px-8 py-3.5 rounded-xl font-bold text-xs uppercase tracking-wider text-ink bg-gold opacity-50 cursor-not-allowed shadow-lg"
+                  className="flex items-center justify-center gap-2 w-full sm:w-auto px-8 py-3.5 rounded-xl font-bold text-xs uppercase tracking-wider text-ink bg-gold opacity-50 cursor-not-allowed shadow-lg"
                   title="Online payment coming soon"
                 >
                   <Wallet className="w-4 h-4" />
