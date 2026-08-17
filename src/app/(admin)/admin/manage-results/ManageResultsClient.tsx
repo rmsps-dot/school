@@ -1,3 +1,5 @@
+'use client'
+
 import { useState } from 'react'
 import {
   Search, Download, Loader2, User, BookOpen, Calendar, TrendingUp, Award,
