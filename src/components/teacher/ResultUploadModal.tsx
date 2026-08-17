@@ -501,10 +501,8 @@ export default function ResultUploadModal({
                     {/* TEST table */}
                     {mode === 'test' && !loadingStudents && students.length > 0 && (
                       <div className="surface-card border-hairline rounded-2xl overflow-hidden shadow-lg">
-                        <div className="grid grid-cols-[auto_1fr_130px] gap-4 px-6 py-3 bg-surface border-b border-hairline text-[10px] font-bold text-veena-blue uppercase tracking-widest">
-                          <span>#</span><span>Student</span><span className="text-center">Marks / {testGlobalTotal}</span>
-                        </div>
-                        <div className="divide-y divide-hairline">
+                        {/* Mobile Layout (Below sm: breakpoint) */}
+                        <div className="sm:hidden divide-y divide-hairline">
                           {students.map((s, idx) => {
                             const val = testMarks[s.studentRowId] ?? ''
                             const obt = parseFloat(val)
@@ -512,29 +510,73 @@ export default function ResultUploadModal({
                             const isOver = !isNaN(obt) && !isNaN(tot) && obt > tot
                             const pct = !isNaN(obt) && !isNaN(tot) && tot > 0 ? (obt / tot) * 100 : null
                             return (
-                              <div key={s.studentRowId} className={`grid grid-cols-[auto_1fr_130px] gap-4 items-center px-6 py-3 transition-colors ${isOver ? 'bg-red-500/10' : 'hover:bg-surface'}`}>
-                                <span className="text-xs font-mono text-mist w-6 text-right">{idx + 1}</span>
-                                <div>
-                                  <p className="text-sm font-bold text-parchment truncate">{s.fullName}</p>
-                                  <div className="flex items-center gap-2 mt-0.5">
-                                    <span className="text-[10px] font-mono text-mist">{s.studentCode}</span>
-                                    {pct !== null && (
-                                      <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full border ${pct >= 75 ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' : pct >= 40 ? 'bg-amber-500/10 text-amber-400 border-amber-500/20' : 'bg-red-500/10 text-red-400 border-red-500/20'}`}>
-                                        {pct.toFixed(1)}%
-                                      </span>
-                                    )}
+                              <div key={s.studentRowId} className={`p-4 space-y-2 transition-colors ${isOver ? 'bg-red-500/10' : 'hover:bg-surface'}`}>
+                                <div className="flex items-center justify-between">
+                                  <div className="flex items-center gap-2 min-w-0">
+                                    <span className="text-xs font-mono text-mist">#{idx + 1}</span>
+                                    <p className="text-sm font-bold text-parchment truncate">{s.fullName}</p>
+                                  </div>
+                                  {pct !== null && (
+                                    <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full border ${pct >= 75 ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' : pct >= 40 ? 'bg-amber-500/10 text-amber-400 border-amber-500/20' : 'bg-red-500/10 text-red-400 border-red-500/20'}`}>
+                                      {pct.toFixed(1)}%
+                                    </span>
+                                  )}
+                                </div>
+                                <div className="flex items-center gap-3">
+                                  <span className="text-[10px] font-mono text-mist">{s.studentCode}</span>
+                                  <div className="flex-1 flex items-center gap-2">
+                                    <span className="text-xs text-mist whitespace-nowrap">Marks:</span>
+                                    <input
+                                      type="number" min="0" step="0.5"
+                                      value={val}
+                                      onChange={(e) => setTestMark(s.studentRowId, e.target.value)}
+                                      placeholder={`Out of ${testGlobalTotal}`}
+                                      className={`${numInputCls} w-full text-left px-3 ${isOver ? 'border-red-500/60 text-red-400' : ''}`}
+                                    />
                                   </div>
                                 </div>
-                                <input
-                                  type="number" min="0" step="0.5"
-                                  value={val}
-                                  onChange={(e) => setTestMark(s.studentRowId, e.target.value)}
-                                  placeholder="—"
-                                  className={`${numInputCls} w-full ${isOver ? 'border-red-500/60 text-red-400' : ''}`}
-                                />
                               </div>
                             )
                           })}
+                        </div>
+
+                        {/* Desktop Layout (sm: and up) */}
+                        <div className="hidden sm:block">
+                          <div className="grid grid-cols-[auto_1fr_130px] gap-4 px-6 py-3 bg-surface border-b border-hairline text-[10px] font-bold text-veena-blue uppercase tracking-widest">
+                            <span>#</span><span>Student</span><span className="text-center">Marks / {testGlobalTotal}</span>
+                          </div>
+                          <div className="divide-y divide-hairline">
+                            {students.map((s, idx) => {
+                              const val = testMarks[s.studentRowId] ?? ''
+                              const obt = parseFloat(val)
+                              const tot = parseFloat(testGlobalTotal)
+                              const isOver = !isNaN(obt) && !isNaN(tot) && obt > tot
+                              const pct = !isNaN(obt) && !isNaN(tot) && tot > 0 ? (obt / tot) * 100 : null
+                              return (
+                                <div key={s.studentRowId} className={`grid grid-cols-[auto_1fr_130px] gap-4 items-center px-6 py-3 transition-colors ${isOver ? 'bg-red-500/10' : 'hover:bg-surface'}`}>
+                                  <span className="text-xs font-mono text-mist w-6 text-right">{idx + 1}</span>
+                                  <div>
+                                    <p className="text-sm font-bold text-parchment truncate">{s.fullName}</p>
+                                    <div className="flex items-center gap-2 mt-0.5">
+                                      <span className="text-[10px] font-mono text-mist">{s.studentCode}</span>
+                                      {pct !== null && (
+                                        <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full border ${pct >= 75 ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' : pct >= 40 ? 'bg-amber-500/10 text-amber-400 border-amber-500/20' : 'bg-red-500/10 text-red-400 border-red-500/20'}`}>
+                                          {pct.toFixed(1)}%
+                                        </span>
+                                      )}
+                                    </div>
+                                  </div>
+                                  <input
+                                    type="number" min="0" step="0.5"
+                                    value={val}
+                                    onChange={(e) => setTestMark(s.studentRowId, e.target.value)}
+                                    placeholder="—"
+                                    className={`${numInputCls} w-full ${isOver ? 'border-red-500/60 text-red-400' : ''}`}
+                                  />
+                                </div>
+                              )
+                            })}
+                          </div>
                         </div>
                         <div className="px-6 py-3 bg-surface border-t border-hairline text-right">
                           <span className="text-[10px] font-mono text-mist uppercase tracking-widest">{students.length} student{students.length !== 1 ? 's' : ''}</span>
