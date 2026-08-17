@@ -143,18 +143,8 @@ export default function ResultsTabsClient({ grouped, profile }: Props) {
             </div>
           </div>
 
-          {/* Table header */}
-          <div className="grid grid-cols-[1fr_80px_80px_80px_70px_70px] gap-4 px-8 py-5 bg-surface border-b border-hairline text-[10px] font-bold text-veena-blue uppercase tracking-widest">
-            <span>Subject</span>
-            <span className="text-center">Max</span>
-            <span className="text-center">Pass</span>
-            <span className="text-center">Obtained</span>
-            <span className="text-center">Grade</span>
-            <span className="text-center">Status</span>
-          </div>
-
-          {/* Rows */}
-          <div className="divide-y divide-hairline">
+          {/* ── Mobile Layout (Below sm: breakpoint) ── */}
+          <div className="sm:hidden divide-y divide-hairline">
             {current.rows.map((r, i) => {
               const rowPct    = r.total_marks > 0 ? (r.marks_obtained / r.total_marks) * 100 : 0
               const rowGrade  = calcGrade(rowPct)
@@ -164,33 +154,103 @@ export default function ResultsTabsClient({ grouped, profile }: Props) {
               return (
                 <div
                   key={r.id}
-                  className="ledger-row grid grid-cols-[1fr_80px_80px_80px_70px_70px] gap-4 px-8 py-5 items-center hover:bg-surface/50 transition-colors"
-                  style={{ animationDelay: `${i * 0.05}s` }}
+                  className="p-4 space-y-3"
+                  style={{ animationDelay: `${i * 0.03}s` }}
                 >
-                  <p className="text-sm font-bold text-parchment">{r.subject}</p>
-                  <p className="text-center text-[10px] font-mono text-mist">{r.total_marks}</p>
-                  <p className="text-center text-[10px] font-mono text-mist">{passMark}</p>
-                  <p className="text-center text-sm font-bold text-parchment drop-shadow-sm">{r.marks_obtained}</p>
-                  <p className={`text-center text-sm font-bold drop-shadow-sm ${gradeColor(rowPct)}`}>{rowGrade}</p>
-                  <div className="flex justify-center">
-                    <span className={`text-[10px] font-bold px-3 py-1 rounded-full uppercase tracking-widest border ${
-                      passed ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' : 'bg-red-500/10 text-red-400 border-red-500/20'
-                    }`}>
-                      {passed ? 'PASS' : 'FAIL'}
-                    </span>
+                  <div className="flex items-start justify-between gap-2">
+                    <p className="text-sm font-bold text-parchment">{r.subject}</p>
+                    <div className="flex items-center gap-2">
+                      <span className={`text-xs font-bold ${gradeColor(rowPct)}`}>{rowGrade}</span>
+                      <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider border ${
+                        passed ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' : 'bg-red-500/10 text-red-400 border-red-500/20'
+                      }`}>
+                        {passed ? 'PASS' : 'FAIL'}
+                      </span>
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-3 gap-2 pt-2 border-t border-hairline/60 text-center">
+                    <div className="p-2 rounded-xl bg-surface/50 border border-hairline/40">
+                      <p className="text-[9px] font-mono text-mist uppercase tracking-wider">Obtained</p>
+                      <p className="text-sm font-bold text-parchment font-mono mt-0.5">{r.marks_obtained}</p>
+                    </div>
+                    <div className="p-2 rounded-xl bg-surface/50 border border-hairline/40">
+                      <p className="text-[9px] font-mono text-mist uppercase tracking-wider">Max Marks</p>
+                      <p className="text-sm font-bold text-mist font-mono mt-0.5">{r.total_marks}</p>
+                    </div>
+                    <div className="p-2 rounded-xl bg-surface/50 border border-hairline/40">
+                      <p className="text-[9px] font-mono text-mist uppercase tracking-wider">Pass Mark</p>
+                      <p className="text-sm font-bold text-mist font-mono mt-0.5">{passMark}</p>
+                    </div>
                   </div>
                 </div>
               )
             })}
+
+            {/* Mobile Footer */}
+            <div className="p-4 bg-surface border-t border-hairline space-y-2">
+              <div className="flex items-center justify-between text-xs">
+                <span className="text-mist font-mono uppercase tracking-wider">{current.rows.length} subjects</span>
+                <span className="font-bold text-parchment font-display">Total: {totalObt} / {totalMax}</span>
+              </div>
+              <div className="flex items-center justify-between text-xs pt-1 border-t border-hairline/50">
+                <span className="text-mist">Overall Percentage</span>
+                <span className={`font-bold font-display ${gradeColor(pct)}`}>{pct.toFixed(1)}% ({calcGrade(pct)})</span>
+              </div>
+            </div>
           </div>
 
-          {/* Footer summary */}
-          <div className="flex items-center justify-between px-8 py-6 bg-surface border-t border-hairline">
-            <span className="text-[10px] font-mono text-mist uppercase tracking-widest">{current.rows.length} subjects</span>
-            <div className="flex items-center gap-8 text-[10px] font-mono uppercase tracking-widest">
-              <span className="text-mist">Total: <strong className="text-parchment text-sm ml-2 font-display">{totalObt}/{totalMax}</strong></span>
-              <span className="text-mist">Percentage: <strong className={`${gradeColor(pct)} text-sm ml-2 font-display`}>{pct.toFixed(1)}%</strong></span>
-              <span className="text-mist">Grade: <strong className={`${gradeColor(pct)} text-sm ml-2 font-display`}>{calcGrade(pct)}</strong></span>
+          {/* ── Desktop Table Layout (sm: and up) ── */}
+          <div className="hidden sm:block">
+            {/* Table header */}
+            <div className="grid grid-cols-[1fr_80px_80px_80px_70px_70px] gap-4 px-8 py-5 bg-surface border-b border-hairline text-[10px] font-bold text-veena-blue uppercase tracking-widest">
+              <span>Subject</span>
+              <span className="text-center">Max</span>
+              <span className="text-center">Pass</span>
+              <span className="text-center">Obtained</span>
+              <span className="text-center">Grade</span>
+              <span className="text-center">Status</span>
+            </div>
+
+            {/* Rows */}
+            <div className="divide-y divide-hairline">
+              {current.rows.map((r, i) => {
+                const rowPct    = r.total_marks > 0 ? (r.marks_obtained / r.total_marks) * 100 : 0
+                const rowGrade  = calcGrade(rowPct)
+                const passMark  = Math.ceil(r.total_marks * 0.33)
+                const passed    = r.marks_obtained >= passMark
+
+                return (
+                  <div
+                    key={r.id}
+                    className="ledger-row grid grid-cols-[1fr_80px_80px_80px_70px_70px] gap-4 px-8 py-5 items-center hover:bg-surface/50 transition-colors"
+                    style={{ animationDelay: `${i * 0.05}s` }}
+                  >
+                    <p className="text-sm font-bold text-parchment">{r.subject}</p>
+                    <p className="text-center text-[10px] font-mono text-mist">{r.total_marks}</p>
+                    <p className="text-center text-[10px] font-mono text-mist">{passMark}</p>
+                    <p className="text-center text-sm font-bold text-parchment drop-shadow-sm">{r.marks_obtained}</p>
+                    <p className={`text-center text-sm font-bold drop-shadow-sm ${gradeColor(rowPct)}`}>{rowGrade}</p>
+                    <div className="flex justify-center">
+                      <span className={`text-[10px] font-bold px-3 py-1 rounded-full uppercase tracking-widest border ${
+                        passed ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' : 'bg-red-500/10 text-red-400 border-red-500/20'
+                      }`}>
+                        {passed ? 'PASS' : 'FAIL'}
+                      </span>
+                    </div>
+                  </div>
+                )
+              })}
+            </div>
+
+            {/* Footer summary */}
+            <div className="flex items-center justify-between px-8 py-6 bg-surface border-t border-hairline">
+              <span className="text-[10px] font-mono text-mist uppercase tracking-widest">{current.rows.length} subjects</span>
+              <div className="flex items-center gap-8 text-[10px] font-mono uppercase tracking-widest">
+                <span className="text-mist">Total: <strong className="text-parchment text-sm ml-2 font-display">{totalObt}/{totalMax}</strong></span>
+                <span className="text-mist">Percentage: <strong className={`${gradeColor(pct)} text-sm ml-2 font-display`}>{pct.toFixed(1)}%</strong></span>
+                <span className="text-mist">Grade: <strong className={`${gradeColor(pct)} text-sm ml-2 font-display`}>{calcGrade(pct)}</strong></span>
+              </div>
             </div>
           </div>
         </motion.div>
