@@ -40,7 +40,7 @@ export async function fetchTeacherClasses(): Promise<{ data: ClassOption[]; erro
     const supabase = await createClient()
 
     // Find the teacher's profile first to get the teacher row ID
-    let { data: teacherRecord } = await supabase
+    const { data: teacherRecord } = await supabase
       .from('teachers')
       .select('id')
       .eq('profile_id', teacherId)

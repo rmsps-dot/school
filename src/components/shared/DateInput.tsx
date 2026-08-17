@@ -33,9 +33,10 @@ export default function DateInput({ id, label, value, onChange, required, classN
     return { dd: '', mm: '', yyyy: '' }
   }
 
-  const [dd, setDd] = useState(parse(value).dd)
-  const [mm, setMm] = useState(parse(value).mm)
-  const [yyyy, setYyyy] = useState(parse(value).yyyy)
+  const initial = parse(value)
+  const [dd, setDd] = useState(initial.dd)
+  const [mm, setMm] = useState(initial.mm)
+  const [yyyy, setYyyy] = useState(initial.yyyy)
   const [showCal, setShowCal] = useState(false)
 
   const today = new Date()
@@ -51,16 +52,6 @@ export default function DateInput({ id, label, value, onChange, required, classN
   const ddRef = useRef<HTMLInputElement>(null)
   const mmRef = useRef<HTMLInputElement>(null)
   const yyyyRef = useRef<HTMLInputElement>(null)
-
-  // Sync if parent changes value
-  useEffect(() => {
-    const parsed = parse(value)
-    setDd(parsed.dd)
-    setMm(parsed.mm)
-    setYyyy(parsed.yyyy)
-    if (parsed.yyyy) setCalYear(parseInt(parsed.yyyy))
-    if (parsed.mm) setCalMonth(parseInt(parsed.mm) - 1)
-  }, [value])
 
   // Close calendar on outside click
   useEffect(() => {

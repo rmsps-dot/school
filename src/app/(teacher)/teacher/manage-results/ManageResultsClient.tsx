@@ -2,7 +2,7 @@
 
 import { useState, useTransition } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { BookOpen, Users, CalendarDays, Loader2, Save, ArrowRight, UserCircle, Plus, Trash2, Edit, AlertCircle, FileSpreadsheet, ListChecks, CheckSquare, ChevronDown, FileText, CheckCircle2, X, Download } from 'lucide-react'
+import { Loader2, Trash2, Edit, AlertCircle, FileSpreadsheet, ChevronDown, X, Download } from 'lucide-react'
 import React from 'react'
 import { updateTeacherResult, deleteTeacherResult } from '@/actions/manage-results-actions'
 import MarksheetModal from '@/components/admin/MarksheetModal'
@@ -309,7 +309,7 @@ export default function ManageResultsClient({ initialResults }: Props) {
                         </td>
                       </tr>
                       
-                      {hasMultiple && expandedRows.has(key) && group.subjectsList.map((sub: TeacherResultRecord, j: number) => {
+                      {hasMultiple && expandedRows.has(key) && group.subjectsList.map((sub: TeacherResultRecord) => {
                         const sp = (sub.marks_obtained / (sub.total_marks || sub.max_marks || 1)) * 100
                         let sg = 'F'
                         if (sp >= 90) sg = 'A+'

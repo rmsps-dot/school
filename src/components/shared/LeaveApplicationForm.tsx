@@ -53,8 +53,6 @@ export default function LeaveApplicationForm({ pastLeaves, roleName }: Props) {
     }
   }
 
-  const themeColor = roleName === 'Student' ? 'veena-blue' : 'veena-blue' // Use default veena-blue or pass color via props in future
-
   return (
     <div className="space-y-10">
       {/* ── Apply Form ── */}
@@ -131,7 +129,7 @@ export default function LeaveApplicationForm({ pastLeaves, roleName }: Props) {
             <div className="w-20 h-20 rounded-full bg-ink border border-hairline flex items-center justify-center">
               <CalendarIcon className="w-10 h-10 text-mist/50" />
             </div>
-            <p className="text-mist font-mono uppercase tracking-widest text-xs">You haven't submitted any leave requests yet.</p>
+            <p className="text-mist font-mono uppercase tracking-widest text-xs">You have not submitted any leave requests yet.</p>
           </div>
         ) : (
           <div className="grid gap-6">

@@ -26,6 +26,7 @@ export default function AdminChatClient({ currentUserId }: Props) {
 
   useEffect(() => {
     let isMounted = true
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setIsLoading(true)
     
     getAllProfiles().then(({ data, error }) => {

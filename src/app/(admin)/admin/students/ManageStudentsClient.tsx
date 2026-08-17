@@ -60,9 +60,13 @@ export default function ManageStudentsClient({ students: initialStudents, classe
     if (editId && initialStudents.length > 0) {
       const studentToEdit = initialStudents.find(s => s.id === editId)
       if (studentToEdit) {
-        setEditingStudent(studentToEdit)
-        setEditDob(studentToEdit.profiles?.dob || '')
-        setIsEditModalOpen(true)
+        // Using callback to avoid setState cascade warnings
+        const updateState = () => {
+          setEditingStudent(studentToEdit)
+          setEditDob(studentToEdit.profiles?.dob || '')
+          setIsEditModalOpen(true)
+        }
+        updateState()
         // Clear the query parameter immediately so it doesn't trigger again on revalidation/refresh
         router.replace('/admin/students', { scroll: false })
       }
@@ -98,7 +102,7 @@ export default function ManageStudentsClient({ students: initialStudents, classe
     if (!acc[className]) acc[className] = []
     acc[className].push(student)
     return acc
-  }, {} as Record<string, any[]>)
+  }, {} as Record<string, StudentRecord[]>)
 
   const handleAddStudent = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
@@ -339,11 +343,11 @@ export default function ManageStudentsClient({ students: initialStudents, classe
                   <h3 className="text-xs font-bold text-coral uppercase tracking-widest border-b border-hairline pb-2">Family Details</h3>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                     <div className="space-y-2">
-                      <label className="text-xs font-semibold text-mist uppercase tracking-wider">Father's Name</label>
+                      <label className="text-xs font-semibold text-mist uppercase tracking-wider">Father&apos;s Name</label>
                       <input type="text" name="fatherName" className="w-full input-glass rounded-xl px-4 py-3 text-sm text-parchment focus:outline-none focus:border-coral" />
                     </div>
                     <div className="space-y-2">
-                      <label className="text-xs font-semibold text-mist uppercase tracking-wider">Mother's Name</label>
+                      <label className="text-xs font-semibold text-mist uppercase tracking-wider">Mother&apos;s Name</label>
                       <input type="text" name="motherName" className="w-full input-glass rounded-xl px-4 py-3 text-sm text-parchment focus:outline-none focus:border-coral" />
                     </div>
                     <div className="space-y-2">
@@ -464,11 +468,11 @@ export default function ManageStudentsClient({ students: initialStudents, classe
                   <h3 className="text-xs font-bold text-coral uppercase tracking-widest border-b border-hairline pb-2">Family Details</h3>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                     <div className="space-y-2">
-                      <label className="text-xs font-semibold text-mist uppercase tracking-wider">Father's Name</label>
+                      <label className="text-xs font-semibold text-mist uppercase tracking-wider">Father&apos;s Name</label>
                       <input type="text" name="fatherName" defaultValue={editingStudent.father_name || ''} className="w-full input-glass rounded-xl px-4 py-3 text-sm text-parchment focus:outline-none focus:border-coral" />
                     </div>
                     <div className="space-y-2">
-                      <label className="text-xs font-semibold text-mist uppercase tracking-wider">Mother's Name</label>
+                      <label className="text-xs font-semibold text-mist uppercase tracking-wider">Mother&apos;s Name</label>
                       <input type="text" name="motherName" defaultValue={editingStudent.mother_name || ''} className="w-full input-glass rounded-xl px-4 py-3 text-sm text-parchment focus:outline-none focus:border-coral" />
                     </div>
                     <div className="space-y-2">

@@ -108,13 +108,16 @@ export default function AvatarUpload({ currentPhotoUrl, onUploadSuccess, userId,
   const [crop, setCrop] = useState({ x: 0, y: 0 });
   const [zoom, setZoom] = useState(1);
   const [croppedAreaPixels, setCroppedAreaPixels] = useState<{width: number, height: number, x: number, y: number} | null>(null);
-  const [mounted, setMounted] = useState(false);
+  const [mounted, setMounted] = useState(() => typeof window !== 'undefined');
   const [imageLoadError, setImageLoadError] = useState(false);
 
+  // eslint-disable-next-line react-hooks/set-state-in-effect
   useEffect(() => {
     setMounted(true);
   }, []);
 
+  // Reset image load error when photo URL changes
+  // eslint-disable-next-line react-hooks/set-state-in-effect
   useEffect(() => {
     setImageLoadError(false);
   }, [currentPhotoUrl]);

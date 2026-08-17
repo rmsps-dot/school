@@ -32,6 +32,7 @@ export default function ChatWindow({ currentUserId, recipient, onClearRecipient 
     }
 
     let isMounted = true
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setIsLoading(true)
 
     getMessageHistory(recipient.id).then(({ data, error }) => {

@@ -278,8 +278,8 @@ export default function ApprovalModal({ registration: reg, classes, onClose, onD
             <div className="surface-card rounded-xl p-4 grid grid-cols-1 sm:grid-cols-2 gap-4">
               {isEditing ? (
                 <>
-                  <div className="flex flex-col gap-1"><label className="text-xs text-mist">Father's Name</label><input name="father_name" value={formData.father_name} onChange={handleChange} className="bg-ink/50 border border-hairline rounded px-2 py-1 text-sm text-parchment" /></div>
-                  <div className="flex flex-col gap-1"><label className="text-xs text-mist">Mother's Name</label><input name="mother_name" value={formData.mother_name} onChange={handleChange} className="bg-ink/50 border border-hairline rounded px-2 py-1 text-sm text-parchment" /></div>
+                  <div className="flex flex-col gap-1"><label className="text-xs text-mist">Father&apos;s Name</label><input name="father_name" value={formData.father_name} onChange={handleChange} className="bg-ink/50 border border-hairline rounded px-2 py-1 text-sm text-parchment" /></div>
+                  <div className="flex flex-col gap-1"><label className="text-xs text-mist">Mother&apos;s Name</label><input name="mother_name" value={formData.mother_name} onChange={handleChange} className="bg-ink/50 border border-hairline rounded px-2 py-1 text-sm text-parchment" /></div>
                   <div className="flex flex-col gap-1"><label className="text-xs text-mist">Parent Mobile</label><input name="parent_mobile" value={formData.parent_mobile} onChange={handleChange} className="bg-ink/50 border border-hairline rounded px-2 py-1 text-sm text-parchment" /></div>
                   <div className="flex flex-col gap-1"><label className="text-xs text-mist">Parent Email</label><input type="email" name="parent_email" value={formData.parent_email} onChange={handleChange} className="bg-ink/50 border border-hairline rounded px-2 py-1 text-sm text-parchment" /></div>
                 </>

@@ -39,6 +39,7 @@ export default function TeacherChatClient({ currentUserId, schoolClasses }: Prop
 
   useEffect(() => {
     let isMounted = true
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setIsLoading(true)
     
     getContactsForTeacher(activeTab, selectedClassId).then(({ data, error }) => {

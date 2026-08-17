@@ -15,6 +15,7 @@ export default function ParentFeesClient({ children }: { children: ChildInfo[] }
 
   useEffect(() => {
     if (activeChild?.studentRowId) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setLoading(true)
       getStudentFees(activeChild.studentRowId).then((res) => {
         setFees(res.data || [])

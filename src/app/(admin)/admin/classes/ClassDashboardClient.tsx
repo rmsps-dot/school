@@ -206,17 +206,32 @@ export default function ClassDashboardClient({ classes: initialClasses }: ClassD
 
   const selectedClassObj = classes.find(c => c.id === selectedClass)
 
+  const groupedResults: GroupedResult[] = Array.from(
+    results.reduce((map: Map<string, GroupedResult>, r: ResultType) => {
+      const key = `${r.student_id}_${r.exam_type}`
+      if (!map.has(key)) {
+        map.set(key, { ...r, subjectsList: [], totalObtained: 0, grandTotal: 0 })
+      }
+
+      const group = map.get(key)!
+      group.subjectsList.push(r)
+      group.totalObtained += r.marks_obtained
+      group.grandTotal += (r.total_marks || r.max_marks || 100)
+      return map
+    }, new Map<string, GroupedResult>()).values()
+  )
+
   return (
-    <div className="space-y-8">
+    <div className="w-full max-w-[1600px] mx-auto space-y-4 sm:space-y-6 lg:space-y-8 mobile-safe-stack">
       {/* ── Page Header ── */}
-      <div className="surface-card rounded-3xl p-8 flex flex-col md:flex-row md:items-center justify-between gap-6">
-        <div>
-          <h1 className="font-display text-3xl font-bold text-parchment flex items-center gap-3">
-            <BookOpen className="w-8 h-8 text-coral" /> Manage Classes
+      <div className="surface-card rounded-3xl p-4 sm:p-6 lg:p-8 flex flex-col gap-4 md:flex-row md:items-center justify-between">
+        <div className="min-w-0">
+          <h1 className="font-display text-2xl sm:text-3xl font-bold text-parchment flex items-center gap-3 flex-wrap">
+            <BookOpen className="w-7 h-7 sm:w-8 sm:h-8 text-coral" /> Manage Classes
           </h1>
-          <p className="text-mist mt-2 max-w-md">Select a class to manage its students, attendance, and results directory.</p>
+          <p className="text-mist mt-2 max-w-md text-sm sm:text-base">Select a class to manage its students, attendance, and results directory.</p>
         </div>
-        <div className="flex items-center gap-4 w-full md:w-auto">
+        <div className="flex flex-col sm:flex-row items-stretch gap-3 w-full md:w-auto md:min-w-[260px]">
           <div className="w-full md:w-64">
             <select
               value={selectedClass}
@@ -304,8 +319,8 @@ export default function ClassDashboardClient({ classes: initialClasses }: ClassD
 
       <div className="surface-card rounded-3xl border border-hairline overflow-hidden shadow-2xl">
         {/* Class Title and Actions */}
-        <div className="px-8 py-6 border-b border-hairline flex justify-between items-center bg-surface">
-          <h2 className="font-display text-2xl font-bold text-parchment">
+        <div className="px-4 py-4 sm:px-6 lg:px-8 border-b border-hairline flex justify-between items-center bg-surface gap-3">
+          <h2 className="font-display text-xl sm:text-2xl font-bold text-parchment truncate">
             {selectedClass ? (
               <>{selectedClassObj?.class_name} <span className="text-coral">{selectedClassObj?.section && selectedClassObj.section !== '-' ? `Section ${selectedClassObj.section}` : ''}</span></>
             ) : (
@@ -327,19 +342,19 @@ export default function ClassDashboardClient({ classes: initialClasses }: ClassD
           <div className="flex border-b border-hairline overflow-x-auto hide-scrollbar">
             <button
               onClick={() => setActiveTab('students')}
-              className={`flex-1 min-w-[140px] flex justify-center items-center gap-2 py-4 text-xs font-bold uppercase tracking-widest transition-colors ${activeTab === 'students' ? 'text-coral border-b-2 border-coral bg-ink' : 'text-mist hover:text-parchment hover:bg-ink/50'}`}
+              className={`flex-1 basis-[140px] min-w-[140px] flex justify-center items-center gap-2 py-4 text-[10px] sm:text-xs font-bold uppercase tracking-widest transition-colors ${activeTab === 'students' ? 'text-coral border-b-2 border-coral bg-ink' : 'text-mist hover:text-parchment hover:bg-ink/50'}`}
             >
               <Users className="w-4 h-4" /> Students
             </button>
             <button
               onClick={() => setActiveTab('mark_attendance')}
-              className={`flex-1 min-w-[160px] flex justify-center items-center gap-2 py-4 text-xs font-bold uppercase tracking-widest transition-colors ${activeTab === 'mark_attendance' ? 'text-coral border-b-2 border-coral bg-ink' : 'text-mist hover:text-parchment hover:bg-ink/50'}`}
+              className={`flex-1 basis-[160px] min-w-[160px] flex justify-center items-center gap-2 py-4 text-[10px] sm:text-xs font-bold uppercase tracking-widest transition-colors ${activeTab === 'mark_attendance' ? 'text-coral border-b-2 border-coral bg-ink' : 'text-mist hover:text-parchment hover:bg-ink/50'}`}
             >
               <CalendarDays className="w-4 h-4" /> Mark Attendance
             </button>
             <button
               onClick={() => setActiveTab('manage_attendance')}
-              className={`flex-1 min-w-[180px] flex justify-center items-center gap-2 py-4 text-xs font-bold uppercase tracking-widest transition-colors ${activeTab === 'manage_attendance' ? 'text-coral border-b-2 border-coral bg-ink' : 'text-mist hover:text-parchment hover:bg-ink/50'}`}
+              className={`flex-1 basis-[180px] min-w-[180px] flex justify-center items-center gap-2 py-4 text-[10px] sm:text-xs font-bold uppercase tracking-widest transition-colors ${activeTab === 'manage_attendance' ? 'text-coral border-b-2 border-coral bg-ink' : 'text-mist hover:text-parchment hover:bg-ink/50'}`}
             >
               <CheckSquare className="w-4 h-4" /> Manage Attendance
             </button>
@@ -348,19 +363,19 @@ export default function ClassDashboardClient({ classes: initialClasses }: ClassD
                 if (!selectedClassObj) return alert('Please select a class from the dropdown first.')
                 setUploadModalOpen(true)
               }}
-              className={`flex-1 min-w-[160px] flex justify-center items-center gap-2 py-4 text-xs font-bold uppercase tracking-widest transition-colors ${uploadModalOpen ? 'text-coral border-b-2 border-coral bg-ink' : 'text-mist hover:text-parchment hover:bg-ink/50'}`}
+              className={`flex-1 basis-[160px] min-w-[160px] flex justify-center items-center gap-2 py-4 text-[10px] sm:text-xs font-bold uppercase tracking-widest transition-colors ${uploadModalOpen ? 'text-coral border-b-2 border-coral bg-ink' : 'text-mist hover:text-parchment hover:bg-ink/50'}`}
             >
               <FileSpreadsheet className="w-4 h-4" /> Upload Result
             </button>
             <button
               onClick={() => setActiveTab('manage_result')}
-              className={`flex-1 min-w-[160px] flex justify-center items-center gap-2 py-4 text-xs font-bold uppercase tracking-widest transition-colors ${activeTab === 'manage_result' ? 'text-coral border-b-2 border-coral bg-ink' : 'text-mist hover:text-parchment hover:bg-ink/50'}`}
+              className={`flex-1 basis-[160px] min-w-[160px] flex justify-center items-center gap-2 py-4 text-[10px] sm:text-xs font-bold uppercase tracking-widest transition-colors ${activeTab === 'manage_result' ? 'text-coral border-b-2 border-coral bg-ink' : 'text-mist hover:text-parchment hover:bg-ink/50'}`}
             >
               <ListChecks className="w-4 h-4" /> Manage Results
             </button>
           </div>
 
-          <div className="p-8 relative min-h-[400px]">
+          <div className="p-4 sm:p-6 lg:p-8 relative min-h-[400px]">
             {isPending && (
               <div className="absolute inset-0 bg-ink/50 backdrop-blur-sm z-10 flex items-center justify-center">
                 <Loader2 className="w-8 h-8 text-coral animate-spin" />
@@ -409,20 +424,22 @@ export default function ClassDashboardClient({ classes: initialClasses }: ClassD
             {/* ATTENDANCE TAB */}
             {activeTab === 'mark_attendance' && (
               <div className="space-y-6">
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                  <div className="flex items-center gap-4">
+                <div className="flex flex-col gap-4 sm:flex-row sm:items-center justify-between">
+                  <div className="flex flex-col sm:flex-row sm:items-center gap-3 min-w-0">
                     <label className="text-xs font-bold text-mist uppercase tracking-widest">Select Date:</label>
-                    <DateInput
-                      value={attendanceDate}
-                      onChange={setAttendanceDate}
-                      label=""
-                      labelClass="hidden"
-                    />
+                    <div className="w-full sm:w-auto min-w-0">
+                      <DateInput
+                        value={attendanceDate}
+                        onChange={setAttendanceDate}
+                        label=""
+                        labelClass="hidden"
+                      />
+                    </div>
                   </div>
                   <button
                     onClick={handleSaveAttendance}
                     disabled={isSavingAtt || attendanceRecords.length === 0}
-                    className="bg-coral text-ink px-6 py-2.5 rounded-xl font-semibold text-sm flex items-center gap-2 hover:bg-[#E67E6B] transition-colors disabled:opacity-50"
+                    className="bg-coral text-ink px-5 py-2.5 rounded-xl font-semibold text-sm flex items-center justify-center gap-2 hover:bg-[#E67E6B] transition-colors disabled:opacity-50 w-full sm:w-auto"
                   >
                     {isSavingAtt ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
                     Save Attendance
@@ -430,47 +447,49 @@ export default function ClassDashboardClient({ classes: initialClasses }: ClassD
                 </div>
 
                 <div className="bg-ink rounded-2xl border border-hairline overflow-hidden">
-                  <table className="w-full text-left">
-                    <thead className="bg-surface border-b border-hairline">
-                      <tr>
-                        <th className="p-4 text-xs font-bold text-mist uppercase tracking-widest">Student</th>
-                        <th className="p-4 text-xs font-bold text-mist uppercase tracking-widest text-center">Status</th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-hairline">
-                      {attendanceRecords.map((r, i) => (
-                        <tr key={r.student_id} className="ledger-row hover:bg-surface/50 transition-colors" style={{ animationDelay: `${i * 0.05}s` }}>
-                          <td className="p-4">
-                            <div className="font-semibold text-parchment">{r.full_name}</div>
-                            <div className="text-[10px] font-mono text-mist uppercase tracking-widest mt-1">{r.student_code}</div>
-                          </td>
-                          <td className="p-4 text-center">
-                            <div className="flex justify-center gap-3">
-                              <button
-                                onClick={() => updateStatus(r.student_id, 'present')}
-                                className={`px-4 py-2 rounded-xl text-xs font-bold transition-all ${r.status === 'present' ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 shadow-lg' : 'bg-surface text-mist border border-hairline hover:border-emerald-500/50 hover:text-emerald-400'}`}
-                              >
-                                Present
-                              </button>
-                              <button
-                                onClick={() => updateStatus(r.student_id, 'absent')}
-                                className={`px-4 py-2 rounded-xl text-xs font-bold transition-all ${r.status === 'absent' ? 'bg-red-500/20 text-red-400 border border-red-500/30 shadow-lg' : 'bg-surface text-mist border border-hairline hover:border-red-500/50 hover:text-red-400'}`}
-                              >
-                                Absent
-                              </button>
-                            </div>
-                          </td>
-                        </tr>
-                      ))}
-                      {attendanceRecords.length === 0 && (
+                  <div className="responsive-table-shell">
+                    <table className="w-full min-w-[420px] text-left">
+                      <thead className="bg-surface border-b border-hairline">
                         <tr>
-                          <td colSpan={2} className="p-12 text-center text-mist font-mono uppercase tracking-widest text-sm">
-                            No students found to mark attendance.
-                          </td>
+                          <th className="p-4 text-xs font-bold text-mist uppercase tracking-widest">Student</th>
+                          <th className="p-4 text-xs font-bold text-mist uppercase tracking-widest text-center">Status</th>
                         </tr>
-                      )}
-                    </tbody>
-                  </table>
+                      </thead>
+                      <tbody className="divide-y divide-hairline">
+                        {attendanceRecords.map((r, i) => (
+                          <tr key={r.student_id} className="ledger-row hover:bg-surface/50 transition-colors" style={{ animationDelay: `${i * 0.05}s` }}>
+                            <td className="p-4 align-top">
+                              <div className="font-semibold text-parchment break-words pr-2">{r.full_name}</div>
+                              <div className="text-[10px] font-mono text-mist uppercase tracking-widest mt-1 break-all">{r.student_code}</div>
+                            </td>
+                            <td className="p-4 text-center align-top">
+                              <div className="flex justify-center flex-wrap gap-2 sm:gap-3">
+                                <button
+                                  onClick={() => updateStatus(r.student_id, 'present')}
+                                  className={`px-3 py-2 rounded-xl text-xs font-bold transition-all ${r.status === 'present' ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 shadow-lg' : 'bg-surface text-mist border border-hairline hover:border-emerald-500/50 hover:text-emerald-400'}`}
+                                >
+                                  Present
+                                </button>
+                                <button
+                                  onClick={() => updateStatus(r.student_id, 'absent')}
+                                  className={`px-3 py-2 rounded-xl text-xs font-bold transition-all ${r.status === 'absent' ? 'bg-red-500/20 text-red-400 border border-red-500/30 shadow-lg' : 'bg-surface text-mist border border-hairline hover:border-red-500/50 hover:text-red-400'}`}
+                                >
+                                  Absent
+                                </button>
+                              </div>
+                            </td>
+                          </tr>
+                        ))}
+                        {attendanceRecords.length === 0 && (
+                          <tr>
+                            <td colSpan={2} className="p-12 text-center text-mist font-mono uppercase tracking-widest text-sm">
+                              No students found to mark attendance.
+                            </td>
+                          </tr>
+                        )}
+                      </tbody>
+                    </table>
+                  </div>
                 </div>
               </div>
             )}
@@ -482,57 +501,59 @@ export default function ClassDashboardClient({ classes: initialClasses }: ClassD
                   <h3 className="font-display text-xl font-bold text-parchment">Manage Attendance Records</h3>
                 </div>
 
-                <div className="bg-ink rounded-2xl border border-hairline overflow-x-auto">
-                  <table className="w-full text-left whitespace-nowrap">
-                    <thead className="bg-surface border-b border-hairline">
-                      <tr>
-                        <th className="p-4 text-xs font-bold text-mist uppercase tracking-widest">Student</th>
-                        <th className="p-4 text-xs font-bold text-mist uppercase tracking-widest text-center">Date</th>
-                        <th className="p-4 text-xs font-bold text-mist uppercase tracking-widest text-center">Status</th>
-                        <th className="p-4 text-xs font-bold text-mist uppercase tracking-widest text-right">Actions</th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-hairline">
-                      {manageAttendance.map((r, i) => (
-                        <tr key={r.id} className="ledger-row hover:bg-surface/50 transition-colors" style={{ animationDelay: `${i * 0.05}s` }}>
-                          <td className="p-4">
-                            <div className="font-semibold text-parchment">{r.students?.profiles?.full_name}</div>
-                            <div className="text-[10px] font-mono text-mist tracking-widest mt-1">{r.students?.student_id}</div>
-                          </td>
-                          <td className="p-4 text-center font-mono text-sm text-mist">{new Date(r.date).toLocaleDateString()}</td>
-                          <td className="p-4 text-center">
-                            <select
-                              value={r.status}
-                              onChange={(e) => handleUpdateManageAttendanceStatus(r.id, e.target.value)}
-                              className={`bg-transparent text-xs font-bold uppercase tracking-wider focus:outline-none cursor-pointer ${
-                                r.status === 'present' ? 'text-emerald-400' : r.status === 'absent' ? 'text-red-400' : 'text-yellow-400'
-                              }`}
-                            >
-                              <option className="text-ink" value="present">Present</option>
-                              <option className="text-ink" value="absent">Absent</option>
-                              <option className="text-ink" value="leave">Leave</option>
-                            </select>
-                          </td>
-                          <td className="p-4 text-right">
-                            <button
-                              onClick={() => handleDeleteAttendance(r.id)}
-                              className="text-mist hover:text-red-400 p-2 rounded-lg hover:bg-red-500/10 transition-colors border border-transparent hover:border-red-500/30"
-                              title="Delete Record"
-                            >
-                              <Trash2 className="w-4 h-4" />
-                            </button>
-                          </td>
-                        </tr>
-                      ))}
-                      {manageAttendance.length === 0 && (
+                <div className="bg-ink rounded-2xl border border-hairline">
+                  <div className="responsive-table-shell">
+                    <table className="w-full min-w-[640px] text-left whitespace-nowrap">
+                      <thead className="bg-surface border-b border-hairline">
                         <tr>
-                          <td colSpan={4} className="p-12 text-center text-mist font-mono text-sm tracking-widest uppercase">
-                            No attendance records found.
-                          </td>
+                          <th className="p-4 text-xs font-bold text-mist uppercase tracking-widest">Student</th>
+                          <th className="p-4 text-xs font-bold text-mist uppercase tracking-widest text-center">Date</th>
+                          <th className="p-4 text-xs font-bold text-mist uppercase tracking-widest text-center">Status</th>
+                          <th className="p-4 text-xs font-bold text-mist uppercase tracking-widest text-right">Actions</th>
                         </tr>
-                      )}
-                    </tbody>
-                  </table>
+                      </thead>
+                      <tbody className="divide-y divide-hairline">
+                        {manageAttendance.map((r, i) => (
+                          <tr key={r.id} className="ledger-row hover:bg-surface/50 transition-colors" style={{ animationDelay: `${i * 0.05}s` }}>
+                            <td className="p-4 align-top">
+                              <div className="font-semibold text-parchment break-words pr-2">{r.students?.profiles?.full_name}</div>
+                              <div className="text-[10px] font-mono text-mist tracking-widest mt-1 break-all">{r.students?.student_id}</div>
+                            </td>
+                            <td className="p-4 text-center font-mono text-sm text-mist align-top">{new Date(r.date).toLocaleDateString()}</td>
+                            <td className="p-4 text-center align-top">
+                              <select
+                                value={r.status}
+                                onChange={(e) => handleUpdateManageAttendanceStatus(r.id, e.target.value)}
+                                className={`bg-transparent text-xs font-bold uppercase tracking-wider focus:outline-none cursor-pointer ${
+                                  r.status === 'present' ? 'text-emerald-400' : r.status === 'absent' ? 'text-red-400' : 'text-yellow-400'
+                                }`}
+                              >
+                                <option className="text-ink" value="present">Present</option>
+                                <option className="text-ink" value="absent">Absent</option>
+                                <option className="text-ink" value="leave">Leave</option>
+                              </select>
+                            </td>
+                            <td className="p-4 text-right align-top">
+                              <button
+                                onClick={() => handleDeleteAttendance(r.id)}
+                                className="text-mist hover:text-red-400 p-2 rounded-lg hover:bg-red-500/10 transition-colors border border-transparent hover:border-red-500/30"
+                                title="Delete Record"
+                              >
+                                <Trash2 className="w-4 h-4" />
+                              </button>
+                            </td>
+                          </tr>
+                        ))}
+                        {manageAttendance.length === 0 && (
+                          <tr>
+                            <td colSpan={4} className="p-12 text-center text-mist font-mono text-sm tracking-widest uppercase">
+                              No attendance records found.
+                            </td>
+                          </tr>
+                        )}
+                      </tbody>
+                    </table>
+                  </div>
                 </div>
               </div>
             )}
@@ -545,202 +566,184 @@ export default function ClassDashboardClient({ classes: initialClasses }: ClassD
                   <h3 className="font-display text-xl font-bold text-parchment">Manage Uploaded Results</h3>
                 </div>
 
-                <div className="bg-ink rounded-2xl border border-hairline overflow-x-auto">
-                  <table className="w-full text-left whitespace-nowrap">
-                    <thead className="bg-surface border-b border-hairline">
-                      <tr>
-                        <th className="p-4 w-8"></th>
-                        <th className="p-4 text-xs font-bold text-mist uppercase tracking-widest">Student</th>
-                        <th className="p-4 text-xs font-bold text-mist uppercase tracking-widest">Exam Type</th>
-                        <th className="p-4 text-xs font-bold text-mist uppercase tracking-widest">Subject</th>
-                        <th className="p-4 text-xs font-bold text-mist uppercase tracking-widest text-center">Marks</th>
-                        <th className="p-4 text-xs font-bold text-mist uppercase tracking-widest text-center">Grade</th>
-                        <th className="p-4 text-xs font-bold text-mist uppercase tracking-widest text-right">Actions</th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-hairline">
-                      {(() => {
-                        const grouped = new Map<string, GroupedResult>()
-                        results.forEach(r => {
-                          const key = `${r.student_id}_${r.exam_type}`
-                          if (!grouped.has(key)) {
-                            grouped.set(key, { ...r, subjectsList: [], totalObtained: 0, grandTotal: 0 })
-                          }
-                          const g = grouped.get(key)!
-                          g.subjectsList.push(r)
-                          g.totalObtained += r.marks_obtained
-                          g.grandTotal += (r.total_marks || r.max_marks || 100)
-                        })
-                        const groupedArr = Array.from(grouped.values())
+                <div className="bg-ink rounded-2xl border border-hairline">
+                  <div className="responsive-table-shell">
+                    <table className="w-full min-w-[820px] text-left whitespace-nowrap">
+                      <thead className="bg-surface border-b border-hairline">
+                        <tr>
+                          <th className="p-4 w-8"></th>
+                          <th className="p-4 text-xs font-bold text-mist uppercase tracking-widest">Student</th>
+                          <th className="p-4 text-xs font-bold text-mist uppercase tracking-widest">Exam Type</th>
+                          <th className="p-4 text-xs font-bold text-mist uppercase tracking-widest">Subject</th>
+                          <th className="p-4 text-xs font-bold text-mist uppercase tracking-widest text-center">Marks</th>
+                          <th className="p-4 text-xs font-bold text-mist uppercase tracking-widest text-center">Grade</th>
+                          <th className="p-4 text-xs font-bold text-mist uppercase tracking-widest text-right">Actions</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-hairline">
+                        {groupedResults.length === 0 ? (
+                          <tr>
+                            <td colSpan={7} className="p-12 text-center text-mist font-mono text-sm tracking-widest uppercase">
+                              No results have been uploaded for this class yet.
+                            </td>
+                          </tr>
+                        ) : (
+                          groupedResults.map((group, i) => {
+                            const key = `${group.student_id}_${group.exam_type}`
+                            const p = (group.totalObtained / (group.grandTotal || 1)) * 100
+                            let grade = 'F'
+                            if (p >= 90) grade = 'A+'
+                            else if (p >= 80) grade = 'A'
+                            else if (p >= 70) grade = 'B+'
+                            else if (p >= 60) grade = 'B'
+                            else if (p >= 50) grade = 'C'
+                            else if (p >= 40) grade = 'D'
 
-                        if (groupedArr.length === 0) {
-                          return (
-                            <tr>
-                              <td colSpan={7} className="p-12 text-center text-mist font-mono text-sm tracking-widest uppercase">
-                                No results have been uploaded for this class yet.
-                              </td>
-                            </tr>
-                          )
-                        }
+                            const hasMultiple = group.subjectsList.length > 1
 
-                        return groupedArr.map((group, i) => {
-                          const key = `${group.student_id}_${group.exam_type}`
-                          const p = (group.totalObtained / (group.grandTotal || 1)) * 100
-                          let grade = 'F'
-                          if (p >= 90) grade = 'A+'
-                          else if (p >= 80) grade = 'A'
-                          else if (p >= 70) grade = 'B+'
-                          else if (p >= 60) grade = 'B'
-                          else if (p >= 50) grade = 'C'
-                          else if (p >= 40) grade = 'D'
+                            const ActionButtons = ({ r }: { r: ResultType }) => (
+                              <div className="flex justify-end gap-2">
+                                <button
+                                  onClick={(e) => {
+                                    e.stopPropagation()
+                                    setEditResult(r)
+                                  }}
+                                  className="text-mist hover:text-veena-blue p-2 rounded-lg hover:bg-veena-blue/10 transition-colors border border-transparent hover:border-veena-blue/30"
+                                  title="Edit Result"
+                                >
+                                  <Edit className="w-4 h-4" />
+                                </button>
+                              </div>
+                            )
 
-                          const hasMultiple = group.subjectsList.length > 1
-                          
-                          // Component for a single row actions (only Edit now)
-                          const ActionButtons = ({ r }: { r: ResultType }) => (
-                            <div className="flex justify-end gap-2">
-                              <button
-                                onClick={(e) => {
-                                  e.stopPropagation()
-                                  setEditResult(r)
-                                }}
-                                className="text-mist hover:text-veena-blue p-2 rounded-lg hover:bg-veena-blue/10 transition-colors border border-transparent hover:border-veena-blue/30"
-                                title="Edit Result"
-                              >
-                                <Edit className="w-4 h-4" />
-                              </button>
-                            </div>
-                          )
-
-                          return (
-                            <React.Fragment key={group.id || key}>
-                              <tr 
-                                className="ledger-row hover:bg-surface/50 transition-colors group cursor-pointer" 
-                                style={{ animationDelay: `${i * 0.05}s` }}
-                                onClick={() => {
-                                  if (!hasMultiple) return
-                                  setExpandedRows(prev => {
-                                    const next = new Set(prev)
-                                    if (next.has(key)) next.delete(key)
-                                    else next.add(key)
-                                    return next
-                                  })
-                                }}
-                              >
-                                <td className="p-4 text-center">
-                                  {hasMultiple && (
-                                    <div className="w-6 h-6 rounded flex items-center justify-center text-mist group-hover:text-coral transition-colors" title="This exam has multiple subjects. Click to expand/collapse.">
-                                      {expandedRows.has(key) ? <ChevronDown className="w-4 h-4 opacity-50" /> : <ChevronDown className="w-4 h-4 opacity-50 -rotate-90" />}
-                                    </div>
-                                  )}
-                                </td>
-                                <td className="p-4">
-                                  <div className="font-semibold text-parchment">{group.students?.profiles?.full_name}</div>
-                                  <div className="text-[10px] font-mono text-mist tracking-widest mt-1">{group.students?.student_id}</div>
-                                </td>
-                                <td className="p-4 text-sm text-mist">{group.exam_type}</td>
-                                <td className="p-4 text-sm font-semibold text-parchment">
-                                  {hasMultiple ? <span className="text-coral bg-coral/10 px-2 py-0.5 rounded text-xs">{group.subjectsList.length} Subjects</span> : group.subject}
-                                </td>
-                                <td className="p-4 text-center font-bold text-parchment">
-                                  {group.totalObtained} <span className="text-mist font-normal">/ {group.grandTotal}</span>
-                                </td>
-                                <td className="p-4 text-center">
-                                  <span className={`px-3 py-1 rounded-full text-[10px] font-bold border tracking-wider ${grade === 'F' ? 'bg-red-500/20 text-red-400 border-red-500/30' : 'bg-coral/20 text-coral border-coral/30'}`}>
-                                    {grade}
-                                  </span>
-                                </td>
-                                <td className="p-4 text-right">
-                                  <div className="flex justify-end gap-2 items-center">
-                                    <button 
-                                      onClick={(e) => {
-                                        e.stopPropagation()
-                                        handleDeleteResult(group.subjectsList.map((s: ResultType) => s.id))
-                                      }}
-                                      className="flex items-center gap-1.5 text-xs font-bold text-mist hover:text-red-400 p-2 rounded-lg hover:bg-red-500/10 transition-colors"
-                                      title="Delete Entire Result"
-                                    >
-                                      <Trash2 className="w-4 h-4" />
-                                    </button>
-                                    <button 
-                                      onClick={(e) => {
-                                        e.stopPropagation()
-                                        setPreviewSheet(group)
-                                      }}
-                                      className="flex items-center gap-1.5 text-xs font-bold text-mist hover:text-veena-blue p-2 rounded-lg hover:bg-veena-blue/10 transition-colors"
-                                      title="Preview PDF"
-                                    >
-                                      <FileSpreadsheet className="w-4 h-4" />
-                                    </button>
-                                    <button 
-                                      onClick={(e) => {
-                                        e.stopPropagation()
-                                        handleGeneratePDF(group)
-                                      }}
-                                      disabled={downloadingKey === key}
-                                      className="flex items-center gap-1.5 text-xs font-bold text-veena-blue hover:text-coral p-2 rounded-lg hover:bg-veena-blue/10 disabled:opacity-50 transition-colors"
-                                      title="Download PDF"
-                                    >
-                                      {downloadingKey === key ? (
-                                        <>
-                                          <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                                          Downloading...
-                                        </>
-                                      ) : (
-                                        <>
-                                          <Download className="w-3.5 h-3.5" />
-                                          Download PDF
-                                        </>
-                                      )}
-                                    </button>
-                                    {!hasMultiple && <div className="ml-2 pl-2 border-l border-hairline"><ActionButtons r={group.subjectsList[0]} /></div>}
+                            return (
+                              <React.Fragment key={group.id || key}>
+                                <tr
+                                  className="ledger-row hover:bg-surface/50 transition-colors group cursor-pointer"
+                                  style={{ animationDelay: `${i * 0.05}s` }}
+                                  onClick={() => {
+                                    if (!hasMultiple) return
+                                    setExpandedRows(prev => {
+                                      const next = new Set(prev)
+                                      if (next.has(key)) next.delete(key)
+                                      else next.add(key)
+                                      return next
+                                    })
+                                  }}
+                                >
+                                  <td className="p-4 text-center">
                                     {hasMultiple && (
-                                      <span className="ml-2 text-[10px] text-mist/50 uppercase tracking-widest pl-2 border-l border-hairline">Multiple</span>
+                                      <div className="w-6 h-6 rounded flex items-center justify-center text-mist group-hover:text-coral transition-colors" title="This exam has multiple subjects. Click to expand/collapse.">
+                                        {expandedRows.has(key) ? <ChevronDown className="w-4 h-4 opacity-50" /> : <ChevronDown className="w-4 h-4 opacity-50 -rotate-90" />}
+                                      </div>
                                     )}
-                                  </div>
-                                </td>
-                              </tr>
-                              
-                              {hasMultiple && expandedRows.has(key) && group.subjectsList.map((sub: ResultType) => {
-                                const sp = (sub.marks_obtained / (sub.total_marks || sub.max_marks || 1)) * 100
-                                let sg = 'F'
-                                if (sp >= 90) sg = 'A+'
-                                else if (sp >= 80) sg = 'A'
-                                else if (sp >= 70) sg = 'B+'
-                                else if (sp >= 60) sg = 'B'
-                                else if (sp >= 50) sg = 'C'
-                                else if (sp >= 40) sg = 'D'
+                                  </td>
+                                  <td className="p-4">
+                                    <div className="font-semibold text-parchment">{group.students?.profiles?.full_name}</div>
+                                    <div className="text-[10px] font-mono text-mist tracking-widest mt-1">{group.students?.student_id}</div>
+                                  </td>
+                                  <td className="p-4 text-sm text-mist">{group.exam_type}</td>
+                                  <td className="p-4 text-sm font-semibold text-parchment">
+                                    {hasMultiple ? <span className="text-coral bg-coral/10 px-2 py-0.5 rounded text-xs">{group.subjectsList.length} Subjects</span> : group.subject}
+                                  </td>
+                                  <td className="p-4 text-center font-bold text-parchment">
+                                    {group.totalObtained} <span className="text-mist font-normal">/ {group.grandTotal}</span>
+                                  </td>
+                                  <td className="p-4 text-center">
+                                    <span className={`px-3 py-1 rounded-full text-[10px] font-bold border tracking-wider ${grade === 'F' ? 'bg-red-500/20 text-red-400 border-red-500/30' : 'bg-coral/20 text-coral border-coral/30'}`}>
+                                      {grade}
+                                    </span>
+                                  </td>
+                                  <td className="p-4 text-right">
+                                    <div className="flex justify-end gap-2 items-center">
+                                      <button
+                                        onClick={(e) => {
+                                          e.stopPropagation()
+                                          handleDeleteResult(group.subjectsList.map((s: ResultType) => s.id))
+                                        }}
+                                        className="flex items-center gap-1.5 text-xs font-bold text-mist hover:text-red-400 p-2 rounded-lg hover:bg-red-500/10 transition-colors"
+                                        title="Delete Entire Result"
+                                      >
+                                        <Trash2 className="w-4 h-4" />
+                                      </button>
+                                      <button
+                                        onClick={(e) => {
+                                          e.stopPropagation()
+                                          setPreviewSheet(group)
+                                        }}
+                                        className="flex items-center gap-1.5 text-xs font-bold text-mist hover:text-veena-blue p-2 rounded-lg hover:bg-veena-blue/10 transition-colors"
+                                        title="Preview PDF"
+                                      >
+                                        <FileSpreadsheet className="w-4 h-4" />
+                                      </button>
+                                      <button
+                                        onClick={(e) => {
+                                          e.stopPropagation()
+                                          handleGeneratePDF(group)
+                                        }}
+                                        disabled={downloadingKey === key}
+                                        className="flex items-center gap-1.5 text-xs font-bold text-veena-blue hover:text-coral p-2 rounded-lg hover:bg-veena-blue/10 disabled:opacity-50 transition-colors"
+                                        title="Download PDF"
+                                      >
+                                        {downloadingKey === key ? (
+                                          <>
+                                            <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                                            Downloading...
+                                          </>
+                                        ) : (
+                                          <>
+                                            <Download className="w-3.5 h-3.5" />
+                                            Download PDF
+                                          </>
+                                        )}
+                                      </button>
+                                      {!hasMultiple && <div className="ml-2 pl-2 border-l border-hairline"><ActionButtons r={group.subjectsList[0]} /></div>}
+                                      {hasMultiple && (
+                                        <span className="ml-2 text-[10px] text-mist/50 uppercase tracking-widest pl-2 border-l border-hairline">Multiple</span>
+                                      )}
+                                    </div>
+                                  </td>
+                                </tr>
 
-                                return (
-                                  <tr key={sub.id} className="bg-surface/20 border-t border-hairline/50 hover:bg-surface/40 transition-colors">
-                                    <td className="p-3"></td>
-                                    <td className="p-3 border-l-2 border-hairline"></td>
-                                    <td className="p-3 text-xs text-mist/60">{sub.exam_type}</td>
-                                    <td className="p-3 text-sm font-medium text-parchment/80">{sub.subject}</td>
-                                    <td className="p-3 text-center text-sm font-medium text-parchment/80">
-                                      {sub.marks_obtained} <span className="text-mist/60 font-normal">/ {sub.total_marks || sub.max_marks}</span>
-                                    </td>
-                                    <td className="p-3 text-center">
-                                      <span className="text-xs font-bold text-mist/80">{sg}</span>
-                                    </td>
-                                    <td className="p-3 pr-4">
-                                      <ActionButtons r={sub} />
-                                    </td>
-                                  </tr>
-                                )
-                              })}
-                            </React.Fragment>
-                          )
-                        })
-                      })()}
-                    </tbody>
-                  </table>
+                                {hasMultiple && expandedRows.has(key) && group.subjectsList.map((sub: ResultType) => {
+                                  const sp = (sub.marks_obtained / (sub.total_marks || sub.max_marks || 1)) * 100
+                                  let sg = 'F'
+                                  if (sp >= 90) sg = 'A+'
+                                  else if (sp >= 80) sg = 'A'
+                                  else if (sp >= 70) sg = 'B+'
+                                  else if (sp >= 60) sg = 'B'
+                                  else if (sp >= 50) sg = 'C'
+                                  else if (sp >= 40) sg = 'D'
+
+                                  return (
+                                    <tr key={sub.id} className="bg-surface/20 border-t border-hairline/50 hover:bg-surface/40 transition-colors">
+                                      <td className="p-3"></td>
+                                      <td className="p-3 border-l-2 border-hairline"></td>
+                                      <td className="p-3 text-xs text-mist/60">{sub.exam_type}</td>
+                                      <td className="p-3 text-sm font-medium text-parchment/80">{sub.subject}</td>
+                                      <td className="p-3 text-center text-sm font-medium text-parchment/80">
+                                        {sub.marks_obtained} <span className="text-mist/60 font-normal">/ {sub.total_marks || sub.max_marks}</span>
+                                      </td>
+                                      <td className="p-3 text-center">
+                                        <span className="text-xs font-bold text-mist/80">{sg}</span>
+                                      </td>
+                                      <td className="p-3 pr-4">
+                                        <ActionButtons r={sub} />
+                                      </td>
+                                    </tr>
+                                  )
+                                })}
+                              </React.Fragment>
+                            )
+                          })
+                        )}
+                      </tbody>
+                    </table>
+                  </div>
                 </div>
               </div>
             )}
-            
-            {/* Modals will go here */}
-            
+
             {uploadModalOpen && selectedClassObj && (
               <ResultUploadModal
                 classId={selectedClassObj.id}
@@ -748,7 +751,6 @@ export default function ClassDashboardClient({ classes: initialClasses }: ClassD
                 section={selectedClassObj.section || '-'}
                 onClose={() => {
                   setUploadModalOpen(false)
-                  // Refresh manage results to show newly uploaded results if on that tab
                   if (activeTab === 'manage_result') {
                     startTransition(async () => {
                       const { data } = await getClassResults(selectedClass)
@@ -770,7 +772,7 @@ export default function ClassDashboardClient({ classes: initialClasses }: ClassD
                   >
                     <div className="p-6 border-b border-hairline flex justify-between items-center">
                       <h2 className="font-display text-xl font-bold text-parchment">Edit Marks (Admin)</h2>
-                      <button onClick={() => setEditResult(null)} className="text-mist hover:text-parchment transition-colors"><X className="w-5 h-5"/></button>
+                      <button onClick={() => setEditResult(null)} className="text-mist hover:text-parchment transition-colors"><X className="w-5 h-5" /></button>
                     </div>
 
                     <div className="p-6 space-y-4">
@@ -784,8 +786,11 @@ export default function ClassDashboardClient({ classes: initialClasses }: ClassD
                         const fd = new FormData(e.currentTarget)
                         const mObtained = parseFloat(fd.get('marksObtained') as string)
                         const tMarks = parseFloat(fd.get('totalMarks') as string)
-                        if (mObtained > tMarks) { alert('Marks obtained cannot be > total marks'); return }
-                        
+                        if (mObtained > tMarks) {
+                          alert('Marks obtained cannot be > total marks')
+                          return
+                        }
+
                         startTransition(async () => {
                           const res = await uploadStudentResult(editResult.class_id, editResult.student_id, {
                             exam_type: editResult.exam_type,
@@ -805,21 +810,29 @@ export default function ClassDashboardClient({ classes: initialClasses }: ClassD
                           <div>
                             <label className="block text-xs font-bold text-mist uppercase tracking-wider mb-1.5">Marks Obtained</label>
                             <input
-                              type="number" name="marksObtained" defaultValue={editResult.marks_obtained}
-                              required step="0.01" min="0"
+                              type="number"
+                              name="marksObtained"
+                              defaultValue={editResult.marks_obtained}
+                              required
+                              step="0.01"
+                              min="0"
                               className="w-full input-glass rounded-xl px-4 py-2.5 text-sm text-parchment focus:outline-none focus:border-coral/60 transition-all"
                             />
                           </div>
                           <div>
                             <label className="block text-xs font-bold text-mist uppercase tracking-wider mb-1.5">Total Marks</label>
                             <input
-                              type="number" name="totalMarks" defaultValue={editResult.total_marks || editResult.max_marks}
-                              required step="0.01" min="1"
+                              type="number"
+                              name="totalMarks"
+                              defaultValue={editResult.total_marks || editResult.max_marks}
+                              required
+                              step="0.01"
+                              min="1"
                               className="w-full input-glass rounded-xl px-4 py-2.5 text-sm text-parchment focus:outline-none focus:border-coral/60 transition-all"
                             />
                           </div>
                         </div>
-                        
+
                         <button
                           type="submit"
                           disabled={isPending}
@@ -834,8 +847,7 @@ export default function ClassDashboardClient({ classes: initialClasses }: ClassD
                 </div>
               )}
             </AnimatePresence>
-            
-            {/* PDF PREVIEW MODAL */}
+
             {previewSheet && (
               <MarksheetModal
                 sheet={mapGroupToMarksheet(previewSheet)}
@@ -844,7 +856,7 @@ export default function ClassDashboardClient({ classes: initialClasses }: ClassD
               />
             )}
           </div>
+        </div>
       </div>
-    </div>
   )
 }

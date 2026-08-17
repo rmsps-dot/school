@@ -5,7 +5,6 @@ import Image from "next/image";
 import { motion, AnimatePresence } from "framer-motion";
 import Link from "next/link";
 import {
-  GraduationCap,
   User,
   Mail,
   Phone,
@@ -219,7 +218,6 @@ export default function RegisterPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [otpSent, setOtpSent] = useState(false);
-  const [verified, setVerified] = useState(false);
   const [submitted, setSubmitted] = useState(false);
 
   function set(field: keyof FormData) {
@@ -243,8 +241,8 @@ export default function RegisterPage() {
   }
 
   function validateStep2() {
-    if (!form.fatherName.trim()) return "Father's name is required.";
-    if (!form.motherName.trim()) return "Mother's name is required.";
+    if (!form.fatherName.trim()) return "Father&apos;s name is required.";
+    if (!form.motherName.trim()) return "Mother&apos;s name is required.";
     const pMob = form.parentMobile.replace(/\D/g, "");
     if (!pMob || pMob.length !== 10 || !MOBILE_RE.test(pMob)) return "Enter a valid 10-digit parent mobile number.";
     if (!form.parentEmail.trim()) return "Parent email is required.";
@@ -396,7 +394,7 @@ export default function RegisterPage() {
               ) : step === 3 && otpSent ? (
                 <OtpVerifyScreen
                   email={form.studentEmail.trim()}
-                  onSuccess={async () => { setVerified(true); await handleSubmitAfterVerify(); }}
+                  onSuccess={async () => { await handleSubmitAfterVerify(); }}
                 />
               ) : (
                 <motion.div

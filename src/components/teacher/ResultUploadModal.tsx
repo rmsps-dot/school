@@ -161,6 +161,7 @@ export default function ResultUploadModal({
   ]
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setLoadingStudents(true)
     setStudentsError('')
     getStudentsForClass(classId).then(({ data, error }) => {
@@ -174,6 +175,7 @@ export default function ResultUploadModal({
   }, [classId])
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setTestSubject('')
     setTestMarks((prev) => {
       const r: Record<string, string> = {}

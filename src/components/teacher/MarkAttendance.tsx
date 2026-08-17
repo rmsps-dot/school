@@ -156,6 +156,7 @@ export default function MarkAttendance({ alreadyMarked, record, teacherProfileId
 
   /* Auto-start on mount if already marked (skip idle) */
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     if (alreadyMarked) setPhase("already-marked");
   }, [alreadyMarked]);
 

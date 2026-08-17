@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef } from "react";
 import {
   motion,
   useScroll,
@@ -8,15 +8,13 @@ import {
   useReducedMotion,
   AnimatePresence,
   useInView,
-  useMotionValue,
-  animate,
 } from "framer-motion";
 import Image from "next/image";
 import Link from "next/link";
 import {
-  ArrowRight, ArrowLeft, Globe, Shield, Microscope, Trophy, Users, Menu, X,
-  BookOpen, Star, CheckCircle, MapPin, Phone, Mail, ChevronRight,
-  Bell, GraduationCap, Award, Zap,
+  ArrowRight, Globe, Shield, Microscope, Trophy, Users, Menu, X,
+  Star, CheckCircle, Mail, ChevronRight,
+  Bell, GraduationCap, Zap, Award, BookOpen, Phone, MapPin,
 } from "lucide-react";
 
 import { ParallaxScrollFeatureSection } from "@/components/ui/parallax-scroll-feature-section";
@@ -146,7 +144,7 @@ function TestimonialCard({ quote, name, role, initial, color, delay }: {
           <Star key={i} className="w-4 h-4 fill-gold text-gold" />
         ))}
       </div>
-      <p className="text-mist leading-relaxed text-sm flex-1 font-body">"{quote}"</p>
+      <p className="text-mist leading-relaxed text-sm flex-1 font-body">&quot;{quote}&quot;</p>
       <div className="flex items-center gap-3 pt-4 border-t border-hairline/60">
         <div
           className="w-10 h-10 rounded-full flex items-center justify-center font-display font-bold text-ink text-sm shrink-0 shadow-md"

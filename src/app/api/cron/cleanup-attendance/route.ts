@@ -81,7 +81,7 @@ export async function GET(request: NextRequest) {
 
   /* ── 4. Delete storage objects ──────────────────────────── */
   let storageDeletedCount = 0
-  let storageErrors: string[] = []
+  const storageErrors: string[] = []
 
   if (storagePaths.length > 0) {
     const { data: deleted, error: storageError } = await supabaseAdmin.storage

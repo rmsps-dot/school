@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import Image from "next/image";
 import { motion, AnimatePresence } from "framer-motion";
 import Link from "next/link";
@@ -14,7 +14,6 @@ import {
   ArrowLeft,
   X,
   AlertCircle,
-  CheckCircle,
   Loader2,
   KeyRound,
   Shield,
@@ -135,7 +134,7 @@ function ForgotPasswordModal({ onClose, roleTint }: { onClose: () => void, roleT
         {sent ? (
           <div className="space-y-4">
             <p className="text-sm text-mist leading-relaxed">
-              We've sent a password reset link to <strong className="text-parchment">{email}</strong>. Check your inbox.
+              We have sent a password reset link to <strong className="text-parchment">{email}</strong>. Check your inbox.
             </p>
             <button onClick={onClose} className={`w-full py-2.5 rounded-xl font-semibold text-ink transition-all ${btnBg} hover:opacity-90`}>
               Got it
@@ -144,7 +143,7 @@ function ForgotPasswordModal({ onClose, roleTint }: { onClose: () => void, roleT
         ) : (
           <div className="space-y-4">
             <p className="text-sm text-mist leading-relaxed">
-              Enter the email address associated with your account and we'll send you a link to reset your password.
+              Enter the email address associated with your account and we will send you a link to reset your password.
             </p>
             {error && (
               <div className="p-3 rounded-lg bg-red-500/10 border border-red-500/20 text-red-400 text-sm flex gap-2">
@@ -179,24 +178,22 @@ function ForgotPasswordModal({ onClose, roleTint }: { onClose: () => void, roleT
 
 export default function LoginPage() {
   const router = useRouter();
-  
-  const [selectedRole, setSelectedRole] = useState<Role>("parent");
+
+  const initialRole = (() => {
+    if (typeof window === 'undefined') return 'parent' as Role
+    const params = new URLSearchParams(window.location.search)
+    const roleParam = params.get('role') as Role | null
+    return roleParam && ['admin', 'teacher', 'parent', 'student'].includes(roleParam) ? roleParam : 'parent'
+  })()
+
+  const [selectedRole, setSelectedRole] = useState<Role>(initialRole)
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
-  
+
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [showForgotPwd, setShowForgotPwd] = useState(false);
-
-  // Read role from URL query params
-  useEffect(() => {
-    const params = new URLSearchParams(window.location.search);
-    const roleParam = params.get("role") as Role;
-    if (roleParam && ["admin", "teacher", "parent", "student"].includes(roleParam)) {
-      setSelectedRole(roleParam);
-    }
-  }, []);
 
   const roles: { id: Role; label: string; icon: React.ElementType }[] = [
     { id: "parent", label: "Parent", icon: Globe },
@@ -447,7 +444,7 @@ export default function LoginPage() {
             {/* Signup Link */}
             <div className="mt-8 text-center">
               <p className="text-sm text-mist">
-                Don't have an account?{" "}
+                Don&apos;t have an account?{" "}
                 <Link href="/register" className="font-bold text-parchment hover:underline decoration-1 underline-offset-4" style={{ textDecorationColor: activeColor }}>
                   Apply for Admission
                 </Link>

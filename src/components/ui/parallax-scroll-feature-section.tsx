@@ -47,18 +47,21 @@ export const ParallaxScrollFeatureSection = () => {
     const scrollYProgress2 = useScroll({ target: sectionRef2, offset: ["start end", "center start"] }).scrollYProgress;
     const scrollYProgresses = [scrollYProgress0, scrollYProgress1, scrollYProgress2];
 
-    // Create animations for each section
-    const opacityContents = scrollYProgresses.map(progress => 
-        useTransform(progress, [0, 0.7], [0, 1])
-    );
+    // Create animations for each section - call hooks at top level, not in map
+    const opacity0 = useTransform(scrollYProgress0, [0, 0.7], [0, 1]);
+    const opacity1 = useTransform(scrollYProgress1, [0, 0.7], [0, 1]);
+    const opacity2 = useTransform(scrollYProgress2, [0, 0.7], [0, 1]);
+    const opacityContents = [opacity0, opacity1, opacity2];
     
-    const clipProgresses = scrollYProgresses.map(progress => 
-        useTransform(progress, [0, 0.7], ["inset(0 100% 0 0)", "inset(0 0% 0 0)"])
-    );
+    const clip0 = useTransform(scrollYProgress0, [0, 0.7], ["inset(0 100% 0 0)", "inset(0 0% 0 0)"]);
+    const clip1 = useTransform(scrollYProgress1, [0, 0.7], ["inset(0 100% 0 0)", "inset(0 0% 0 0)"]);
+    const clip2 = useTransform(scrollYProgress2, [0, 0.7], ["inset(0 100% 0 0)", "inset(0 0% 0 0)"]);
+    const clipProgresses = [clip0, clip1, clip2];
     
-    const translateContents = scrollYProgresses.map(progress => 
-        useTransform(progress, [0, 1], [-40, 0])
-    );
+    const translate0 = useTransform(scrollYProgress0, [0, 1], [-40, 0]);
+    const translate1 = useTransform(scrollYProgress1, [0, 1], [-40, 0]);
+    const translate2 = useTransform(scrollYProgress2, [0, 1], [-40, 0]);
+    const translateContents = [translate0, translate1, translate2];
 
   return (
     <div className="w-full bg-ink text-parchment py-16">

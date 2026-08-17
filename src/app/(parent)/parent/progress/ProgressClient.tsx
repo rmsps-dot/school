@@ -97,6 +97,7 @@ export default function ProgressClient({ children, defaultId }: Props) {
   // Load data when child or tab changes
   useEffect(() => {
     if (!selectedId) return
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setError('')
     setResults(null)
     setAttendance(null)

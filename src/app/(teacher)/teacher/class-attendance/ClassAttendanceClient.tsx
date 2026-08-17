@@ -3,7 +3,7 @@
 import { useState, useEffect, useTransition } from 'react'
 import Image from 'next/image'
 import { motion } from 'framer-motion'
-import { Calendar, Save, CheckCircle2, XCircle, AlertCircle, Loader2, Users } from 'lucide-react'
+import { CheckCircle2, AlertCircle, Loader2, Save } from 'lucide-react'
 import { getStudentsByClass } from '@/actions/class-actions'
 import type { StudentViewRecord } from '@/actions/class-actions'
 import { getStudentAttendance, markStudentAttendance } from '@/actions/attendance-actions'
@@ -44,10 +44,13 @@ export default function ClassAttendanceClient({ classes, timeWindow }: Props) {
   const canEdit = isToday() && isTimeAllowed()
 
   useEffect(() => {
-    if (selectedDate) {
-      setLoadingData(true)
-      setErrorMsg('')
-      setSuccessMsg('')
+    if (selectedDate && selectedClass) {
+      const updateStates = () => {
+        setErrorMsg('')
+        setSuccessMsg('')
+        setLoadingData(true)
+      }
+      updateStates()
       
       Promise.all([
         getStudentsByClass(selectedClass),
@@ -66,9 +69,6 @@ export default function ClassAttendanceClient({ classes, timeWindow }: Props) {
           setAttendance({})
         }
       })
-    } else {
-      setStudents([])
-      setAttendance({})
     }
   }, [selectedClass, selectedDate])
 
