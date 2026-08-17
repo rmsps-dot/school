@@ -3,7 +3,7 @@
 import { useState, useEffect, useTransition } from 'react'
 import Image from 'next/image'
 import { motion } from 'framer-motion'
-import { CheckCircle2, AlertCircle, Loader2, Save } from 'lucide-react'
+import { CheckCircle2, AlertCircle, Loader2, Save, Users } from 'lucide-react'
 import { getStudentsByClass } from '@/actions/class-actions'
 import type { StudentViewRecord } from '@/actions/class-actions'
 import { getStudentAttendance, markStudentAttendance } from '@/actions/attendance-actions'
@@ -69,6 +69,9 @@ export default function ClassAttendanceClient({ classes, timeWindow }: Props) {
           setAttendance({})
         }
       })
+    } else {
+      setStudents([])
+      setAttendance({})
     }
   }, [selectedClass, selectedDate])
 
@@ -108,35 +111,35 @@ export default function ClassAttendanceClient({ classes, timeWindow }: Props) {
           <select
             value={selectedClass}
             onChange={(e) => setSelectedClass(e.target.value)}
-            className="w-full bg-ink/50 border border-hairline rounded-xl px-4 py-2.5 text-parchment focus:outline-none focus:border-coral transition-colors"
+            className="w-full bg-ink border border-hairline rounded-xl px-4 py-2.5 text-sm font-medium text-parchment focus:outline-none focus:border-coral transition-colors"
           >
             <option value="">Select a Class</option>
             {classes.map(c => (
               <option key={c.classId} value={c.classId}>
-                {c.className} - {c.section}
+                {c.className} ({c.section}) - {c.subject}
               </option>
             ))}
           </select>
         </div>
 
-        <div className="w-full md:w-64">
-          <DateInput
-            value={selectedDate}
-            onChange={setSelectedDate}
-            label=""
-            labelClass="hidden"
-            className="[&>div:first-child]:hidden"
-          />
+        <div className="flex items-center gap-4 w-full md:w-auto">
+          <div className="flex-1 md:w-48">
+            <DateInput
+              value={selectedDate}
+              onChange={setSelectedDate}
+              label=""
+              labelClass="hidden"
+            />
+          </div>
         </div>
       </div>
 
-      {!canEdit && selectedClass && (
-        <div className="bg-amber-500/10 border border-amber-500/20 text-amber-400 p-4 rounded-xl flex items-center gap-3">
-          <AlertCircle className="w-5 h-5 shrink-0" />
-          <p className="text-sm">
-            {!isToday() 
-              ? "You are viewing a past date. Attendance cannot be edited for past dates." 
-              : `Attendance can only be marked between ${timeWindow.start} and ${timeWindow.end}.`}
+      {/* Info Notice if outside time window */}
+      {!canEdit && (
+        <div className="bg-amber-500/10 border border-amber-500/20 text-amber-400 p-4 rounded-xl text-sm flex items-center gap-3">
+          <AlertCircle className="w-5 h-5 flex-shrink-0" />
+          <p>
+            Attendance can only be marked for today between <strong className="text-parchment">{timeWindow.start}</strong> and <strong className="text-parchment">{timeWindow.end}</strong>. Viewing records in read-only mode.
           </p>
         </div>
       )}
@@ -159,9 +162,21 @@ export default function ClassAttendanceClient({ classes, timeWindow }: Props) {
           <div className="h-[400px] flex items-center justify-center">
             <Loader2 className="w-8 h-8 animate-spin text-coral" />
           </div>
+        ) : !selectedClass ? (
+          <div className="h-[400px] flex flex-col items-center justify-center text-mist gap-3 text-center p-6">
+            <div className="w-16 h-16 rounded-2xl bg-surface border border-hairline flex items-center justify-center mb-1">
+              <Users className="w-8 h-8 text-mist/50" />
+            </div>
+            <p className="font-bold text-parchment text-base">Select a Class</p>
+            <p className="text-xs text-mist max-w-sm">Please choose a class from the dropdown above to view student list and record attendance.</p>
+          </div>
         ) : students.length === 0 ? (
-          <div className="h-[400px] flex items-center justify-center text-mist">
-            <p>No students found for this class.</p>
+          <div className="h-[400px] flex flex-col items-center justify-center text-mist gap-3 text-center p-6">
+            <div className="w-16 h-16 rounded-2xl bg-surface border border-hairline flex items-center justify-center mb-1">
+              <Users className="w-8 h-8 text-mist/50" />
+            </div>
+            <p className="font-bold text-parchment text-base">No Students Found</p>
+            <p className="text-xs text-mist max-w-sm">No students are currently enrolled in this class.</p>
           </div>
         ) : (
           <motion.div 
