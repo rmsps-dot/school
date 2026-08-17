@@ -129,54 +129,90 @@ export default function ClassesClient({ initialClasses }: { initialClasses: Scho
       </AnimatePresence>
 
       {/* Classes List */}
-      <div className="glass rounded-2xl overflow-hidden border border-hairline">
+      <div className="space-y-4">
         {classes.length === 0 ? (
-          <div className="p-10 text-center">
+          <div className="glass rounded-2xl overflow-hidden border border-hairline p-10 text-center">
             <BookOpen className="w-12 h-12 text-mist mx-auto mb-3" />
             <h3 className="text-white font-bold text-lg">No Classes Found</h3>
             <p className="text-mist text-sm mt-1">Start by creating your first class and section.</p>
           </div>
         ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full text-left border-collapse">
-              <thead>
-                <tr className="bg-white/5 border-b border-hairline">
-                  <th className="p-4 text-xs font-semibold text-mist uppercase tracking-wider">Class Name</th>
-                  <th className="p-4 text-xs font-semibold text-mist uppercase tracking-wider text-center">Section</th>
-                  <th className="p-4 text-xs font-semibold text-mist uppercase tracking-wider text-right">Actions</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-white/5">
-                {classes.map((c) => (
-                  <tr key={c.id} className="hover:bg-white/[0.02] transition-colors">
-                    <td className="p-4">
-                      <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-xl bg-coral/20 flex items-center justify-center">
-                          <BookOpen className="w-5 h-5 text-coral" />
-                        </div>
-                        <span className="font-bold text-white">{c.class_name}</span>
+          <>
+            {/* ── Mobile Layout (Below sm: breakpoint) ── */}
+            <div className="sm:hidden space-y-3">
+              {classes.map((c) => (
+                <div
+                  key={c.id}
+                  className="surface-card rounded-2xl border border-hairline p-4 flex items-center justify-between gap-3"
+                >
+                  <div className="flex items-center gap-3 min-w-0">
+                    <div className="w-10 h-10 rounded-xl bg-coral/20 flex items-center justify-center flex-shrink-0">
+                      <BookOpen className="w-5 h-5 text-coral" />
+                    </div>
+                    <div className="min-w-0">
+                      <div className="font-bold text-white text-base truncate">{c.class_name}</div>
+                      <div className="mt-1">
+                        <span className="surface-card px-2.5 py-0.5 rounded-lg text-xs font-bold text-sky-400 border border-hairline">
+                          Section: {c.section}
+                        </span>
                       </div>
-                    </td>
-                    <td className="p-4 text-center">
-                      <span className="surface-card px-3 py-1 rounded-lg text-sm font-bold text-sky-400 border border-hairline">
-                        {c.section}
-                      </span>
-                    </td>
-                    <td className="p-4 text-right">
-                      <button
-                        onClick={() => handleDelete(c.id)}
-                        disabled={isPending}
-                        className="p-2 rounded-lg text-red-400 hover:bg-red-500/20 transition-colors disabled:opacity-50"
-                        title="Delete Class"
-                      >
-                        <Trash2 className="w-5 h-5" />
-                      </button>
-                    </td>
+                    </div>
+                  </div>
+
+                  <button
+                    onClick={() => handleDelete(c.id)}
+                    disabled={isPending}
+                    className="p-2.5 rounded-xl text-red-400 bg-red-500/10 border border-red-500/20 hover:bg-red-500/20 transition-colors disabled:opacity-50 flex-shrink-0"
+                    title="Delete Class"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </button>
+                </div>
+              ))}
+            </div>
+
+            {/* ── Desktop Table Layout (sm: and up) ── */}
+            <div className="hidden sm:block glass rounded-2xl overflow-hidden border border-hairline">
+              <table className="w-full text-left border-collapse">
+                <thead>
+                  <tr className="bg-white/5 border-b border-hairline">
+                    <th className="p-4 text-xs font-semibold text-mist uppercase tracking-wider">Class Name</th>
+                    <th className="p-4 text-xs font-semibold text-mist uppercase tracking-wider text-center">Section</th>
+                    <th className="p-4 text-xs font-semibold text-mist uppercase tracking-wider text-right">Actions</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+                </thead>
+                <tbody className="divide-y divide-white/5">
+                  {classes.map((c) => (
+                    <tr key={c.id} className="hover:bg-white/[0.02] transition-colors">
+                      <td className="p-4">
+                        <div className="flex items-center gap-3">
+                          <div className="w-10 h-10 rounded-xl bg-coral/20 flex items-center justify-center">
+                            <BookOpen className="w-5 h-5 text-coral" />
+                          </div>
+                          <span className="font-bold text-white">{c.class_name}</span>
+                        </div>
+                      </td>
+                      <td className="p-4 text-center">
+                        <span className="surface-card px-3 py-1 rounded-lg text-sm font-bold text-sky-400 border border-hairline">
+                          {c.section}
+                        </span>
+                      </td>
+                      <td className="p-4 text-right">
+                        <button
+                          onClick={() => handleDelete(c.id)}
+                          disabled={isPending}
+                          className="p-2 rounded-lg text-red-400 hover:bg-red-500/20 transition-colors disabled:opacity-50"
+                          title="Delete Class"
+                        >
+                          <Trash2 className="w-5 h-5" />
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </>
         )}
       </div>
     </div>
