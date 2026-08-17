@@ -446,50 +446,92 @@ export default function ClassDashboardClient({ classes: initialClasses }: ClassD
                   </button>
                 </div>
 
-                <div className="bg-ink rounded-2xl border border-hairline overflow-hidden">
-                  <div className="responsive-table-shell">
-                    <table className="w-full min-w-[420px] text-left">
-                      <thead className="bg-surface border-b border-hairline">
-                        <tr>
-                          <th className="p-4 text-xs font-bold text-mist uppercase tracking-widest">Student</th>
-                          <th className="p-4 text-xs font-bold text-mist uppercase tracking-widest text-center">Status</th>
+                {/* ── Mobile Layout (Below sm: breakpoint) ── */}
+                <div className="sm:hidden space-y-3">
+                  {attendanceRecords.map((r, i) => (
+                    <div
+                      key={r.student_id}
+                      className="surface-card border-hairline rounded-2xl p-4 space-y-3"
+                      style={{ animationDelay: `${i * 0.03}s` }}
+                    >
+                      <div>
+                        <div className="font-semibold text-parchment text-sm">{r.full_name}</div>
+                        <div className="text-[10px] font-mono text-mist uppercase tracking-widest mt-0.5">{r.student_code}</div>
+                      </div>
+                      <div className="grid grid-cols-2 gap-2">
+                        <button
+                          onClick={() => updateStatus(r.student_id, 'present')}
+                          className={`w-full py-2.5 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-1.5 ${
+                            r.status === 'present'
+                              ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 shadow-lg'
+                              : 'bg-surface text-mist border border-hairline hover:border-emerald-500/50 hover:text-emerald-400'
+                          }`}
+                        >
+                          Present
+                        </button>
+                        <button
+                          onClick={() => updateStatus(r.student_id, 'absent')}
+                          className={`w-full py-2.5 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-1.5 ${
+                            r.status === 'absent'
+                              ? 'bg-red-500/20 text-red-400 border border-red-500/30 shadow-lg'
+                              : 'bg-surface text-mist border border-hairline hover:border-red-500/50 hover:text-red-400'
+                          }`}
+                        >
+                          Absent
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                  {attendanceRecords.length === 0 && (
+                    <div className="surface-card border-hairline rounded-2xl p-10 text-center text-mist font-mono uppercase tracking-widest text-xs">
+                      No students found to mark attendance.
+                    </div>
+                  )}
+                </div>
+
+                {/* ── Desktop Table Layout (sm: and up) ── */}
+                <div className="hidden sm:block bg-ink rounded-2xl border border-hairline overflow-hidden">
+                  <table className="w-full text-left">
+                    <thead className="bg-surface border-b border-hairline">
+                      <tr>
+                        <th className="p-4 text-xs font-bold text-mist uppercase tracking-widest">Student</th>
+                        <th className="p-4 text-xs font-bold text-mist uppercase tracking-widest text-center">Status</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-hairline">
+                      {attendanceRecords.map((r, i) => (
+                        <tr key={r.student_id} className="ledger-row hover:bg-surface/50 transition-colors" style={{ animationDelay: `${i * 0.05}s` }}>
+                          <td className="p-4 align-middle">
+                            <div className="font-semibold text-parchment">{r.full_name}</div>
+                            <div className="text-[10px] font-mono text-mist uppercase tracking-widest mt-1">{r.student_code}</div>
+                          </td>
+                          <td className="p-4 text-center align-middle">
+                            <div className="flex justify-center gap-3">
+                              <button
+                                onClick={() => updateStatus(r.student_id, 'present')}
+                                className={`px-4 py-2 rounded-xl text-xs font-bold transition-all ${r.status === 'present' ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 shadow-lg' : 'bg-surface text-mist border border-hairline hover:border-emerald-500/50 hover:text-emerald-400'}`}
+                              >
+                                Present
+                              </button>
+                              <button
+                                onClick={() => updateStatus(r.student_id, 'absent')}
+                                className={`px-4 py-2 rounded-xl text-xs font-bold transition-all ${r.status === 'absent' ? 'bg-red-500/20 text-red-400 border border-red-500/30 shadow-lg' : 'bg-surface text-mist border border-hairline hover:border-red-500/50 hover:text-red-400'}`}
+                              >
+                                Absent
+                              </button>
+                            </div>
+                          </td>
                         </tr>
-                      </thead>
-                      <tbody className="divide-y divide-hairline">
-                        {attendanceRecords.map((r, i) => (
-                          <tr key={r.student_id} className="ledger-row hover:bg-surface/50 transition-colors" style={{ animationDelay: `${i * 0.05}s` }}>
-                            <td className="p-4 align-top">
-                              <div className="font-semibold text-parchment break-words pr-2">{r.full_name}</div>
-                              <div className="text-[10px] font-mono text-mist uppercase tracking-widest mt-1 break-all">{r.student_code}</div>
-                            </td>
-                            <td className="p-4 text-center align-top">
-                              <div className="flex justify-center flex-wrap gap-2 sm:gap-3">
-                                <button
-                                  onClick={() => updateStatus(r.student_id, 'present')}
-                                  className={`px-3 py-2 rounded-xl text-xs font-bold transition-all ${r.status === 'present' ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 shadow-lg' : 'bg-surface text-mist border border-hairline hover:border-emerald-500/50 hover:text-emerald-400'}`}
-                                >
-                                  Present
-                                </button>
-                                <button
-                                  onClick={() => updateStatus(r.student_id, 'absent')}
-                                  className={`px-3 py-2 rounded-xl text-xs font-bold transition-all ${r.status === 'absent' ? 'bg-red-500/20 text-red-400 border border-red-500/30 shadow-lg' : 'bg-surface text-mist border border-hairline hover:border-red-500/50 hover:text-red-400'}`}
-                                >
-                                  Absent
-                                </button>
-                              </div>
-                            </td>
-                          </tr>
-                        ))}
-                        {attendanceRecords.length === 0 && (
-                          <tr>
-                            <td colSpan={2} className="p-12 text-center text-mist font-mono uppercase tracking-widest text-sm">
-                              No students found to mark attendance.
-                            </td>
-                          </tr>
-                        )}
-                      </tbody>
-                    </table>
-                  </div>
+                      ))}
+                      {attendanceRecords.length === 0 && (
+                        <tr>
+                          <td colSpan={2} className="p-12 text-center text-mist font-mono uppercase tracking-widest text-sm">
+                            No students found to mark attendance.
+                          </td>
+                        </tr>
+                      )}
+                    </tbody>
+                  </table>
                 </div>
               </div>
             )}
