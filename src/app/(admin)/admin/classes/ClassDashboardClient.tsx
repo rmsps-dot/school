@@ -49,6 +49,7 @@ export default function ClassDashboardClient({ classes: initialClasses }: ClassD
   // Manage Result State
   const [results, setResults] = useState<ResultType[]>([])
   const [expandedRows, setExpandedRows] = useState<Set<string>>(new Set())
+  const [editResult, setEditResult] = useState<ResultType | null>(null)
   const [downloadingKey, setDownloadingKey] = useState<string | null>(null)
   const [previewSheet, setPreviewSheet] = useState<GroupedResult | null>(null)
 
