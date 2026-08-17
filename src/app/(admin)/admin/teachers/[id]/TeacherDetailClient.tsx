@@ -208,51 +208,85 @@ export default function TeacherDetailClient({ teacher }: Props) {
           {/* ATTENDANCE */}
           {activeTab === 'attendance' && (
             <motion.div key="attendance" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }}
-              className="surface-card rounded-2xl border border-hairline overflow-hidden">
-              <div className="p-6 border-b border-hairline">
+              className="space-y-4">
+              <div className="surface-card rounded-2xl p-6 border border-hairline">
                 <h3 className="font-display text-lg font-bold text-parchment">Attendance Log</h3>
                 <p className="text-sm text-mist">Record of daily check-ins.</p>
               </div>
-              <div className="overflow-x-auto">
-                <table className="w-full text-left">
-                  <thead>
-                    <tr className="border-b border-hairline bg-ink/30">
-                      <th className="p-4 text-xs font-bold text-mist uppercase tracking-wider">Date</th>
-                      <th className="p-4 text-xs font-bold text-mist uppercase tracking-wider">Status</th>
-                      <th className="p-4 text-xs font-bold text-mist uppercase tracking-wider">Check In Time</th>
-                      <th className="p-4 text-xs font-bold text-mist uppercase tracking-wider">Photo</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-hairline">
-                    {attendance.length > 0 ? attendance
+
+              {attendance.length === 0 ? (
+                <div className="surface-card rounded-2xl border border-hairline p-8 text-center text-mist italic">
+                  No attendance records found.
+                </div>
+              ) : (
+                <>
+                  {/* ── Mobile Layout (Below sm: breakpoint) ── */}
+                  <div className="sm:hidden space-y-3">
+                    {attendance
                       .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
                       .map((a) => (
-                        <tr key={a.id} className="hover:bg-white/[0.01] transition-colors">
-                          <td className="p-4 font-medium text-parchment">{formatDate(a.date)}</td>
-                          <td className="p-4">
-                            <span className={`px-2 py-1 rounded text-xs font-bold uppercase tracking-wider border ${
+                        <div key={a.id} className="surface-card rounded-2xl border border-hairline p-4 space-y-2">
+                          <div className="flex items-center justify-between">
+                            <span className="font-semibold text-parchment text-sm">{formatDate(a.date)}</span>
+                            <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider border ${
                               a.status === 'present' ? 'text-emerald-400 border-emerald-500/30 bg-emerald-500/10' :
                               a.status === 'absent'  ? 'text-red-400 border-red-500/30 bg-red-500/10' :
-                                                        'text-amber-400 border-amber-500/30 bg-amber-500/10'
+                                                      'text-amber-400 border-amber-500/30 bg-amber-500/10'
                             }`}>{a.status}</span>
-                          </td>
-                          <td className="p-4 text-mist text-sm">
-                            {a.check_in_at ? new Date(a.check_in_at).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' }) : '—'}
-                          </td>
-                          <td className="p-4">
-                            {a.photo_url ? (
-                              <a href={a.photo_url} target="_blank" rel="noreferrer" className="text-coral hover:underline text-sm flex items-center gap-1">
-                                <FileText className="w-4 h-4" /> View
+                          </div>
+                          <div className="flex items-center justify-between text-xs text-mist pt-1 border-t border-hairline">
+                            <span>Check In: <strong className="text-parchment font-mono">{a.check_in_at ? new Date(a.check_in_at).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' }) : '—'}</strong></span>
+                            {a.photo_url && (
+                              <a href={a.photo_url} target="_blank" rel="noreferrer" className="text-coral hover:underline flex items-center gap-1">
+                                <FileText className="w-3.5 h-3.5" /> View Photo
                               </a>
-                            ) : <span className="text-mist">—</span>}
-                          </td>
+                            )}
+                          </div>
+                        </div>
+                      ))}
+                  </div>
+
+                  {/* ── Desktop Table Layout (sm: and up) ── */}
+                  <div className="hidden sm:block surface-card rounded-2xl border border-hairline overflow-hidden">
+                    <table className="w-full text-left">
+                      <thead>
+                        <tr className="border-b border-hairline bg-ink/30">
+                          <th className="p-4 text-xs font-bold text-mist uppercase tracking-wider">Date</th>
+                          <th className="p-4 text-xs font-bold text-mist uppercase tracking-wider">Status</th>
+                          <th className="p-4 text-xs font-bold text-mist uppercase tracking-wider">Check In Time</th>
+                          <th className="p-4 text-xs font-bold text-mist uppercase tracking-wider">Photo</th>
                         </tr>
-                      )) : (
-                        <tr><td colSpan={4} className="p-8 text-center text-mist italic">No attendance records found.</td></tr>
-                      )}
-                  </tbody>
-                </table>
-              </div>
+                      </thead>
+                      <tbody className="divide-y divide-hairline">
+                        {attendance
+                          .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
+                          .map((a) => (
+                            <tr key={a.id} className="hover:bg-white/[0.01] transition-colors">
+                              <td className="p-4 font-medium text-parchment">{formatDate(a.date)}</td>
+                              <td className="p-4">
+                                <span className={`px-2 py-1 rounded text-xs font-bold uppercase tracking-wider border ${
+                                  a.status === 'present' ? 'text-emerald-400 border-emerald-500/30 bg-emerald-500/10' :
+                                  a.status === 'absent'  ? 'text-red-400 border-red-500/30 bg-red-500/10' :
+                                                          'text-amber-400 border-amber-500/30 bg-amber-500/10'
+                                }`}>{a.status}</span>
+                              </td>
+                              <td className="p-4 text-mist text-sm">
+                                {a.check_in_at ? new Date(a.check_in_at).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' }) : '—'}
+                              </td>
+                              <td className="p-4">
+                                {a.photo_url ? (
+                                  <a href={a.photo_url} target="_blank" rel="noreferrer" className="text-coral hover:underline text-sm flex items-center gap-1">
+                                    <FileText className="w-4 h-4" /> View
+                                  </a>
+                                ) : <span className="text-mist">—</span>}
+                              </td>
+                            </tr>
+                          ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </>
+              )}
             </motion.div>
           )}
 
@@ -262,40 +296,68 @@ export default function TeacherDetailClient({ teacher }: Props) {
               className="grid grid-cols-1 lg:grid-cols-3 gap-6">
 
               {/* Payment History */}
-              <div className="lg:col-span-2 surface-card rounded-2xl border border-hairline overflow-hidden">
-                <div className="p-6 border-b border-hairline">
+              <div className="lg:col-span-2 space-y-4">
+                <div className="surface-card rounded-2xl p-6 border border-hairline">
                   <h3 className="font-display text-lg font-bold text-parchment">Payment History</h3>
                 </div>
-                <div className="overflow-x-auto">
-                  <table className="w-full text-left">
-                    <thead>
-                      <tr className="border-b border-hairline bg-ink/30">
-                        <th className="p-4 text-xs font-bold text-mist uppercase tracking-wider">Date</th>
-                        <th className="p-4 text-xs font-bold text-mist uppercase tracking-wider">Amount</th>
-                        <th className="p-4 text-xs font-bold text-mist uppercase tracking-wider">Status</th>
-                        <th className="p-4 text-xs font-bold text-mist uppercase tracking-wider">Remarks</th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-hairline">
-                      {payments.length > 0 ? payments
+
+                {payments.length === 0 ? (
+                  <div className="surface-card rounded-2xl border border-hairline p-8 text-center text-mist italic">
+                    No payments recorded yet.
+                  </div>
+                ) : (
+                  <>
+                    {/* ── Mobile Layout (Below sm: breakpoint) ── */}
+                    <div className="sm:hidden space-y-3">
+                      {payments
                         .sort((a, b) => new Date(b.payment_date).getTime() - new Date(a.payment_date).getTime())
                         .map((p) => (
-                          <tr key={p.id} className="hover:bg-white/[0.01] transition-colors">
-                            <td className="p-4 font-medium text-parchment">{formatDate(p.payment_date)}</td>
-                            <td className="p-4 font-bold text-emerald-400">₹{p.amount}</td>
-                            <td className="p-4">
-                              <span className={`px-2 py-1 rounded text-xs font-bold uppercase tracking-wider border ${
+                          <div key={p.id} className="surface-card rounded-2xl border border-hairline p-4 space-y-2">
+                            <div className="flex items-center justify-between">
+                              <span className="font-semibold text-parchment text-sm">{formatDate(p.payment_date)}</span>
+                              <span className="font-bold text-emerald-400 text-sm">₹{p.amount}</span>
+                            </div>
+                            <div className="flex items-center justify-between text-xs text-mist pt-1 border-t border-hairline">
+                              <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider border ${
                                 p.status === 'paid' ? 'text-emerald-400 border-emerald-500/30 bg-emerald-500/10' : 'text-amber-400 border-amber-500/30 bg-amber-500/10'
                               }`}>{p.status}</span>
-                            </td>
-                            <td className="p-4 text-mist text-sm max-w-[200px] truncate" title={p.remarks}>{p.remarks || '—'}</td>
+                              <span className="text-mist truncate max-w-[180px]">{p.remarks || '—'}</span>
+                            </div>
+                          </div>
+                        ))}
+                    </div>
+
+                    {/* ── Desktop Table Layout (sm: and up) ── */}
+                    <div className="hidden sm:block surface-card rounded-2xl border border-hairline overflow-hidden">
+                      <table className="w-full text-left">
+                        <thead>
+                          <tr className="border-b border-hairline bg-ink/30">
+                            <th className="p-4 text-xs font-bold text-mist uppercase tracking-wider">Date</th>
+                            <th className="p-4 text-xs font-bold text-mist uppercase tracking-wider">Amount</th>
+                            <th className="p-4 text-xs font-bold text-mist uppercase tracking-wider">Status</th>
+                            <th className="p-4 text-xs font-bold text-mist uppercase tracking-wider">Remarks</th>
                           </tr>
-                        )) : (
-                          <tr><td colSpan={4} className="p-8 text-center text-mist italic">No payments recorded yet.</td></tr>
-                        )}
-                    </tbody>
-                  </table>
-                </div>
+                        </thead>
+                        <tbody className="divide-y divide-hairline">
+                          {payments
+                            .sort((a, b) => new Date(b.payment_date).getTime() - new Date(a.payment_date).getTime())
+                            .map((p) => (
+                              <tr key={p.id} className="hover:bg-white/[0.01] transition-colors">
+                                <td className="p-4 font-medium text-parchment">{formatDate(p.payment_date)}</td>
+                                <td className="p-4 font-bold text-emerald-400">₹{p.amount}</td>
+                                <td className="p-4">
+                                  <span className={`px-2 py-1 rounded text-xs font-bold uppercase tracking-wider border ${
+                                    p.status === 'paid' ? 'text-emerald-400 border-emerald-500/30 bg-emerald-500/10' : 'text-amber-400 border-amber-500/30 bg-amber-500/10'
+                                  }`}>{p.status}</span>
+                                </td>
+                                <td className="p-4 text-mist text-sm max-w-[200px] truncate" title={p.remarks}>{p.remarks || '—'}</td>
+                              </tr>
+                            ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  </>
+                )}
               </div>
 
               {/* Record Payment Form */}
