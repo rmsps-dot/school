@@ -543,59 +543,108 @@ export default function ClassDashboardClient({ classes: initialClasses }: ClassD
                   <h3 className="font-display text-xl font-bold text-parchment">Manage Attendance Records</h3>
                 </div>
 
-                <div className="bg-ink rounded-2xl border border-hairline">
-                  <div className="responsive-table-shell">
-                    <table className="w-full min-w-[640px] text-left whitespace-nowrap">
-                      <thead className="bg-surface border-b border-hairline">
-                        <tr>
-                          <th className="p-4 text-xs font-bold text-mist uppercase tracking-widest">Student</th>
-                          <th className="p-4 text-xs font-bold text-mist uppercase tracking-widest text-center">Date</th>
-                          <th className="p-4 text-xs font-bold text-mist uppercase tracking-widest text-center">Status</th>
-                          <th className="p-4 text-xs font-bold text-mist uppercase tracking-widest text-right">Actions</th>
+                {/* ── Mobile Layout (Below sm: breakpoint) ── */}
+                <div className="sm:hidden space-y-3">
+                  {manageAttendance.map((r, i) => (
+                    <div
+                      key={r.id}
+                      className="surface-card rounded-2xl border border-hairline p-4 space-y-3"
+                      style={{ animationDelay: `${i * 0.03}s` }}
+                    >
+                      <div className="flex items-start justify-between gap-3">
+                        <div className="min-w-0 flex-1">
+                          <div className="font-semibold text-parchment text-sm truncate">{r.students?.profiles?.full_name}</div>
+                          <div className="text-[10px] font-mono text-mist tracking-widest mt-0.5">{r.students?.student_id}</div>
+                          <div className="text-xs text-mist/80 font-mono mt-1">{new Date(r.date).toLocaleDateString()}</div>
+                        </div>
+                        <button
+                          onClick={() => handleDeleteAttendance(r.id)}
+                          className="text-mist hover:text-red-400 p-2 rounded-lg bg-surface border border-hairline hover:bg-red-500/10 hover:border-red-500/30 transition-colors"
+                          title="Delete Record"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      </div>
+
+                      <div className="pt-2 border-t border-hairline flex items-center justify-between">
+                        <span className="text-xs font-bold text-mist uppercase tracking-wider">Status</span>
+                        <select
+                          value={r.status}
+                          onChange={(e) => handleUpdateManageAttendanceStatus(r.id, e.target.value)}
+                          className={`px-3 py-1.5 rounded-xl border text-xs font-bold uppercase tracking-wider bg-surface focus:outline-none cursor-pointer ${
+                            r.status === 'present'
+                              ? 'text-emerald-400 border-emerald-500/30'
+                              : r.status === 'absent'
+                              ? 'text-red-400 border-red-500/30'
+                              : 'text-yellow-400 border-yellow-500/30'
+                          }`}
+                        >
+                          <option className="text-ink" value="present">Present</option>
+                          <option className="text-ink" value="absent">Absent</option>
+                          <option className="text-ink" value="leave">Leave</option>
+                        </select>
+                      </div>
+                    </div>
+                  ))}
+                  {manageAttendance.length === 0 && (
+                    <div className="surface-card rounded-2xl border border-hairline p-10 text-center text-mist font-mono text-xs tracking-widest uppercase">
+                      No attendance records found.
+                    </div>
+                  )}
+                </div>
+
+                {/* ── Desktop Table Layout (sm: and up) ── */}
+                <div className="hidden sm:block bg-ink rounded-2xl border border-hairline overflow-x-auto">
+                  <table className="w-full text-left whitespace-nowrap">
+                    <thead className="bg-surface border-b border-hairline">
+                      <tr>
+                        <th className="p-4 text-xs font-bold text-mist uppercase tracking-widest">Student</th>
+                        <th className="p-4 text-xs font-bold text-mist uppercase tracking-widest text-center">Date</th>
+                        <th className="p-4 text-xs font-bold text-mist uppercase tracking-widest text-center">Status</th>
+                        <th className="p-4 text-xs font-bold text-mist uppercase tracking-widest text-right">Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-hairline">
+                      {manageAttendance.map((r, i) => (
+                        <tr key={r.id} className="ledger-row hover:bg-surface/50 transition-colors" style={{ animationDelay: `${i * 0.05}s` }}>
+                          <td className="p-4 align-top">
+                            <div className="font-semibold text-parchment break-words pr-2">{r.students?.profiles?.full_name}</div>
+                            <div className="text-[10px] font-mono text-mist tracking-widest mt-1 break-all">{r.students?.student_id}</div>
+                          </td>
+                          <td className="p-4 text-center font-mono text-sm text-mist align-top">{new Date(r.date).toLocaleDateString()}</td>
+                          <td className="p-4 text-center align-top">
+                            <select
+                              value={r.status}
+                              onChange={(e) => handleUpdateManageAttendanceStatus(r.id, e.target.value)}
+                              className={`bg-transparent text-xs font-bold uppercase tracking-wider focus:outline-none cursor-pointer ${
+                                r.status === 'present' ? 'text-emerald-400' : r.status === 'absent' ? 'text-red-400' : 'text-yellow-400'
+                              }`}
+                            >
+                              <option className="text-ink" value="present">Present</option>
+                              <option className="text-ink" value="absent">Absent</option>
+                              <option className="text-ink" value="leave">Leave</option>
+                            </select>
+                          </td>
+                          <td className="p-4 text-right align-top">
+                            <button
+                              onClick={() => handleDeleteAttendance(r.id)}
+                              className="text-mist hover:text-red-400 p-2 rounded-lg hover:bg-red-500/10 transition-colors border border-transparent hover:border-red-500/30"
+                              title="Delete Record"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </button>
+                          </td>
                         </tr>
-                      </thead>
-                      <tbody className="divide-y divide-hairline">
-                        {manageAttendance.map((r, i) => (
-                          <tr key={r.id} className="ledger-row hover:bg-surface/50 transition-colors" style={{ animationDelay: `${i * 0.05}s` }}>
-                            <td className="p-4 align-top">
-                              <div className="font-semibold text-parchment break-words pr-2">{r.students?.profiles?.full_name}</div>
-                              <div className="text-[10px] font-mono text-mist tracking-widest mt-1 break-all">{r.students?.student_id}</div>
-                            </td>
-                            <td className="p-4 text-center font-mono text-sm text-mist align-top">{new Date(r.date).toLocaleDateString()}</td>
-                            <td className="p-4 text-center align-top">
-                              <select
-                                value={r.status}
-                                onChange={(e) => handleUpdateManageAttendanceStatus(r.id, e.target.value)}
-                                className={`bg-transparent text-xs font-bold uppercase tracking-wider focus:outline-none cursor-pointer ${
-                                  r.status === 'present' ? 'text-emerald-400' : r.status === 'absent' ? 'text-red-400' : 'text-yellow-400'
-                                }`}
-                              >
-                                <option className="text-ink" value="present">Present</option>
-                                <option className="text-ink" value="absent">Absent</option>
-                                <option className="text-ink" value="leave">Leave</option>
-                              </select>
-                            </td>
-                            <td className="p-4 text-right align-top">
-                              <button
-                                onClick={() => handleDeleteAttendance(r.id)}
-                                className="text-mist hover:text-red-400 p-2 rounded-lg hover:bg-red-500/10 transition-colors border border-transparent hover:border-red-500/30"
-                                title="Delete Record"
-                              >
-                                <Trash2 className="w-4 h-4" />
-                              </button>
-                            </td>
-                          </tr>
-                        ))}
-                        {manageAttendance.length === 0 && (
-                          <tr>
-                            <td colSpan={4} className="p-12 text-center text-mist font-mono text-sm tracking-widest uppercase">
-                              No attendance records found.
-                            </td>
-                          </tr>
-                        )}
-                      </tbody>
-                    </table>
-                  </div>
+                      ))}
+                      {manageAttendance.length === 0 && (
+                        <tr>
+                          <td colSpan={4} className="p-12 text-center text-mist font-mono text-sm tracking-widest uppercase">
+                            No attendance records found.
+                          </td>
+                        </tr>
+                      )}
+                    </tbody>
+                  </table>
                 </div>
               </div>
             )}
@@ -608,180 +657,321 @@ export default function ClassDashboardClient({ classes: initialClasses }: ClassD
                   <h3 className="font-display text-xl font-bold text-parchment">Manage Uploaded Results</h3>
                 </div>
 
-                <div className="bg-ink rounded-2xl border border-hairline">
-                  <div className="responsive-table-shell">
-                    <table className="w-full min-w-[820px] text-left whitespace-nowrap">
-                      <thead className="bg-surface border-b border-hairline">
-                        <tr>
-                          <th className="p-4 w-8"></th>
-                          <th className="p-4 text-xs font-bold text-mist uppercase tracking-widest">Student</th>
-                          <th className="p-4 text-xs font-bold text-mist uppercase tracking-widest">Exam Type</th>
-                          <th className="p-4 text-xs font-bold text-mist uppercase tracking-widest">Subject</th>
-                          <th className="p-4 text-xs font-bold text-mist uppercase tracking-widest text-center">Marks</th>
-                          <th className="p-4 text-xs font-bold text-mist uppercase tracking-widest text-center">Grade</th>
-                          <th className="p-4 text-xs font-bold text-mist uppercase tracking-widest text-right">Actions</th>
-                        </tr>
-                      </thead>
-                      <tbody className="divide-y divide-hairline">
-                        {groupedResults.length === 0 ? (
-                          <tr>
-                            <td colSpan={7} className="p-12 text-center text-mist font-mono text-sm tracking-widest uppercase">
-                              No results have been uploaded for this class yet.
-                            </td>
-                          </tr>
-                        ) : (
-                          groupedResults.map((group, i) => {
-                            const key = `${group.student_id}_${group.exam_type}`
-                            const p = (group.totalObtained / (group.grandTotal || 1)) * 100
-                            let grade = 'F'
-                            if (p >= 90) grade = 'A+'
-                            else if (p >= 80) grade = 'A'
-                            else if (p >= 70) grade = 'B+'
-                            else if (p >= 60) grade = 'B'
-                            else if (p >= 50) grade = 'C'
-                            else if (p >= 40) grade = 'D'
+                {/* ── Mobile Layout (Below sm: breakpoint) ── */}
+                <div className="sm:hidden space-y-3">
+                  {groupedResults.length === 0 ? (
+                    <div className="surface-card rounded-2xl border border-hairline p-10 text-center text-mist font-mono text-xs tracking-widest uppercase">
+                      No results have been uploaded for this class yet.
+                    </div>
+                  ) : (
+                    groupedResults.map((group, i) => {
+                      const key = `${group.student_id}_${group.exam_type}`
+                      const p = (group.totalObtained / (group.grandTotal || 1)) * 100
+                      let grade = 'F'
+                      if (p >= 90) grade = 'A+'
+                      else if (p >= 80) grade = 'A'
+                      else if (p >= 70) grade = 'B+'
+                      else if (p >= 60) grade = 'B'
+                      else if (p >= 50) grade = 'C'
+                      else if (p >= 40) grade = 'D'
 
-                            const hasMultiple = group.subjectsList.length > 1
+                      const hasMultiple = group.subjectsList.length > 1
+                      const isExpanded = expandedRows.has(key)
 
-                            const ActionButtons = ({ r }: { r: ResultType }) => (
-                              <div className="flex justify-end gap-2">
-                                <button
-                                  onClick={(e) => {
-                                    e.stopPropagation()
-                                    setEditResult(r)
-                                  }}
-                                  className="text-mist hover:text-veena-blue p-2 rounded-lg hover:bg-veena-blue/10 transition-colors border border-transparent hover:border-veena-blue/30"
-                                  title="Edit Result"
-                                >
-                                  <Edit className="w-4 h-4" />
-                                </button>
-                              </div>
-                            )
+                      return (
+                        <div
+                          key={group.id || key}
+                          className="surface-card rounded-2xl border border-hairline p-4 space-y-3"
+                          style={{ animationDelay: `${i * 0.03}s` }}
+                        >
+                          <div className="flex items-start justify-between gap-3">
+                            <div className="min-w-0 flex-1">
+                              <div className="font-semibold text-parchment text-sm truncate">{group.students?.profiles?.full_name}</div>
+                              <div className="text-[10px] font-mono text-mist uppercase tracking-widest mt-0.5">{group.students?.student_id}</div>
+                              <div className="text-xs text-coral font-medium mt-1">{group.exam_type}</div>
+                            </div>
+                            <div className="flex flex-col items-end gap-1">
+                              <span className={`px-2.5 py-0.5 rounded-full text-xs font-bold border tracking-wider ${grade === 'F' ? 'bg-red-500/20 text-red-400 border-red-500/30' : 'bg-coral/20 text-coral border-coral/30'}`}>
+                                {grade}
+                              </span>
+                              <span className="text-xs font-mono font-bold text-parchment">
+                                {group.totalObtained} <span className="text-mist font-normal">/ {group.grandTotal}</span>
+                              </span>
+                            </div>
+                          </div>
 
-                            return (
-                              <React.Fragment key={group.id || key}>
-                                <tr
-                                  className="ledger-row hover:bg-surface/50 transition-colors group cursor-pointer"
-                                  style={{ animationDelay: `${i * 0.05}s` }}
-                                  onClick={() => {
-                                    if (!hasMultiple) return
-                                    setExpandedRows(prev => {
-                                      const next = new Set(prev)
-                                      if (next.has(key)) next.delete(key)
-                                      else next.add(key)
-                                      return next
-                                    })
-                                  }}
-                                >
-                                  <td className="p-4 text-center">
-                                    {hasMultiple && (
-                                      <div className="w-6 h-6 rounded flex items-center justify-center text-mist group-hover:text-coral transition-colors" title="This exam has multiple subjects. Click to expand/collapse.">
-                                        {expandedRows.has(key) ? <ChevronDown className="w-4 h-4 opacity-50" /> : <ChevronDown className="w-4 h-4 opacity-50 -rotate-90" />}
-                                      </div>
-                                    )}
-                                  </td>
-                                  <td className="p-4">
-                                    <div className="font-semibold text-parchment">{group.students?.profiles?.full_name}</div>
-                                    <div className="text-[10px] font-mono text-mist tracking-widest mt-1">{group.students?.student_id}</div>
-                                  </td>
-                                  <td className="p-4 text-sm text-mist">{group.exam_type}</td>
-                                  <td className="p-4 text-sm font-semibold text-parchment">
-                                    {hasMultiple ? <span className="text-coral bg-coral/10 px-2 py-0.5 rounded text-xs">{group.subjectsList.length} Subjects</span> : group.subject}
-                                  </td>
-                                  <td className="p-4 text-center font-bold text-parchment">
-                                    {group.totalObtained} <span className="text-mist font-normal">/ {group.grandTotal}</span>
-                                  </td>
-                                  <td className="p-4 text-center">
-                                    <span className={`px-3 py-1 rounded-full text-[10px] font-bold border tracking-wider ${grade === 'F' ? 'bg-red-500/20 text-red-400 border-red-500/30' : 'bg-coral/20 text-coral border-coral/30'}`}>
-                                      {grade}
-                                    </span>
-                                  </td>
-                                  <td className="p-4 text-right">
-                                    <div className="flex justify-end gap-2 items-center">
-                                      <button
-                                        onClick={(e) => {
-                                          e.stopPropagation()
-                                          handleDeleteResult(group.subjectsList.map((s: ResultType) => s.id))
-                                        }}
-                                        className="flex items-center gap-1.5 text-xs font-bold text-mist hover:text-red-400 p-2 rounded-lg hover:bg-red-500/10 transition-colors"
-                                        title="Delete Entire Result"
-                                      >
-                                        <Trash2 className="w-4 h-4" />
-                                      </button>
-                                      <button
-                                        onClick={(e) => {
-                                          e.stopPropagation()
-                                          setPreviewSheet(group)
-                                        }}
-                                        className="flex items-center gap-1.5 text-xs font-bold text-mist hover:text-veena-blue p-2 rounded-lg hover:bg-veena-blue/10 transition-colors"
-                                        title="Preview PDF"
-                                      >
-                                        <FileSpreadsheet className="w-4 h-4" />
-                                      </button>
-                                      <button
-                                        onClick={(e) => {
-                                          e.stopPropagation()
-                                          handleGeneratePDF(group)
-                                        }}
-                                        disabled={downloadingKey === key}
-                                        className="flex items-center gap-1.5 text-xs font-bold text-veena-blue hover:text-coral p-2 rounded-lg hover:bg-veena-blue/10 disabled:opacity-50 transition-colors"
-                                        title="Download PDF"
-                                      >
-                                        {downloadingKey === key ? (
-                                          <>
-                                            <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                                            Downloading...
-                                          </>
-                                        ) : (
-                                          <>
-                                            <Download className="w-3.5 h-3.5" />
-                                            Download PDF
-                                          </>
-                                        )}
-                                      </button>
-                                      {!hasMultiple && <div className="ml-2 pl-2 border-l border-hairline"><ActionButtons r={group.subjectsList[0]} /></div>}
-                                      {hasMultiple && (
-                                        <span className="ml-2 text-[10px] text-mist/50 uppercase tracking-widest pl-2 border-l border-hairline">Multiple</span>
-                                      )}
+                          {hasMultiple ? (
+                            <button
+                              onClick={() => {
+                                setExpandedRows(prev => {
+                                  const next = new Set(prev)
+                                  if (next.has(key)) next.delete(key)
+                                  else next.add(key)
+                                  return next
+                                })
+                              }}
+                              className="w-full flex items-center justify-between px-3 py-2 rounded-xl bg-surface/50 border border-hairline text-xs text-mist hover:text-parchment"
+                            >
+                              <span>{group.subjectsList.length} Subjects Breakdown</span>
+                              <ChevronDown className={`w-4 h-4 transition-transform ${isExpanded ? 'rotate-180' : ''}`} />
+                            </button>
+                          ) : (
+                            <div className="text-xs text-mist font-medium">Subject: <span className="text-parchment">{group.subject}</span></div>
+                          )}
+
+                          {hasMultiple && isExpanded && (
+                            <div className="space-y-2 pt-1 border-t border-hairline/60">
+                              {group.subjectsList.map((sub: ResultType) => {
+                                const sp = (sub.marks_obtained / (sub.total_marks || sub.max_marks || 1)) * 100
+                                let sg = 'F'
+                                if (sp >= 90) sg = 'A+'
+                                else if (sp >= 80) sg = 'A'
+                                else if (sp >= 70) sg = 'B+'
+                                else if (sp >= 60) sg = 'B'
+                                else if (sp >= 50) sg = 'C'
+                                else if (sp >= 40) sg = 'D'
+
+                                return (
+                                  <div key={sub.id} className="p-2.5 rounded-xl bg-ink/60 border border-hairline/50 flex items-center justify-between text-xs">
+                                    <div>
+                                      <div className="font-medium text-parchment">{sub.subject}</div>
+                                      <div className="text-mist font-mono text-[10px]">{sub.marks_obtained} / {sub.total_marks || sub.max_marks} ({sg})</div>
                                     </div>
-                                  </td>
-                                </tr>
+                                    <button
+                                      onClick={() => setEditResult(sub)}
+                                      className="text-mist hover:text-veena-blue p-1.5 rounded-lg bg-surface border border-hairline"
+                                      title="Edit Subject"
+                                    >
+                                      <Edit className="w-3.5 h-3.5" />
+                                    </button>
+                                  </div>
+                                )
+                              })}
+                            </div>
+                          )}
 
-                                {hasMultiple && expandedRows.has(key) && group.subjectsList.map((sub: ResultType) => {
-                                  const sp = (sub.marks_obtained / (sub.total_marks || sub.max_marks || 1)) * 100
-                                  let sg = 'F'
-                                  if (sp >= 90) sg = 'A+'
-                                  else if (sp >= 80) sg = 'A'
-                                  else if (sp >= 70) sg = 'B+'
-                                  else if (sp >= 60) sg = 'B'
-                                  else if (sp >= 50) sg = 'C'
-                                  else if (sp >= 40) sg = 'D'
+                          {/* Mobile Action Buttons */}
+                          <div className="grid grid-cols-2 gap-2 pt-2 border-t border-hairline">
+                            <button
+                              onClick={() => setPreviewSheet(group)}
+                              className="py-2 px-3 rounded-xl bg-surface border border-hairline text-xs font-bold text-mist hover:text-veena-blue flex items-center justify-center gap-1.5"
+                            >
+                              <FileSpreadsheet className="w-3.5 h-3.5" />
+                              Preview
+                            </button>
+                            <button
+                              onClick={() => handleGeneratePDF(group)}
+                              disabled={downloadingKey === key}
+                              className="py-2 px-3 rounded-xl bg-veena-blue/10 border border-veena-blue/30 text-xs font-bold text-veena-blue hover:text-coral flex items-center justify-center gap-1.5 disabled:opacity-50"
+                            >
+                              {downloadingKey === key ? (
+                                <>
+                                  <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                                  Downloading...
+                                </>
+                              ) : (
+                                <>
+                                  <Download className="w-3.5 h-3.5" />
+                                  Download PDF
+                                </>
+                              )}
+                            </button>
+                            {!hasMultiple && (
+                              <button
+                                onClick={() => setEditResult(group.subjectsList[0])}
+                                className="py-2 px-3 rounded-xl bg-surface border border-hairline text-xs font-bold text-mist hover:text-veena-blue flex items-center justify-center gap-1.5"
+                              >
+                                <Edit className="w-3.5 h-3.5" />
+                                Edit
+                              </button>
+                            )}
+                            <button
+                              onClick={() => handleDeleteResult(group.subjectsList.map((s: ResultType) => s.id))}
+                              className={`py-2 px-3 rounded-xl bg-red-500/10 border border-red-500/30 text-xs font-bold text-red-400 hover:bg-red-500/20 flex items-center justify-center gap-1.5 ${hasMultiple ? 'col-span-2' : ''}`}
+                            >
+                              <Trash2 className="w-3.5 h-3.5" />
+                              Delete
+                            </button>
+                          </div>
+                        </div>
+                      )
+                    })
+                  )}
+                </div>
 
-                                  return (
-                                    <tr key={sub.id} className="bg-surface/20 border-t border-hairline/50 hover:bg-surface/40 transition-colors">
-                                      <td className="p-3"></td>
-                                      <td className="p-3 border-l-2 border-hairline"></td>
-                                      <td className="p-3 text-xs text-mist/60">{sub.exam_type}</td>
-                                      <td className="p-3 text-sm font-medium text-parchment/80">{sub.subject}</td>
-                                      <td className="p-3 text-center text-sm font-medium text-parchment/80">
-                                        {sub.marks_obtained} <span className="text-mist/60 font-normal">/ {sub.total_marks || sub.max_marks}</span>
-                                      </td>
-                                      <td className="p-3 text-center">
-                                        <span className="text-xs font-bold text-mist/80">{sg}</span>
-                                      </td>
-                                      <td className="p-3 pr-4">
-                                        <ActionButtons r={sub} />
-                                      </td>
-                                    </tr>
-                                  )
-                                })}
-                              </React.Fragment>
-                            )
-                          })
-                        )}
-                      </tbody>
-                    </table>
-                  </div>
+                {/* ── Desktop Table Layout (sm: and up) ── */}
+                <div className="hidden sm:block bg-ink rounded-2xl border border-hairline overflow-x-auto">
+                  <table className="w-full text-left whitespace-nowrap">
+                    <thead className="bg-surface border-b border-hairline">
+                      <tr>
+                        <th className="p-4 w-8"></th>
+                        <th className="p-4 text-xs font-bold text-mist uppercase tracking-widest">Student</th>
+                        <th className="p-4 text-xs font-bold text-mist uppercase tracking-widest">Exam Type</th>
+                        <th className="p-4 text-xs font-bold text-mist uppercase tracking-widest">Subject</th>
+                        <th className="p-4 text-xs font-bold text-mist uppercase tracking-widest text-center">Marks</th>
+                        <th className="p-4 text-xs font-bold text-mist uppercase tracking-widest text-center">Grade</th>
+                        <th className="p-4 text-xs font-bold text-mist uppercase tracking-widest text-right">Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-hairline">
+                      {groupedResults.length === 0 ? (
+                        <tr>
+                          <td colSpan={7} className="p-12 text-center text-mist font-mono text-sm tracking-widest uppercase">
+                            No results have been uploaded for this class yet.
+                          </td>
+                        </tr>
+                      ) : (
+                        groupedResults.map((group, i) => {
+                          const key = `${group.student_id}_${group.exam_type}`
+                          const p = (group.totalObtained / (group.grandTotal || 1)) * 100
+                          let grade = 'F'
+                          if (p >= 90) grade = 'A+'
+                          else if (p >= 80) grade = 'A'
+                          else if (p >= 70) grade = 'B+'
+                          else if (p >= 60) grade = 'B'
+                          else if (p >= 50) grade = 'C'
+                          else if (p >= 40) grade = 'D'
+
+                          const hasMultiple = group.subjectsList.length > 1
+
+                          const ActionButtons = ({ r }: { r: ResultType }) => (
+                            <div className="flex justify-end gap-2">
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation()
+                                  setEditResult(r)
+                                }}
+                                className="text-mist hover:text-veena-blue p-2 rounded-lg hover:bg-veena-blue/10 transition-colors border border-transparent hover:border-veena-blue/30"
+                                title="Edit Result"
+                              >
+                                <Edit className="w-4 h-4" />
+                              </button>
+                            </div>
+                          )
+
+                          return (
+                            <React.Fragment key={group.id || key}>
+                              <tr
+                                className="ledger-row hover:bg-surface/50 transition-colors group cursor-pointer"
+                                style={{ animationDelay: `${i * 0.05}s` }}
+                                onClick={() => {
+                                  if (!hasMultiple) return
+                                  setExpandedRows(prev => {
+                                    const next = new Set(prev)
+                                    if (next.has(key)) next.delete(key)
+                                    else next.add(key)
+                                    return next
+                                  })
+                                }}
+                              >
+                                <td className="p-4 text-center">
+                                  {hasMultiple && (
+                                    <div className="w-6 h-6 rounded flex items-center justify-center text-mist group-hover:text-coral transition-colors" title="This exam has multiple subjects. Click to expand/collapse.">
+                                      {expandedRows.has(key) ? <ChevronDown className="w-4 h-4 opacity-50" /> : <ChevronDown className="w-4 h-4 opacity-50 -rotate-90" />}
+                                    </div>
+                                  )}
+                                </td>
+                                <td className="p-4">
+                                  <div className="font-semibold text-parchment">{group.students?.profiles?.full_name}</div>
+                                  <div className="text-[10px] font-mono text-mist tracking-widest mt-1">{group.students?.student_id}</div>
+                                </td>
+                                <td className="p-4 text-sm text-mist">{group.exam_type}</td>
+                                <td className="p-4 text-sm font-semibold text-parchment">
+                                  {hasMultiple ? <span className="text-coral bg-coral/10 px-2 py-0.5 rounded text-xs">{group.subjectsList.length} Subjects</span> : group.subject}
+                                </td>
+                                <td className="p-4 text-center font-bold text-parchment">
+                                  {group.totalObtained} <span className="text-mist font-normal">/ {group.grandTotal}</span>
+                                </td>
+                                <td className="p-4 text-center">
+                                  <span className={`px-3 py-1 rounded-full text-[10px] font-bold border tracking-wider ${grade === 'F' ? 'bg-red-500/20 text-red-400 border-red-500/30' : 'bg-coral/20 text-coral border-coral/30'}`}>
+                                    {grade}
+                                  </span>
+                                </td>
+                                <td className="p-4 text-right">
+                                  <div className="flex justify-end gap-2 items-center">
+                                    <button
+                                      onClick={(e) => {
+                                        e.stopPropagation()
+                                        handleDeleteResult(group.subjectsList.map((s: ResultType) => s.id))
+                                      }}
+                                      className="flex items-center gap-1.5 text-xs font-bold text-mist hover:text-red-400 p-2 rounded-lg hover:bg-red-500/10 transition-colors"
+                                      title="Delete Entire Result"
+                                    >
+                                      <Trash2 className="w-4 h-4" />
+                                    </button>
+                                    <button
+                                      onClick={(e) => {
+                                        e.stopPropagation()
+                                        setPreviewSheet(group)
+                                      }}
+                                      className="flex items-center gap-1.5 text-xs font-bold text-mist hover:text-veena-blue p-2 rounded-lg hover:bg-veena-blue/10 transition-colors"
+                                      title="Preview PDF"
+                                    >
+                                      <FileSpreadsheet className="w-4 h-4" />
+                                    </button>
+                                    <button
+                                      onClick={(e) => {
+                                        e.stopPropagation()
+                                        handleGeneratePDF(group)
+                                      }}
+                                      disabled={downloadingKey === key}
+                                      className="flex items-center gap-1.5 text-xs font-bold text-veena-blue hover:text-coral p-2 rounded-lg hover:bg-veena-blue/10 disabled:opacity-50 transition-colors"
+                                      title="Download PDF"
+                                    >
+                                      {downloadingKey === key ? (
+                                        <>
+                                          <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                                          Downloading...
+                                        </>
+                                      ) : (
+                                        <>
+                                          <Download className="w-3.5 h-3.5" />
+                                          Download PDF
+                                        </>
+                                      )}
+                                    </button>
+                                    {!hasMultiple && <div className="ml-2 pl-2 border-l border-hairline"><ActionButtons r={group.subjectsList[0]} /></div>}
+                                    {hasMultiple && (
+                                      <span className="ml-2 text-[10px] text-mist/50 uppercase tracking-widest pl-2 border-l border-hairline">Multiple</span>
+                                    )}
+                                  </div>
+                                </td>
+                              </tr>
+
+                              {hasMultiple && expandedRows.has(key) && group.subjectsList.map((sub: ResultType) => {
+                                const sp = (sub.marks_obtained / (sub.total_marks || sub.max_marks || 1)) * 100
+                                let sg = 'F'
+                                if (sp >= 90) sg = 'A+'
+                                else if (sp >= 80) sg = 'A'
+                                else if (sp >= 70) sg = 'B+'
+                                else if (sp >= 60) sg = 'B'
+                                else if (sp >= 50) sg = 'C'
+                                else if (sp >= 40) sg = 'D'
+
+                                return (
+                                  <tr key={sub.id} className="bg-surface/20 border-t border-hairline/50 hover:bg-surface/40 transition-colors">
+                                    <td className="p-3"></td>
+                                    <td className="p-3 border-l-2 border-hairline"></td>
+                                    <td className="p-3 text-xs text-mist/60">{sub.exam_type}</td>
+                                    <td className="p-3 text-sm font-medium text-parchment/80">{sub.subject}</td>
+                                    <td className="p-3 text-center text-sm font-medium text-parchment/80">
+                                      {sub.marks_obtained} <span className="text-mist/60 font-normal">/ {sub.total_marks || sub.max_marks}</span>
+                                    </td>
+                                    <td className="p-3 text-center">
+                                      <span className="text-xs font-bold text-mist/80">{sg}</span>
+                                    </td>
+                                    <td className="p-3 pr-4">
+                                      <ActionButtons r={sub} />
+                                    </td>
+                                  </tr>
+                                )
+                              })}
+                            </React.Fragment>
+                          )
+                        })
+                      )}
+                    </tbody>
+                  </table>
                 </div>
               </div>
             )}
