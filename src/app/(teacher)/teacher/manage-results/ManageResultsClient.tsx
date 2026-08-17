@@ -154,8 +154,175 @@ export default function ManageResultsClient({ initialResults }: Props) {
   }
 
   return (
-    <div className="surface-card rounded-2xl border border-hairline overflow-hidden">
-        {/* MAIN RESULTS TABLE */}
+    <div className="space-y-4">
+      {/* ── Mobile Layout (Below sm: breakpoint) ── */}
+      <div className="sm:hidden space-y-3">
+        {(() => {
+          const grouped = new Map<string, typeof results[0] & { subjectsList: typeof results, totalObtained: number, grandTotal: number }>()
+          results.forEach(r => {
+            const key = `${r.student_id}_${r.exam_type}`
+            if (!grouped.has(key)) {
+              grouped.set(key, { ...r, subjectsList: [], totalObtained: 0, grandTotal: 0 })
+            }
+            const g = grouped.get(key)!
+            g.subjectsList.push(r)
+            g.totalObtained += r.marks_obtained
+            g.grandTotal += (r.total_marks || r.max_marks || 100)
+          })
+          const groupedArr = Array.from(grouped.values())
+
+          if (groupedArr.length === 0) {
+            return (
+              <div className="surface-card rounded-2xl border border-hairline p-10 text-center text-mist font-mono text-xs tracking-widest uppercase">
+                No results have been uploaded yet.
+              </div>
+            )
+          }
+
+          return groupedArr.map((group, i) => {
+            const key = `${group.student_id}_${group.exam_type}`
+            const p = (group.totalObtained / (group.grandTotal || 1)) * 100
+            let grade = 'F'
+            if (p >= 90) grade = 'A+'
+            else if (p >= 80) grade = 'A'
+            else if (p >= 70) grade = 'B+'
+            else if (p >= 60) grade = 'B'
+            else if (p >= 50) grade = 'C'
+            else if (p >= 40) grade = 'D'
+
+            const hasMultiple = group.subjectsList.length > 1
+            const isExpanded = expandedRows.has(key)
+
+            return (
+              <div
+                key={group.id || key}
+                className="surface-card rounded-2xl border border-hairline p-4 space-y-3"
+                style={{ animationDelay: `${i * 0.03}s` }}
+              >
+                <div className="flex items-start justify-between gap-3">
+                  <div className="min-w-0 flex-1">
+                    <div className="font-semibold text-parchment text-sm truncate">{group.students?.profiles?.full_name}</div>
+                    <div className="text-[10px] font-mono text-mist uppercase tracking-widest mt-0.5">{group.students?.student_id}</div>
+                    <div className="text-xs text-coral font-medium mt-1">{group.exam_type}</div>
+                  </div>
+                  <div className="flex flex-col items-end gap-1">
+                    <span className={`px-2.5 py-0.5 rounded-full text-xs font-bold border tracking-wider ${grade === 'F' ? 'bg-red-500/20 text-red-400 border-red-500/30' : 'bg-coral/20 text-coral border-coral/30'}`}>
+                      {grade}
+                    </span>
+                    <span className="text-xs font-mono font-bold text-parchment">
+                      {group.totalObtained} <span className="text-mist font-normal">/ {group.grandTotal}</span>
+                    </span>
+                  </div>
+                </div>
+
+                {hasMultiple ? (
+                  <button
+                    onClick={() => {
+                      setExpandedRows(prev => {
+                        const next = new Set(prev)
+                        if (next.has(key)) next.delete(key)
+                        else next.add(key)
+                        return next
+                      })
+                    }}
+                    className="w-full flex items-center justify-between px-3 py-2 rounded-xl bg-surface/50 border border-hairline text-xs text-mist hover:text-parchment"
+                  >
+                    <span>{group.subjectsList.length} Subjects Breakdown</span>
+                    <ChevronDown className={`w-4 h-4 transition-transform ${isExpanded ? 'rotate-180' : ''}`} />
+                  </button>
+                ) : (
+                  <div className="text-xs text-mist font-medium">Subject: <span className="text-parchment">{group.subject}</span></div>
+                )}
+
+                {hasMultiple && isExpanded && (
+                  <div className="space-y-2 pt-1 border-t border-hairline/60">
+                    {group.subjectsList.map((sub: TeacherResultRecord) => {
+                      const sp = (sub.marks_obtained / (sub.total_marks || sub.max_marks || 1)) * 100
+                      let sg = 'F'
+                      if (sp >= 90) sg = 'A+'
+                      else if (sp >= 80) sg = 'A'
+                      else if (sp >= 70) sg = 'B+'
+                      else if (sp >= 60) sg = 'B'
+                      else if (sp >= 50) sg = 'C'
+                      else if (sp >= 40) sg = 'D'
+
+                      return (
+                        <div key={sub.id} className="p-2.5 rounded-xl bg-ink/60 border border-hairline/50 flex items-center justify-between text-xs">
+                          <div>
+                            <div className="font-medium text-parchment">{sub.subject}</div>
+                            <div className="text-mist font-mono text-[10px]">{sub.marks_obtained} / {sub.total_marks || sub.max_marks} ({sg})</div>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            {(sub.edit_request || sub.delete_request) && (
+                              <span className="text-[9px] text-coral border border-coral/30 px-1.5 py-0.5 rounded-full uppercase tracking-wider bg-coral/10">
+                                {sub.delete_request ? 'Delete Req' : 'Edit Req'}
+                              </span>
+                            )}
+                            <button
+                              onClick={() => handleEditResult(sub)}
+                              className="text-mist hover:text-veena-blue p-1.5 rounded-lg bg-surface border border-hairline"
+                              title="Edit Subject"
+                            >
+                              <Edit className="w-3.5 h-3.5" />
+                            </button>
+                          </div>
+                        </div>
+                      )
+                    })}
+                  </div>
+                )}
+
+                {/* Mobile Action Buttons */}
+                <div className="grid grid-cols-2 gap-2 pt-2 border-t border-hairline">
+                  <button
+                    onClick={() => setPreviewSheet(mapGroupToMarksheet(group))}
+                    className="py-2 px-3 rounded-xl bg-surface border border-hairline text-xs font-bold text-mist hover:text-veena-blue flex items-center justify-center gap-1.5"
+                  >
+                    <FileSpreadsheet className="w-3.5 h-3.5" />
+                    Preview
+                  </button>
+                  <button
+                    onClick={() => handleGeneratePDF(mapGroupToMarksheet(group))}
+                    disabled={downloadingKey === `${group.student_id}-${group.exam_type}`}
+                    className="py-2 px-3 rounded-xl bg-veena-blue/10 border border-veena-blue/30 text-xs font-bold text-veena-blue hover:text-coral flex items-center justify-center gap-1.5 disabled:opacity-50"
+                  >
+                    {downloadingKey === `${group.student_id}-${group.exam_type}` ? (
+                      <>
+                        <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                        Downloading...
+                      </>
+                    ) : (
+                      <>
+                        <Download className="w-3.5 h-3.5" />
+                        Download PDF
+                      </>
+                    )}
+                  </button>
+                  {!hasMultiple && (
+                    <button
+                      onClick={() => handleEditResult(group.subjectsList[0])}
+                      className="py-2 px-3 rounded-xl bg-surface border border-hairline text-xs font-bold text-mist hover:text-veena-blue flex items-center justify-center gap-1.5"
+                    >
+                      <Edit className="w-3.5 h-3.5" />
+                      Edit
+                    </button>
+                  )}
+                  <button
+                    onClick={() => handleDeleteResult(group.subjectsList.map((s: TeacherResultRecord) => s.id))}
+                    className={`py-2 px-3 rounded-xl bg-red-500/10 border border-red-500/30 text-xs font-bold text-red-400 hover:bg-red-500/20 flex items-center justify-center gap-1.5 ${hasMultiple ? 'col-span-2' : ''}`}
+                  >
+                    <Trash2 className="w-3.5 h-3.5" />
+                    Delete
+                  </button>
+                </div>
+              </div>
+            )
+          })
+        })()}
+      </div>
+
+      {/* ── Desktop Table Layout (sm: and up) ── */}
+      <div className="hidden sm:block surface-card rounded-2xl border border-hairline overflow-hidden">
         <div className="bg-ink rounded-2xl border border-hairline overflow-x-auto">
           <table className="w-full text-left whitespace-nowrap">
             <thead className="bg-surface border-b border-hairline">
@@ -207,7 +374,6 @@ export default function ManageResultsClient({ initialResults }: Props) {
 
                   const hasMultiple = group.subjectsList.length > 1
                   
-                  // Action buttons component (only Edit now)
                   const ActionButtons = ({ r }: { r: TeacherResultRecord }) => (
                     <div className="flex justify-end gap-2">
                       <button
@@ -351,6 +517,7 @@ export default function ManageResultsClient({ initialResults }: Props) {
             </tbody>
           </table>
         </div>
+      </div>
 
       {/* EDIT MODAL */}
       <AnimatePresence>
