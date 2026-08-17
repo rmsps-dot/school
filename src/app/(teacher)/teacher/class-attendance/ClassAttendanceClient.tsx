@@ -167,9 +167,72 @@ export default function ClassAttendanceClient({ classes, timeWindow }: Props) {
           <motion.div 
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
-            className="surface-card rounded-2xl border border-hairline overflow-hidden"
+            className="space-y-4"
           >
-            <div className="overflow-x-auto">
+            {/* ── Mobile Layout (Below sm: breakpoint) ── */}
+            <div className="sm:hidden space-y-3">
+              {students.map(s => (
+                <div
+                  key={s.id}
+                  className="surface-card rounded-2xl border border-hairline p-4 space-y-3"
+                >
+                  <div className="flex items-center gap-3">
+                    {s.profiles?.profile_photo_url ? (
+                      <div className="w-10 h-10 relative rounded-full overflow-hidden flex-shrink-0 border border-hairline">
+                        <Image src={s.profiles.profile_photo_url} alt={s.profiles.full_name || 'Student'} fill sizes="40px" className="object-cover" />
+                      </div>
+                    ) : (
+                      <div className="w-10 h-10 rounded-full bg-coral/20 flex items-center justify-center text-xs font-bold text-coral flex-shrink-0">
+                        {s.profiles?.full_name?.charAt(0) || 'S'}
+                      </div>
+                    )}
+                    <div className="min-w-0 flex-1">
+                      <div className="font-semibold text-parchment text-sm truncate">{s.profiles?.full_name}</div>
+                      <div className="text-[10px] font-mono text-mist uppercase tracking-widest mt-0.5">{s.student_id}</div>
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-3 gap-2 pt-1">
+                    <button
+                      disabled={!canEdit}
+                      onClick={() => handleMark(s.id, 'present')}
+                      className={`w-full py-2.5 rounded-xl text-xs font-bold transition-all flex items-center justify-center ${
+                        attendance[s.id] === 'present' 
+                          ? 'bg-emerald-500 text-white shadow-lg shadow-emerald-500/20' 
+                          : 'bg-white/5 text-mist hover:bg-emerald-500/20 hover:text-emerald-400'
+                      } disabled:opacity-50 disabled:cursor-not-allowed`}
+                    >
+                      Present
+                    </button>
+                    <button
+                      disabled={!canEdit}
+                      onClick={() => handleMark(s.id, 'absent')}
+                      className={`w-full py-2.5 rounded-xl text-xs font-bold transition-all flex items-center justify-center ${
+                        (!attendance[s.id] || attendance[s.id] === 'absent')
+                          ? 'bg-red-500 text-white shadow-lg shadow-red-500/20' 
+                          : 'bg-white/5 text-mist hover:bg-red-500/20 hover:text-red-400'
+                      } disabled:opacity-50 disabled:cursor-not-allowed`}
+                    >
+                      Absent
+                    </button>
+                    <button
+                      disabled={!canEdit}
+                      onClick={() => handleMark(s.id, 'leave')}
+                      className={`w-full py-2.5 rounded-xl text-xs font-bold transition-all flex items-center justify-center ${
+                        attendance[s.id] === 'leave' 
+                          ? 'bg-amber-500 text-white shadow-lg shadow-amber-500/20' 
+                          : 'bg-white/5 text-mist hover:bg-amber-500/20 hover:text-amber-400'
+                      } disabled:opacity-50 disabled:cursor-not-allowed`}
+                    >
+                      Leave
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {/* ── Desktop Table Layout (sm: and up) ── */}
+            <div className="hidden sm:block surface-card rounded-2xl border border-hairline overflow-hidden">
               <table className="w-full text-left border-collapse">
                 <thead>
                   <tr className="border-b border-hairline bg-white/[0.02]">
@@ -187,7 +250,9 @@ export default function ClassAttendanceClient({ classes, timeWindow }: Props) {
                              <Image src={s.profiles.profile_photo_url} alt={s.profiles.full_name || 'Student'} fill sizes="32px" className="object-cover" />
                            </div>
                         ) : (
-                           <div className="w-8 h-8 rounded-full bg-coral/20" />
+                           <div className="w-8 h-8 rounded-full bg-coral/20 flex items-center justify-center text-xs font-bold text-coral">
+                             {s.profiles?.full_name?.charAt(0) || 'S'}
+                           </div>
                         )}
                         {s.profiles?.full_name}
                       </td>
