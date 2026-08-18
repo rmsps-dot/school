@@ -119,8 +119,8 @@ export default function AdminGalleryClient({ initialItems }: Props) {
       setUploadSuccess('')
       const file = e.target.files[0]
 
-      if (file.size > 10 * 1024 * 1024) {
-        setUploadError('Image size is too large (max 10MB).')
+      if (file.size > 32 * 1024 * 1024) {
+        setUploadError('Image size is too large (max 32MB).')
         return
       }
 
@@ -299,7 +299,7 @@ export default function AdminGalleryClient({ initialItems }: Props) {
                     Click to Choose Photo from Device
                   </p>
                   <p className="text-[11px] text-mist mt-1 font-mono">
-                    JPG, PNG, or WEBP (Max 10MB)
+                    JPG, PNG, or WEBP (Max 32MB)
                   </p>
                 </div>
               )}
