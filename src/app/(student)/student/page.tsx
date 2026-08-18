@@ -2,19 +2,17 @@ import Image from 'next/image'
 import Link from 'next/link'
 import { BookOpen, CalendarDays, Bell, ArrowRight, GraduationCap, MapPin, Phone, UserCheck } from 'lucide-react'
 import { getStudentProfile, getStudentResults, getStudentAttendance } from '@/actions/portal-actions'
+import { getUserPendingProfileRequest } from '@/actions/profile-request-actions'
+import StudentProfileCard from '@/components/student/StudentProfileCard'
 
 export const dynamic = 'force-dynamic'
 
-function fmtDate(iso: string | null | undefined) {
-  if (!iso) return '—'
-  return new Date(iso).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })
-}
-
 export default async function StudentDashboard() {
-  const [{ data: profile }, { data: results }, { data: attendance }] = await Promise.all([
+  const [{ data: profile }, { data: results }, { data: attendance }, { data: pendingRequest }] = await Promise.all([
     getStudentProfile(),
     getStudentResults(),
     getStudentAttendance(),
+    getUserPendingProfileRequest(),
   ])
 
   if (!profile) {
@@ -33,13 +31,12 @@ export default async function StudentDashboard() {
     )
   }
 
-  const approvedCount  = results?.length ?? 0
-  const pct            = attendance?.percentage ?? 0
+  const approvedCount = results?.length ?? 0
+  const pct = attendance?.percentage ?? 0
   const attendanceColor = pct >= 75 ? 'text-gold' : pct >= 50 ? 'text-coral' : 'text-red-400'
 
   return (
     <div className="max-w-7xl mx-auto space-y-16 py-8">
-      
       {/* ── Big-Statement Hero ── */}
       <div className="flex flex-col md:flex-row md:items-end justify-between gap-8 border-b border-hairline pb-12">
         <div>
@@ -57,55 +54,15 @@ export default async function StudentDashboard() {
 
       {/* ── Dashboard Grid ── */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        
-        {/* Left Col: Digital ID & Info */}
+        {/* Left Col: Digital ID & Self-Edit Request Card */}
         <div className="lg:col-span-1 space-y-6">
-          
-          {/* Digital ID Card (Masterplan Glass) */}
-          <div className="relative group overflow-hidden rounded-[2rem] glass-panel p-6 border border-hairline hover:border-[#81B29A]/40 transition-all duration-500 shadow-xl">
-            {/* Light sweep animation */}
-            <div className="absolute inset-0 -translate-x-full group-hover:animate-[shimmer_1.5s_ease-out] bg-gradient-to-r from-transparent via-white/5 to-transparent skew-x-12 pointer-events-none" />
-            
-            <div className="flex items-center gap-4 mb-6">
-              <div className="w-16 h-16 rounded-full bg-[#81B29A]/20 flex items-center justify-center border border-[#81B29A]/30 text-[#81B29A] font-display text-2xl font-bold overflow-hidden flex-shrink-0">
-                {profile.profilePhotoUrl ? (
-                  <Image src={profile.profilePhotoUrl} alt="Avatar" width={64} height={64} className="w-full h-full object-cover" />
-                ) : (
-                  profile.fullName.charAt(0)
-                )}
-              </div>
-              <div>
-                <p className="font-display text-xl font-bold text-parchment">{profile.fullName}</p>
-                <p className="text-[#81B29A] font-mono text-sm tracking-widest mt-1">STUDENT ID</p>
-              </div>
-            </div>
-
-            <div className="space-y-4">
-              <div className="flex justify-between items-end border-b border-hairline pb-2">
-                <span className="text-mist text-xs uppercase tracking-widest">Enrollment</span>
-                <span className="text-parchment font-mono text-sm">{fmtDate(profile.admissionDate)}</span>
-              </div>
-              <div className="flex justify-between items-end border-b border-hairline pb-2">
-                <span className="text-mist text-xs uppercase tracking-widest">D.O.B</span>
-                <span className="text-parchment font-mono text-sm">{fmtDate(profile.dob)}</span>
-              </div>
-              {profile.mobile && (
-                <div className="flex justify-between items-end border-b border-hairline pb-2">
-                  <span className="text-mist text-xs uppercase tracking-widest">Contact</span>
-                  <span className="text-parchment font-mono text-sm">{profile.mobile}</span>
-                </div>
-              )}
-            </div>
-          </div>
-
+          <StudentProfileCard profile={profile} initialPendingRequest={pendingRequest} />
         </div>
 
         {/* Right Col: Stats & Quick Links Bento */}
         <div className="lg:col-span-2 space-y-6">
-          
           {/* Stats Row */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-            
             <Link href="/student/results" className="surface-card rounded-3xl p-8 flex flex-col justify-between group h-[180px]">
               <div>
                 <p className="text-mist text-sm font-medium tracking-wide uppercase mb-1">Approved Results</p>
@@ -140,43 +97,38 @@ export default async function StudentDashboard() {
                 View History <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
               </div>
             </Link>
-
           </div>
 
-          {/* Quick Nav Row */}
-          <div className="surface-card rounded-3xl p-8">
-            <h2 className="font-display text-2xl font-bold text-parchment mb-6">Quick Links</h2>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              {[
-                { label: 'Exam Results', href: '/student/results', icon: BookOpen },
-                { label: 'Attendance logs', href: '/student/attendance', icon: CalendarDays },
-                { label: 'School Notices', href: '/student/notices', icon: Bell },
-              ].map((link) => (
-                <Link
-                  key={link.href}
-                  href={link.href}
-                  className="flex items-center gap-4 p-4 rounded-2xl border border-hairline hover:border-[#81B29A]/40 hover:bg-[#81B29A]/5 transition-all group"
-                >
-                  <div className="w-10 h-10 rounded-xl bg-ink flex items-center justify-center text-mist group-hover:text-[#81B29A] transition-colors">
-                    <link.icon className="w-5 h-5" />
-                  </div>
-                  <span className="text-sm font-semibold text-parchment group-hover:text-[#81B29A] transition-colors">
-                    {link.label}
-                  </span>
-                </Link>
-              ))}
-            </div>
-          </div>
+          {/* Bottom Bento: Portal Features Links */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <Link href="/student/homework" className="surface-card rounded-3xl p-8 border border-hairline hover:border-[#81B29A]/50 transition-colors group flex flex-col justify-between h-[160px]">
+              <div className="flex items-center justify-between">
+                <div className="w-12 h-12 rounded-2xl bg-[#81B29A]/10 text-[#81B29A] flex items-center justify-center">
+                  <BookOpen className="w-6 h-6" />
+                </div>
+                <span className="text-xs font-mono uppercase text-mist">Assignments</span>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="font-display text-lg font-bold text-parchment">Homework & Tasks</span>
+                <ArrowRight className="w-4 h-4 text-mist group-hover:text-[#81B29A] group-hover:translate-x-1 transition-all" />
+              </div>
+            </Link>
 
+            <Link href="/student/notices" className="surface-card rounded-3xl p-8 border border-hairline hover:border-gold/50 transition-colors group flex flex-col justify-between h-[160px]">
+              <div className="flex items-center justify-between">
+                <div className="w-12 h-12 rounded-2xl bg-gold/10 text-gold flex items-center justify-center">
+                  <Bell className="w-6 h-6" />
+                </div>
+                <span className="text-xs font-mono uppercase text-mist">Bulletin</span>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="font-display text-lg font-bold text-parchment">School Notices</span>
+                <ArrowRight className="w-4 h-4 text-mist group-hover:text-gold group-hover:translate-x-1 transition-all" />
+              </div>
+            </Link>
+          </div>
         </div>
       </div>
-      
-      <style dangerouslySetInnerHTML={{__html: `
-        @keyframes shimmer {
-          0% { transform: translateX(-100%) skewX(12deg); }
-          100% { transform: translateX(200%) skewX(12deg); }
-        }
-      `}} />
     </div>
   )
 }

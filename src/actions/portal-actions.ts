@@ -40,6 +40,7 @@ export interface AttendanceSummary {
 export interface StudentProfile {
   studentRowId: string
   studentCode: string
+  classId: string | null
   fullName: string
   profilePhotoUrl: string | null
   fatherName: string | null
@@ -55,6 +56,7 @@ export interface StudentProfile {
 export interface ChildInfo {
   studentRowId: string
   studentCode: string
+  classId: string | null
   fullName: string
   profilePhotoUrl: string | null
   fatherName: string | null
@@ -106,6 +108,7 @@ export async function getStudentProfile(): Promise<{ data: StudentProfile | null
       data: {
         studentRowId:  student.id,
         studentCode:   student.student_id,
+        classId:       student.class_id || null,
         fullName:      profile.full_name ?? 'Student',
         profilePhotoUrl: profile.profile_photo_url ?? null,
         fatherName:    student.father_name,
@@ -239,6 +242,7 @@ export async function getParentChildren(): Promise<{ data: ChildInfo[]; error?: 
       return {
         studentRowId: student.id,
         studentCode:  student.student_id,
+        classId:      student.class_id || null,
         fullName:     prof?.full_name ?? 'Unknown',
         profilePhotoUrl: prof?.profile_photo_url ?? null,
         fatherName:   student?.father_name ?? null,

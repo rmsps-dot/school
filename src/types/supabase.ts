@@ -1,4 +1,4 @@
-﻿export type Json =
+export type Json =
   | string
   | number
   | boolean
@@ -407,6 +407,73 @@ export type Database = {
           updated_at?: string
         }
         Relationships: []
+      }
+      profile_change_requests: {
+        Row: {
+          id: string
+          user_id: string
+          role: 'student' | 'teacher' | 'parent'
+          class_id: string | null
+          target_approver: 'teacher' | 'admin'
+          current_data: Json
+          requested_data: Json
+          status: 'pending' | 'approved' | 'rejected'
+          review_notes: string | null
+          reviewed_by: string | null
+          reviewed_at: string | null
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          user_id: string
+          role: 'student' | 'teacher' | 'parent'
+          class_id?: string | null
+          target_approver: 'teacher' | 'admin'
+          current_data: Json
+          requested_data: Json
+          status?: 'pending' | 'approved' | 'rejected'
+          review_notes?: string | null
+          reviewed_by?: string | null
+          reviewed_at?: string | null
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          user_id?: string
+          role?: 'student' | 'teacher' | 'parent'
+          class_id?: string | null
+          target_approver?: 'teacher' | 'admin'
+          current_data?: Json
+          requested_data?: Json
+          status?: 'pending' | 'approved' | 'rejected'
+          review_notes?: string | null
+          reviewed_by?: string | null
+          reviewed_at?: string | null
+          created_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "profile_change_requests_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "profile_change_requests_class_id_fkey"
+            columns: ["class_id"]
+            isOneToOne: false
+            referencedRelation: "classes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "profile_change_requests_reviewed_by_fkey"
+            columns: ["reviewed_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          }
+        ]
       }
       results: {
         Row: {
