@@ -211,6 +211,16 @@ export default function ManageParentsClient({ parents: initialParents, students 
                   <p className="text-xs text-mist">No students mapped to this parent yet.</p>
                 </div>
               )}
+
+              {/* Bottom Profile Link */}
+              <div className="mt-4 pt-3 border-t border-hairline">
+                <Link
+                  href={`/admin/parents/${p.id}`}
+                  className="w-full py-2.5 rounded-xl bg-surface border border-hairline text-center text-xs font-bold text-mist hover:text-parchment hover:border-coral/50 transition-colors block"
+                >
+                  View Full Profile & Log →
+                </Link>
+              </div>
             </div>
           </div>
         ))}

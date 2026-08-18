@@ -2,6 +2,7 @@
 
 import { useState, useTransition } from 'react'
 import Image from 'next/image'
+import Link from 'next/link'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Search, Plus, UserCircle, Trash2, Loader2, UserX, AlertCircle, Edit, GraduationCap, CheckCircle } from 'lucide-react'
 import { useRouter, useSearchParams } from 'next/navigation'
@@ -210,48 +211,69 @@ export default function ManageStudentsClient({ students: initialStudents, classe
             
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               {classStudents.map((s: StudentRecord, index: number) => (
-                <div 
-                  key={s.id} 
-                  className="ledger-row surface-card p-4 flex items-center gap-4 transition-all relative group hover:border-coral/40 cursor-pointer"
+                <div
+                  key={s.id}
+                  className="surface-card rounded-2xl border border-hairline overflow-hidden flex flex-col justify-between hover:border-coral/40 transition-all group"
                   style={{ animationDelay: `${index * 0.05}s` }}
-                  onClick={() => router.push(`/admin/students/${s.id}`)}
                 >
-                  {s.profiles?.profile_photo_url ? (
-                    <div className="w-12 h-12 relative rounded-full overflow-hidden border border-hairline flex-shrink-0">
-                      <Image src={s.profiles.profile_photo_url} alt="Avatar" fill sizes="48px" className="object-cover" />
-                    </div>
-                  ) : (
-                    <div className="w-12 h-12 rounded-full bg-ink border border-hairline flex items-center justify-center text-mist shrink-0 group-hover:text-coral transition-colors">
-                      <UserCircle className="w-6 h-6" />
-                    </div>
-                  )}
-                  <div className="flex-1 min-w-0">
-                    <h3 className="font-semibold text-parchment truncate group-hover:text-coral transition-colors">{s.profiles?.full_name}</h3>
-                    <div className="flex items-center gap-2 mt-1">
-                      <p className="text-[10px] font-mono text-mist uppercase tracking-wider border border-hairline px-2 py-0.5 rounded-md">ID: {s.student_id}</p>
+                  <div className="p-4 flex items-center justify-between gap-3">
+                    <Link href={`/admin/students/${s.id}`} className="flex items-center gap-3.5 min-w-0 flex-1 group/link">
+                      {s.profiles?.profile_photo_url ? (
+                        <div className="w-12 h-12 relative rounded-full overflow-hidden border border-hairline flex-shrink-0">
+                          <Image src={s.profiles.profile_photo_url} alt="Avatar" fill sizes="48px" className="object-cover" />
+                        </div>
+                      ) : (
+                        <div className="w-12 h-12 rounded-full bg-ink border border-hairline flex items-center justify-center text-mist shrink-0 group-hover/link:text-coral transition-colors">
+                          <UserCircle className="w-6 h-6" />
+                        </div>
+                      )}
+                      <div className="min-w-0 flex-1">
+                        <h3 className="font-semibold text-parchment truncate group-hover/link:text-coral transition-colors text-sm">
+                          {s.profiles?.full_name}
+                        </h3>
+                        <p className="text-[10px] font-mono text-mist uppercase tracking-wider mt-0.5">
+                          ID: <span className="text-coral font-bold">{s.student_id}</span>
+                        </p>
+                      </div>
+                    </Link>
+
+                    <div className="flex items-center gap-1 shrink-0">
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          setEditError('')
+                          setEditSuccess('')
+                          setEditingStudent(s)
+                          setIsEditModalOpen(true)
+                        }}
+                        className="p-2 rounded-xl bg-surface border border-hairline text-mist hover:text-coral hover:border-coral/40 transition-colors"
+                        title="Edit Student"
+                      >
+                        <Edit className="w-3.5 h-3.5" />
+                      </button>
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          handleDelete(s.profile_id)
+                        }}
+                        className="p-2 rounded-xl bg-red-500/10 text-red-400 border border-red-500/30 hover:bg-red-500/20 transition-colors"
+                        title="Delete Student"
+                      >
+                        {isPending ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Trash2 className="w-3.5 h-3.5" />}
+                      </button>
                     </div>
                   </div>
-                  <div className="flex flex-col gap-2">
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation()
-                        setEditError('')
-                        setEditSuccess('')
-                        setEditingStudent(s)
-                        setIsEditModalOpen(true)
-                      }}
-                      className="text-mist hover:text-coral transition-colors p-1 opacity-0 group-hover:opacity-100"
-                      title="Edit Student"
+
+                  {/* Bottom View Profile Link */}
+                  <div className="px-4 pb-4 pt-1">
+                    <Link
+                      href={`/admin/students/${s.id}`}
+                      className="w-full py-2 rounded-xl bg-ink/60 border border-hairline text-center text-xs font-bold text-mist hover:text-parchment hover:border-coral/50 transition-colors block"
                     >
-                      {isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Edit className="w-4 h-4" />}
-                    </button>
-                    <button
-                      onClick={(e) => { e.stopPropagation(); handleDelete(s.profile_id); }}
-                      className="text-mist hover:text-red-400 transition-colors p-1 opacity-0 group-hover:opacity-100"
-                      title="Delete Student"
-                    >
-                      {isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Trash2 className="w-4 h-4" />}
-                    </button>
+                      View Full Profile & Log →
+                    </Link>
                   </div>
                 </div>
               ))}
