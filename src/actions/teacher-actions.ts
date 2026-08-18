@@ -181,7 +181,6 @@ export async function teacherUpdateStudent(formData: FormData): Promise<{ succes
     const supabase = await createClient()
 
     const studentIdRow = formData.get('studentIdRow') as string
-    const profileId = formData.get('profileId') as string
     const fullName = formData.get('fullName') as string
     const studentId = formData.get('studentId') as string
     const fatherName = formData.get('fatherName') as string
@@ -190,19 +189,31 @@ export async function teacherUpdateStudent(formData: FormData): Promise<{ succes
     const phone = formData.get('phone') as string
     const dob = formData.get('dob') as string
 
-    if (!profileId || !studentIdRow) {
-      return { error: 'Student ID and Profile ID are required.' }
+    if (!studentIdRow) {
+      return { error: 'Student record identifier is required.' }
     }
 
-    // Verify student exists
+    if (!fullName || !fullName.trim()) {
+      return { error: 'Full Name is required.' }
+    }
+
+    if (!studentId || !studentId.trim()) {
+      return { error: 'Roll / Student ID is required.' }
+    }
+
+    // Verify student exists and get trusted profile_id + class_id
     const { data: studentRecord, error: studentFetchErr } = await supabase
       .from('students')
-      .select('id, class_id')
+      .select('id, class_id, profile_id')
       .eq('id', studentIdRow)
       .single()
 
     if (studentFetchErr || !studentRecord) {
       return { error: 'Student record not found.' }
+    }
+
+    if (!studentRecord.profile_id) {
+      return { error: 'Student profile is not linked. Please contact the administrator.' }
     }
 
     // Verify this teacher is assigned to student's class
@@ -217,13 +228,13 @@ export async function teacherUpdateStudent(formData: FormData): Promise<{ succes
       return { error: 'You are only authorized to edit students in your assigned classes.' }
     }
 
-    // 1. Update Profile
+    // 1. Update Profile (using trusted profile_id from DB record)
     const { error: profileError } = await supabaseAdmin.from('profiles').update({
-      full_name: fullName ? fullName.trim() : null,
+      full_name: fullName.trim(),
       mobile: phone ? phone.trim() : null,
       address: address ? address.trim() : null,
       dob: dob || null,
-    }).eq('id', profileId)
+    }).eq('id', studentRecord.profile_id)
 
     if (profileError) {
       return { error: profileError.message }
@@ -231,7 +242,7 @@ export async function teacherUpdateStudent(formData: FormData): Promise<{ succes
 
     // 2. Update Student
     const { error: studentUpdateErr } = await supabaseAdmin.from('students').update({
-      student_id: studentId ? studentId.trim() : studentRecord.id,
+      student_id: studentId.trim(),
       father_name: fatherName ? fatherName.trim() : null,
       mother_name: motherName ? motherName.trim() : null,
     }).eq('id', studentIdRow)

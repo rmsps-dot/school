@@ -95,27 +95,27 @@ export default function TeacherStudentsClient({ classes }: Props) {
       if (res.error) {
         setEditError(res.error)
       } else {
-        const updatedFullName = fd.get('fullName') as string
-        const updatedStudentId = fd.get('studentId') as string
-        const updatedFatherName = fd.get('fatherName') as string
-        const updatedMotherName = fd.get('motherName') as string
-        const updatedPhone = fd.get('phone') as string
-        const updatedAddress = fd.get('address') as string
+        const updatedFullName = (fd.get('fullName') as string)?.trim()
+        const updatedStudentId = (fd.get('studentId') as string)?.trim()
+        const updatedFatherName = (fd.get('fatherName') as string)?.trim() || null
+        const updatedMotherName = (fd.get('motherName') as string)?.trim() || null
+        const updatedPhone = (fd.get('phone') as string)?.trim() || null
+        const updatedAddress = (fd.get('address') as string)?.trim() || null
 
-        // Update in-memory state
+        // Update in-memory state accurately
         setStudents(prev => prev.map(s => {
           if (s.id === editingStudent?.id) {
             return {
               ...s,
               student_id: updatedStudentId || s.student_id,
-              father_name: updatedFatherName || s.father_name,
-              mother_name: updatedMotherName || s.mother_name,
+              father_name: updatedFatherName,
+              mother_name: updatedMotherName,
               profiles: s.profiles ? {
                 ...s.profiles,
                 full_name: updatedFullName || s.profiles.full_name,
-                mobile: updatedPhone || s.profiles.mobile,
-                address: updatedAddress || s.profiles.address,
-                dob: editDob || s.profiles.dob,
+                mobile: updatedPhone,
+                address: updatedAddress,
+                dob: editDob || null,
               } : null
             }
           }
@@ -307,7 +307,13 @@ export default function TeacherStudentsClient({ classes }: Props) {
       {/* ── EDIT STUDENT MODAL ── */}
       <AnimatePresence>
         {editingStudent && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-ink/80 backdrop-blur-sm">
+          <motion.div 
+            key="edit-student-modal"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-ink/80 backdrop-blur-sm"
+          >
             <motion.div
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
@@ -321,12 +327,18 @@ export default function TeacherStudentsClient({ classes }: Props) {
                     Class: <span className="text-coral font-semibold">{editingStudent.classes?.class_name}-{editingStudent.classes?.section}</span>
                   </p>
                 </div>
-                <button onClick={handleCloseEdit} className="text-mist hover:text-coral transition-colors">✕</button>
+                <button 
+                  type="button" 
+                  onClick={handleCloseEdit} 
+                  aria-label="Close edit modal"
+                  className="text-mist hover:text-coral transition-colors"
+                >
+                  ✕
+                </button>
               </div>
 
               <form onSubmit={handleEditSubmit} className="p-6 space-y-6">
                 <input type="hidden" name="studentIdRow" value={editingStudent.id} />
-                <input type="hidden" name="profileId" value={editingStudent.profiles?.id || ''} />
                 <input type="hidden" name="dob" value={editDob} />
                 
                 <AnimatePresence>
@@ -433,7 +445,7 @@ export default function TeacherStudentsClient({ classes }: Props) {
                 </div>
               </form>
             </motion.div>
-          </div>
+          </motion.div>
         )}
       </AnimatePresence>
 
