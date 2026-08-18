@@ -14,7 +14,7 @@ export default async function ClassAttendancePage() {
   }))
 
   const { data: settings } = await getSettings()
-  const windowSetting = (settings?.find(s => s.key === 'teacher_attendance_window')?.value as { start: string, end: string }) || { start: '06:00', end: '12:00' }
+  const windowSetting = (settings?.find(s => s.key === 'student_attendance_window' || s.key === 'teacher_attendance_window')?.value as { start: string, end: string }) || { start: '06:00', end: '12:00' }
 
   return (
     <div className="max-w-6xl mx-auto space-y-8">

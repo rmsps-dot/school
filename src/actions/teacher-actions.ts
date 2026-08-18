@@ -127,16 +127,39 @@ export async function markTeacherAttendance(payload: {
     const { teacher } = await getTeacherId()
     const supabase = await createClient()
 
-    // Server-side geofence guard (50 m — school building boundary)
-    const SCHOOL_LAT = 26.1121
-    const SCHOOL_LNG = 86.6069
-    const MAX_DIST   = 50
+    // Fetch dynamic geofence settings from database
+    const { data: settingData } = await supabase
+      .from('settings')
+      .select('value')
+      .eq('key', 'teacher_attendance_setting')
+      .maybeSingle()
 
-    const dist = haversine(payload.lat, payload.lng, SCHOOL_LAT, SCHOOL_LNG)
-    if (dist > MAX_DIST) {
+    const setting = settingData?.value as {
+      lat?: number | null
+      lng?: number | null
+      radius_meters?: number
+      start_time?: string
+      end_time?: string
+    } | null
+
+    if (!setting || setting.lat == null || setting.lng == null) {
       return {
         success: false,
-        error: `Aap school premises ke bahar hain (${Math.round(dist)} m). Attendance mark nahi ho sakti.`,
+        error: 'School attendance location has not been configured by administrator. Please contact admin.',
+      }
+    }
+
+    const schoolLat = setting.lat
+    const schoolLng = setting.lng
+    const maxDist = (typeof setting.radius_meters === 'number' && setting.radius_meters > 0)
+      ? setting.radius_meters
+      : 50
+
+    const dist = haversine(payload.lat, payload.lng, schoolLat, schoolLng)
+    if (dist > maxDist) {
+      return {
+        success: false,
+        error: `Aap school premises ke bahar hain (${Math.round(dist)} m door, allowed radius: ${maxDist} m). Attendance mark nahi ho sakti.`,
       }
     }
 

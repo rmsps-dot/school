@@ -1,7 +1,7 @@
 import { redirect } from 'next/navigation'
 import { createClient } from '@/utils/supabase/server'
-import { supabaseAdmin } from '@/utils/supabase/admin'
 import { getTodayAttendance } from '@/actions/teacher-actions'
+import { getTeacherAttendanceSetting } from '@/actions/settings-actions'
 import MarkAttendance from '@/components/teacher/MarkAttendance'
 import { Camera } from 'lucide-react'
 
@@ -14,8 +14,11 @@ export default async function AttendancePage() {
   } = await supabase.auth.getUser()
   if (!user) redirect('/login')
 
-  // Fetch today's status for this teacher
-  const { marked, record, error } = await getTodayAttendance()
+  // Fetch today's status for this teacher and active geofence settings
+  const [{ marked, record, error }, { data: geofenceSetting }] = await Promise.all([
+    getTodayAttendance(),
+    getTeacherAttendanceSetting(),
+  ])
 
   return (
     <div className="max-w-xl mx-auto space-y-8">
@@ -47,6 +50,7 @@ export default async function AttendancePage() {
         alreadyMarked={marked}
         record={record}
         teacherProfileId={user.id}
+        geofenceSetting={geofenceSetting}
       />
     </div>
   )

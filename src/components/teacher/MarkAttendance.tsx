@@ -16,13 +16,13 @@ import {
   Navigation,
   Shield,
   Clock,
+  MapPinOff,
 } from "lucide-react";
 import { supabase } from "@/utils/supabase/client";
 import { markTeacherAttendance } from "@/actions/teacher-actions";
+import type { TeacherAttendanceSetting } from "@/actions/settings-actions";
 
 /* ─── Constants ─── */
-const SCHOOL = { lat: 26.1121, lng: 86.6069 } as const;
-const MAX_DISTANCE_M = 50; // must match MAX_DIST in teacher-actions.ts
 const BUCKET = "attendance-photos";
 
 /* ─── Types ─── */
@@ -37,6 +37,7 @@ type Phase =
   | "uploading"
   | "success"
   | "already-marked"
+  | "unconfigured"
   | "error";
 
 interface AlreadyMarkedRecord {
@@ -49,6 +50,7 @@ interface Props {
   alreadyMarked: boolean;
   record?: AlreadyMarkedRecord;
   teacherProfileId: string;
+  geofenceSetting?: TeacherAttendanceSetting | null;
 }
 
 /* ─── Base64 → Blob ─── */
@@ -76,67 +78,63 @@ function AlreadyMarkedCard({ record }: { record?: AlreadyMarkedRecord }) {
       <div className="w-24 h-24 rounded-full bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-center shadow-inner">
         <CheckCircle className="w-12 h-12 text-emerald-400" />
       </div>
+
       <div>
-        <h2 className="font-display text-3xl font-bold text-parchment">Attendance Marked!</h2>
-        <p className="text-mist text-sm mt-2 font-mono uppercase tracking-widest max-w-sm">
-          Aaj ki attendance successfully register ho gayi hai.
+        <span className="text-[10px] font-mono uppercase tracking-widest text-emerald-400 font-bold px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/30">
+          Already Recorded
+        </span>
+        <h2 className="font-display text-3xl font-bold text-parchment mt-4">
+          Attendance Marked
+        </h2>
+        <p className="text-mist text-xs mt-2 font-mono uppercase tracking-widest">
+          Aapki attendance aaj ke liye pehle hi register ho chuki hai.
         </p>
       </div>
 
-      <div className="bg-ink border border-hairline rounded-2xl p-6 w-full text-left space-y-4">
-        <Row icon={CheckCircle} label="Status" value="Present ✓" color="text-emerald-400" />
+      {record?.photo_url && (
+        // eslint-disable-next-line @next/next/no-img-element
+        <img
+          src={record.photo_url}
+          alt="Today's attendance photo"
+          className="w-36 h-36 rounded-2xl object-cover border border-hairline shadow-lg"
+        />
+      )}
+
+      <div className="w-full space-y-2 text-left">
         {record?.check_in_at && (
-          <Row
+          <InfoRow
             icon={Clock}
             label="Check-in Time"
             value={new Date(record.check_in_at).toLocaleTimeString("en-IN", {
               hour: "2-digit",
               minute: "2-digit",
             })}
-            color="text-parchment"
           />
         )}
-        <Row
-          icon={MapPin}
-          label="Date"
-          value={new Date().toLocaleDateString("en-IN", {
-            weekday: "long",
-            year: "numeric",
-            month: "long",
-            day: "numeric",
-          })}
-          color="text-parchment"
+        <InfoRow
+          icon={Shield}
+          label="Status"
+          value={record?.status?.toUpperCase() ?? "PRESENT"}
+          color="text-emerald-400"
         />
       </div>
-
-      {record?.photo_url && (
-        <div className="w-full mt-4">
-          <p className="text-[10px] font-mono text-mist uppercase tracking-widest mb-3">Captured Photo</p>
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
-            src={record.photo_url}
-            alt="Attendance photo"
-            className="w-40 h-40 rounded-2xl object-cover mx-auto border border-hairline shadow-lg"
-          />
-        </div>
-      )}
     </motion.div>
   );
 }
 
-function Row({
+function InfoRow({
   icon: Icon,
   label,
   value,
-  color,
+  color = "text-parchment",
 }: {
   icon: React.ElementType;
   label: string;
   value: string;
-  color: string;
+  color?: string;
 }) {
   return (
-    <div className="flex items-center gap-4">
+    <div className="flex items-center gap-3 p-3 bg-surface rounded-xl border border-hairline">
       <Icon className={`w-5 h-5 flex-shrink-0 ${color}`} />
       <span className="text-[10px] font-mono uppercase tracking-widest text-mist w-28">{label}</span>
       <span className={`text-sm font-bold ${color}`}>{value}</span>
@@ -145,23 +143,48 @@ function Row({
 }
 
 /* ─── MAIN COMPONENT ─── */
-export default function MarkAttendance({ alreadyMarked, record, teacherProfileId }: Props) {
+export default function MarkAttendance({ alreadyMarked, record, teacherProfileId, geofenceSetting }: Props) {
   const webcamRef = useRef<Webcam>(null);
 
-  const [phase, setPhase] = useState<Phase>(alreadyMarked ? "already-marked" : "idle");
+  const isGeofenceConfigured = Boolean(
+    geofenceSetting &&
+    geofenceSetting.lat !== null &&
+    geofenceSetting.lng !== null &&
+    geofenceSetting.radius_meters > 0
+  );
+
+  const initialPhase: Phase = alreadyMarked
+    ? "already-marked"
+    : !isGeofenceConfigured
+    ? "unconfigured"
+    : "idle";
+
+  const [phase, setPhase] = useState<Phase>(initialPhase);
   const [errorMsg, setErrorMsg] = useState("");
   const [location, setLocation] = useState<{ lat: number; lng: number; distance: number } | null>(null);
   const [capturedImage, setCapturedImage] = useState<string | null>(null);
   const [uploadProgress, setUploadProgress] = useState(0);
 
-  /* Auto-start on mount if already marked (skip idle) */
+  const maxDistanceM = geofenceSetting?.radius_meters ?? 50;
+  const schoolLat = geofenceSetting?.lat;
+  const schoolLng = geofenceSetting?.lng;
+
+  /* Auto-update phase if already marked or unconfigured changes */
   useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    if (alreadyMarked) setPhase("already-marked");
-  }, [alreadyMarked]);
+    if (alreadyMarked) {
+      setPhase("already-marked");
+    } else if (!isGeofenceConfigured) {
+      setPhase("unconfigured");
+    }
+  }, [alreadyMarked, isGeofenceConfigured]);
 
   /* ── STEP 1: Verify location ── */
   const verifyLocation = useCallback(() => {
+    if (!isGeofenceConfigured || schoolLat == null || schoolLng == null) {
+      setPhase("unconfigured");
+      return;
+    }
+
     setPhase("verifying-location");
     setErrorMsg("");
 
@@ -175,13 +198,13 @@ export default function MarkAttendance({ alreadyMarked, record, teacherProfileId
       (pos) => {
         const lat = pos.coords.latitude;
         const lng = pos.coords.longitude;
-        const distance = haversine(lat, lng, SCHOOL.lat, SCHOOL.lng);
+        const distance = haversine(lat, lng, schoolLat, schoolLng);
         setLocation({ lat, lng, distance });
 
-        if (distance > MAX_DISTANCE_M) {
+        if (distance > maxDistanceM) {
           setPhase("outside-range");
           setErrorMsg(
-            `Aap school premises ke bahar hain (${Math.round(distance)} meter door). Attendance mark nahi ho sakti.`
+            `Aap school premises ke bahar hain (${Math.round(distance)} meter door, allowed: ${maxDistanceM}m). Attendance mark nahi ho sakti.`
           );
         } else {
           setPhase("ready");
@@ -200,7 +223,7 @@ export default function MarkAttendance({ alreadyMarked, record, teacherProfileId
       },
       { enableHighAccuracy: true, timeout: 15000, maximumAge: 0 }
     );
-  }, []);
+  }, [isGeofenceConfigured, maxDistanceM, schoolLat, schoolLng]);
 
   /* ── STEP 2: Capture photo ── */
   const capturePhoto = useCallback(() => {
@@ -274,13 +297,45 @@ export default function MarkAttendance({ alreadyMarked, record, teacherProfileId
     setCapturedImage(null);
     setErrorMsg("");
     setLocation(null);
-    setPhase("idle");
+    setPhase(isGeofenceConfigured ? "idle" : "unconfigured");
   }
 
   /* ──────────────────────────────────────────────────────────── */
   return (
     <div className="max-w-lg mx-auto pb-12">
       <AnimatePresence mode="wait">
+
+        {/* ── UNCONFIGURED LOCATION ALERT ── */}
+        {phase === "unconfigured" && (
+          <motion.div
+            key="unconfigured"
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0 }}
+            className="surface-card border border-amber-500/30 rounded-[2rem] p-10 flex flex-col items-center gap-6 text-center shadow-2xl bg-amber-500/5"
+          >
+            <div className="w-20 h-20 rounded-full bg-amber-500/10 border border-amber-500/30 flex items-center justify-center shadow-inner text-amber-400">
+              <MapPinOff className="w-10 h-10" />
+            </div>
+
+            <div>
+              <span className="text-[10px] font-mono uppercase tracking-widest text-amber-400 font-bold px-3 py-1 rounded-full bg-amber-500/10 border border-amber-500/30">
+                Setup Required
+              </span>
+              <h2 className="font-display text-2xl font-bold text-parchment mt-3">
+                Attendance Location Not Configured
+              </h2>
+              <p className="text-mist text-xs mt-3 leading-relaxed max-w-sm mx-auto font-sans">
+                Admin ne abhi tak school ka attendance location aur radius range set nahi kiya hai. Kripya school administrator se contact karein taaki wo System Settings me jakar location configure kar sakein.
+              </p>
+            </div>
+
+            <div className="w-full bg-ink/60 border border-hairline rounded-2xl p-4 text-xs font-mono text-mist flex items-center gap-3">
+              <Shield className="w-5 h-5 text-amber-400 flex-shrink-0" />
+              <span>Location verification is temporarily locked until admin configures geofence.</span>
+            </div>
+          </motion.div>
+        )}
 
         {/* ── ALREADY MARKED ── */}
         {phase === "already-marked" && (
@@ -340,10 +395,15 @@ export default function MarkAttendance({ alreadyMarked, record, teacherProfileId
                   weekday: "long", year: "numeric", month: "long", day: "numeric",
                 })}
               </p>
+              {geofenceSetting?.location_name && (
+                <p className="text-xs text-coral font-semibold mt-1">
+                  📍 {geofenceSetting.location_name}
+                </p>
+              )}
             </div>
 
             <div className="bg-ink border border-hairline rounded-2xl p-6 space-y-5">
-              <Step n={1} icon={Navigation} label="Location Verify" desc="GPS check (200m radius)" />
+              <Step n={1} icon={Navigation} label="Location Verify" desc={`GPS check (${maxDistanceM}m radius)`} />
               <Step n={2} icon={Camera}    label="Live Photo" desc="Take a clear selfie" />
               <Step n={3} icon={Shield}    label="Secure Save" desc="Encrypted storage" />
             </div>
@@ -397,7 +457,7 @@ export default function MarkAttendance({ alreadyMarked, record, teacherProfileId
             {location && (
               <div className="input-glass rounded-xl p-5 text-xs text-mist font-mono tracking-widest uppercase w-full space-y-2">
                 <p>Coordinates: {location.lat.toFixed(5)}, {location.lng.toFixed(5)}</p>
-                <p>Distance: <span className="text-red-400 font-bold">{Math.round(location.distance)} m</span> (limit: {MAX_DISTANCE_M} m)</p>
+                <p>Distance: <span className="text-red-400 font-bold">{Math.round(location.distance)} m</span> (limit: {maxDistanceM} m)</p>
               </div>
             )}
             <button onClick={verifyLocation}
