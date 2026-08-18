@@ -122,8 +122,10 @@ export default function RequestsClient({
       (r.student_mobile ?? '').includes(search)
   )
 
-  // Filter profile requests
+  // Filter profile requests (only pending requests appear in active review queue)
   const filteredProfileReqs = profileReqs.filter((r) => {
+    if (r.status !== 'pending') return false
+
     const matchesSearch =
       (r.profiles?.full_name ?? '').toLowerCase().includes(search.toLowerCase()) ||
       (r.profiles?.mobile ?? '').includes(search) ||

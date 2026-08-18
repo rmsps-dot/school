@@ -225,7 +225,10 @@ export async function getClassTeacherPendingRequests() {
 /**
  * Admin fetches all profile change requests, optionally filtered by role
  */
-export async function getAdminProfileRequests(filterRole?: 'all' | 'student' | 'teacher' | 'parent') {
+export async function getAdminProfileRequests(
+  filterRole?: 'all' | 'student' | 'teacher' | 'parent',
+  status: 'pending' | 'approved' | 'rejected' | 'all' = 'pending'
+) {
   try {
     const auth = await requireAdmin()
     if (!auth.ok) return { data: [], error: auth.error }
@@ -237,6 +240,10 @@ export async function getAdminProfileRequests(filterRole?: 'all' | 'student' | '
 
     if (filterRole && filterRole !== 'all') {
       query = query.eq('role', filterRole)
+    }
+
+    if (status && status !== 'all') {
+      query = query.eq('status', status)
     }
 
     const { data: requests, error } = await query
