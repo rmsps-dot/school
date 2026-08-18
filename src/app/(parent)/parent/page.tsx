@@ -22,7 +22,7 @@ export default async function ParentDashboard() {
 
   // Fetch parent profile
   const { data: profile } = user
-    ? await client.from('profiles').select('id, full_name, mobile, address, dob').eq('id', user.id).single()
+    ? await client.from('profiles').select('id, full_name, mobile, address, dob, profile_photo_url').eq('id', user.id).single()
     : { data: null }
 
   return (

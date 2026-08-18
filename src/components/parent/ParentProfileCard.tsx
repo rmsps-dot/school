@@ -3,6 +3,7 @@
 import { useState, useTransition } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
+import { useRouter } from 'next/navigation'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
   Edit3,
@@ -14,9 +15,9 @@ import {
   Loader2,
   GraduationCap,
   TrendingUp,
-  User,
 } from 'lucide-react'
 import DateInput from '@/components/shared/DateInput'
+import AvatarUpload from '@/components/ui/AvatarUpload'
 import {
   submitProfileChangeRequest,
   type ProfileChangeRequestItem,
@@ -30,6 +31,7 @@ interface Props {
     mobile: string | null
     address: string | null
     dob: string | null
+    profile_photo_url?: string | null
   } | null
   children: ChildInfo[]
   initialPendingRequest: ProfileChangeRequestItem | null
@@ -40,6 +42,7 @@ export default function ParentProfileCard({
   children,
   initialPendingRequest,
 }: Props) {
+  const router = useRouter()
   const [pendingReq, setPendingReq] = useState<ProfileChangeRequestItem | null>(initialPendingRequest)
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [isPending, startTransition] = useTransition()
@@ -162,9 +165,11 @@ export default function ParentProfileCard({
       {/* Guardian Quick Card with Edit Button */}
       <div className="surface-card rounded-3xl p-6 border border-hairline flex flex-col sm:flex-row items-center justify-between gap-4">
         <div className="flex items-center gap-4">
-          <div className="w-12 h-12 rounded-2xl bg-gold/10 text-gold border border-gold/30 flex items-center justify-center font-display font-bold text-xl">
-            {parentProfile?.full_name ? parentProfile.full_name.charAt(0) : <User className="w-6 h-6" />}
-          </div>
+          <AvatarUpload
+            currentPhotoUrl={parentProfile?.profile_photo_url}
+            size="sm"
+            onUploadSuccess={() => router.refresh()}
+          />
           <div>
             <h3 className="font-display text-lg font-bold text-parchment">
               {parentProfile?.full_name || 'Guardian Profile'}
@@ -285,7 +290,7 @@ export default function ParentProfileCard({
                   />
                 </div>
 
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
                     <label className="text-xs font-semibold text-mist uppercase tracking-wider block mb-1">
                       Primary Mobile Number
