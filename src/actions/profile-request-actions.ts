@@ -165,7 +165,7 @@ export async function getClassTeacherPendingRequests() {
     if (classIds.length === 0) return { data: [], error: null }
 
     // 3. Fetch requests matching classIds
-    const { data, error } = await supabaseAdmin
+    const { data: requests, error } = await supabaseAdmin
       .from('profile_change_requests')
       .select(`
         id,
@@ -180,7 +180,6 @@ export async function getClassTeacherPendingRequests() {
         reviewed_by,
         reviewed_at,
         created_at,
-        profiles ( full_name, mobile, profile_photo_url ),
         classes ( id, class_name, section )
       `)
       .in('class_id', classIds)
@@ -188,16 +187,43 @@ export async function getClassTeacherPendingRequests() {
       .order('created_at', { ascending: false })
 
     if (error) return { data: [], error: error.message }
+    if (!requests || requests.length === 0) return { data: [], error: null }
 
-    const formatted = (data || []).map((r) => {
-      const p = Array.isArray(r.profiles) ? r.profiles[0] : r.profiles
+    // 4. Batch fetch profiles to avoid PostgREST relationship ambiguity
+    const userIds = Array.from(new Set(requests.map((r) => r.user_id).filter(Boolean)))
+    const { data: profileList } = userIds.length > 0
+      ? await supabaseAdmin
+          .from('profiles')
+          .select('id, full_name, mobile, profile_photo_url')
+          .in('id', userIds)
+      : { data: [] }
+
+    const profileMap = new Map((profileList || []).map((p) => [p.id, p]))
+
+    const formatted: ProfileChangeRequestItem[] = requests.map((r) => {
       const c = Array.isArray(r.classes) ? r.classes[0] : r.classes
+      const prof = profileMap.get(r.user_id)
       return {
-        ...r,
-        profiles: p || null,
+        id: r.id,
+        user_id: r.user_id,
+        role: r.role as 'student' | 'teacher' | 'parent',
+        class_id: r.class_id,
+        target_approver: r.target_approver as 'teacher' | 'admin',
+        current_data: r.current_data as Record<string, string | null | undefined>,
+        requested_data: r.requested_data as Record<string, string | null | undefined>,
+        status: r.status as 'pending' | 'approved' | 'rejected',
+        review_notes: r.review_notes,
+        reviewed_by: r.reviewed_by,
+        reviewed_at: r.reviewed_at,
+        created_at: r.created_at,
+        profiles: prof ? {
+          full_name: prof.full_name,
+          mobile: prof.mobile,
+          profile_photo_url: prof.profile_photo_url,
+        } : null,
         classes: c || null,
       }
-    }) as unknown as ProfileChangeRequestItem[]
+    })
 
     return { data: formatted, error: null }
   } catch (err) {
@@ -228,7 +254,6 @@ export async function getAdminProfileRequests(filterRole?: 'all' | 'student' | '
         reviewed_by,
         reviewed_at,
         created_at,
-        profiles ( full_name, mobile, profile_photo_url ),
         classes ( id, class_name, section )
       `)
       .order('created_at', { ascending: false })
@@ -237,19 +262,46 @@ export async function getAdminProfileRequests(filterRole?: 'all' | 'student' | '
       query = query.eq('role', filterRole)
     }
 
-    const { data, error } = await query
+    const { data: requests, error } = await query
 
     if (error) return { data: [], error: error.message }
+    if (!requests || requests.length === 0) return { data: [], error: null }
 
-    const formatted = (data || []).map((r) => {
-      const p = Array.isArray(r.profiles) ? r.profiles[0] : r.profiles
+    // Batch fetch profiles to avoid PostgREST relationship ambiguity
+    const userIds = Array.from(new Set(requests.map((r) => r.user_id).filter(Boolean)))
+    const { data: profileList } = userIds.length > 0
+      ? await supabaseAdmin
+          .from('profiles')
+          .select('id, full_name, mobile, profile_photo_url')
+          .in('id', userIds)
+      : { data: [] }
+
+    const profileMap = new Map((profileList || []).map((p) => [p.id, p]))
+
+    const formatted: ProfileChangeRequestItem[] = requests.map((r) => {
       const c = Array.isArray(r.classes) ? r.classes[0] : r.classes
+      const prof = profileMap.get(r.user_id)
       return {
-        ...r,
-        profiles: p || null,
+        id: r.id,
+        user_id: r.user_id,
+        role: r.role as 'student' | 'teacher' | 'parent',
+        class_id: r.class_id,
+        target_approver: r.target_approver as 'teacher' | 'admin',
+        current_data: r.current_data as Record<string, string | null | undefined>,
+        requested_data: r.requested_data as Record<string, string | null | undefined>,
+        status: r.status as 'pending' | 'approved' | 'rejected',
+        review_notes: r.review_notes,
+        reviewed_by: r.reviewed_by,
+        reviewed_at: r.reviewed_at,
+        created_at: r.created_at,
+        profiles: prof ? {
+          full_name: prof.full_name,
+          mobile: prof.mobile,
+          profile_photo_url: prof.profile_photo_url,
+        } : null,
         classes: c || null,
       }
-    }) as unknown as ProfileChangeRequestItem[]
+    })
 
     return { data: formatted, error: null }
   } catch (err) {
