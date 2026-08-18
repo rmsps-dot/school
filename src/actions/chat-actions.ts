@@ -22,12 +22,18 @@ export type ChatMessage = Database['public']['Tables']['messages']['Row']
    ACTIONS
 ════════════════════════════════════════════════════════════ */
 
+const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
+
 /**
  * Hard Delete Conversation
  * Permanently deletes all messages between the authenticated user and the selected user.
  */
 export async function deleteConversation(otherUserId: string): Promise<{ success: boolean; error?: string }> {
   try {
+    if (!UUID_REGEX.test(otherUserId)) {
+      return { success: false, error: 'Invalid user ID format.' }
+    }
+
     const auth = await requireAuth()
     if (!auth.ok) return { success: false, error: auth.error }
     const myId = auth.profile.id
@@ -294,7 +300,7 @@ export async function getAllProfiles(): Promise<{ data: ChatContact[]; error?: s
 /**
  * Action 2: Get message history between current user and recipient
  */
-const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
+
 
 export async function getMessageHistory(receiverId: string): Promise<{ data: ChatMessage[]; error?: string }> {
   try {
@@ -336,6 +342,10 @@ export async function getMessageHistory(receiverId: string): Promise<{ data: Cha
  */
 export async function sendMessageAction(receiverId: string, content: string): Promise<{ success: boolean; error?: string }> {
   try {
+    if (!UUID_REGEX.test(receiverId)) {
+      return { success: false, error: 'Invalid receiver ID format.' }
+    }
+
     const auth = await requireAuth()
     if (!auth.ok) return { success: false, error: auth.error }
     const senderId = auth.profile.id

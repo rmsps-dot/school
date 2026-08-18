@@ -29,8 +29,19 @@ export async function POST(request: Request) {
     const title = (formData.get('title') as string | null)?.trim() || 'School Event'
     const category = (formData.get('category') as string | null) || 'Event'
 
+    const ALLOWED_MIME_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/gif', 'image/jpg']
+    const MAX_FILE_SIZE = 10 * 1024 * 1024 // 10MB
+
     if (!file) {
       return NextResponse.json({ error: 'No image file provided' }, { status: 400 })
+    }
+
+    if (!ALLOWED_MIME_TYPES.includes(file.type.toLowerCase())) {
+      return NextResponse.json({ error: 'Invalid file format. Only JPG, PNG, WEBP, and GIF images are supported.' }, { status: 400 })
+    }
+
+    if (file.size > MAX_FILE_SIZE) {
+      return NextResponse.json({ error: 'File size exceeds 10MB limit.' }, { status: 400 })
     }
 
     // 4. Check ImgBB API Key

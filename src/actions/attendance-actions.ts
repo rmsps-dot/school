@@ -33,11 +33,19 @@ import type { Database } from '@/types/supabase'
 export async function markStudentAttendance(records: Database['public']['Tables']['student_attendance']['Insert'][]) {
   // records array should have { student_id, class_id, date, status }
   if (!records || records.length === 0) return { success: true }
-  const classId = records[0].class_id
 
-  const auth = await requireTeacherForClass(classId, { allowAdmin: true })
-  if (!auth.ok) return { error: auth.error }
-  const user = { id: auth.profile.id }
+  // Verify all distinct class IDs present in the batch
+  const uniqueClassIds = Array.from(new Set(records.map(r => r.class_id).filter((cid): cid is string => Boolean(cid))))
+  if (uniqueClassIds.length === 0) return { error: 'Class identifier is required.' }
+
+  for (const cid of uniqueClassIds) {
+    const auth = await requireTeacherForClass(cid, { allowAdmin: true })
+    if (!auth.ok) return { error: auth.error }
+  }
+
+  const baseAuth = await requireTeacherForClass(uniqueClassIds[0], { allowAdmin: true })
+  if (!baseAuth.ok) return { error: baseAuth.error }
+  const user = { id: baseAuth.profile.id }
 
   const supabase = await createClient()
 

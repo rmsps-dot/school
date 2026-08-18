@@ -50,8 +50,20 @@ export async function submitProfileChangeRequest(payload: {
       return { success: false, error: 'User is not authenticated.' }
     }
 
+    // Verify caller role from DB to prevent role spoofing
+    const { data: callerProfile } = await supabase
+      .from('profiles')
+      .select('role')
+      .eq('id', user.id)
+      .single()
+
+    const actualRole: 'student' | 'teacher' | 'parent' =
+      callerProfile?.role === 'teacher' || callerProfile?.role === 'parent' || callerProfile?.role === 'student'
+        ? (callerProfile.role as 'student' | 'teacher' | 'parent')
+        : payload.role
+
     // Determine target approver: teachers route to admin, students/parents route to class teacher
-    const targetApprover: 'teacher' | 'admin' = payload.role === 'teacher' ? 'admin' : 'teacher'
+    const targetApprover: 'teacher' | 'admin' = actualRole === 'teacher' ? 'admin' : 'teacher'
 
     // Check if user already has an active pending request
     const { data: existing } = await supabaseAdmin
@@ -66,6 +78,7 @@ export async function submitProfileChangeRequest(payload: {
       const { error: updateError } = await supabaseAdmin
         .from('profile_change_requests')
         .update({
+          role: actualRole,
           current_data: payload.current_data,
           requested_data: payload.requested_data,
           class_id: payload.class_id || null,
@@ -81,7 +94,7 @@ export async function submitProfileChangeRequest(payload: {
         .from('profile_change_requests')
         .insert({
           user_id: user.id,
-          role: payload.role,
+          role: actualRole,
           class_id: payload.class_id || null,
           target_approver: targetApprover,
           current_data: payload.current_data,
@@ -310,6 +323,17 @@ export async function approveProfileChangeRequest(requestId: string) {
 
     if (!user) return { success: false, error: 'Not authenticated' }
 
+    // Check caller role
+    const { data: callerProfile } = await supabase
+      .from('profiles')
+      .select('role')
+      .eq('id', user.id)
+      .single()
+
+    if (!callerProfile || (callerProfile.role !== 'admin' && callerProfile.role !== 'teacher')) {
+      return { success: false, error: 'Unauthorized: Only admins and teachers can approve requests.' }
+    }
+
     // 1. Fetch request
     const { data: request, error: fetchErr } = await supabaseAdmin
       .from('profile_change_requests')
@@ -319,6 +343,33 @@ export async function approveProfileChangeRequest(requestId: string) {
 
     if (fetchErr || !request) return { success: false, error: 'Request not found' }
     if (request.status !== 'pending') return { success: false, error: 'Request is already processed' }
+
+    // If caller is teacher, ensure target_approver is teacher and class matches teacher's assigned classes
+    if (callerProfile.role === 'teacher') {
+      if (request.target_approver !== 'teacher') {
+        return { success: false, error: 'Unauthorized: This request must be approved by an administrator.' }
+      }
+      if (request.class_id) {
+        const { data: teacherRow } = await supabaseAdmin
+          .from('teachers')
+          .select('id')
+          .eq('profile_id', user.id)
+          .maybeSingle()
+
+        if (!teacherRow) return { success: false, error: 'Teacher record not found.' }
+
+        const { data: classAssigned } = await supabaseAdmin
+          .from('teacher_classes')
+          .select('class_id')
+          .eq('teacher_id', teacherRow.id)
+          .eq('class_id', request.class_id)
+          .maybeSingle()
+
+        if (!classAssigned) {
+          return { success: false, error: 'Unauthorized: You are not assigned to this student\'s class.' }
+        }
+      }
+    }
 
     const reqData = request.requested_data as Record<string, string | null | undefined>
 
@@ -419,6 +470,49 @@ export async function rejectProfileChangeRequest(requestId: string, reason?: str
     } = await supabase.auth.getUser()
 
     if (!user) return { success: false, error: 'Not authenticated' }
+
+    // Check caller role
+    const { data: callerProfile } = await supabase
+      .from('profiles')
+      .select('role')
+      .eq('id', user.id)
+      .single()
+
+    if (!callerProfile || (callerProfile.role !== 'admin' && callerProfile.role !== 'teacher')) {
+      return { success: false, error: 'Unauthorized: Only admins and teachers can reject requests.' }
+    }
+
+    const { data: request } = await supabaseAdmin
+      .from('profile_change_requests')
+      .select('target_approver, class_id')
+      .eq('id', requestId)
+      .maybeSingle()
+
+    if (callerProfile.role === 'teacher' && request) {
+      if (request.target_approver !== 'teacher') {
+        return { success: false, error: 'Unauthorized: This request must be reviewed by an administrator.' }
+      }
+      if (request.class_id) {
+        const { data: teacherRow } = await supabaseAdmin
+          .from('teachers')
+          .select('id')
+          .eq('profile_id', user.id)
+          .maybeSingle()
+
+        if (!teacherRow) return { success: false, error: 'Teacher record not found.' }
+
+        const { data: classAssigned } = await supabaseAdmin
+          .from('teacher_classes')
+          .select('class_id')
+          .eq('teacher_id', teacherRow.id)
+          .eq('class_id', request.class_id)
+          .maybeSingle()
+
+        if (!classAssigned) {
+          return { success: false, error: 'Unauthorized: You are not assigned to this student\'s class.' }
+        }
+      }
+    }
 
     const { error } = await supabaseAdmin
       .from('profile_change_requests')

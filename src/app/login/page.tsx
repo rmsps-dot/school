@@ -5,6 +5,7 @@ import Image from "next/image";
 import { motion, AnimatePresence } from "framer-motion";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { useEffect } from "react";
 import {
   Mail,
   Lock,
@@ -195,6 +196,24 @@ export default function LoginPage() {
   const [error, setError] = useState<string | null>(null);
   const [showForgotPwd, setShowForgotPwd] = useState(false);
 
+  // Auto-redirect if already logged in
+  useEffect(() => {
+    supabase.auth.getUser().then(({ data: { user } }) => {
+      if (user) {
+        supabase
+          .from("profiles")
+          .select("role")
+          .eq("id", user.id)
+          .single()
+          .then(({ data }) => {
+            if (data?.role && data.role !== "pending") {
+              router.push(ROLE_ROUTES[data.role as Role]);
+            }
+          });
+      }
+    });
+  }, [router]);
+
   const roles: { id: Role; label: string; icon: React.ElementType }[] = [
     { id: "parent", label: "Parent", icon: Globe },
     { id: "student", label: "Student", icon: GraduationCap },
@@ -229,12 +248,14 @@ export default function LoginPage() {
       if (profile.role === "pending") {
         await supabase.auth.signOut();
         setError("Your account is pending admin approval.");
+        setLoading(false);
         return;
       }
 
       if (profile.role !== selectedRole) {
         await supabase.auth.signOut();
         setError(`You are registered as a ${profile.role}. Please select the correct tab.`);
+        setLoading(false);
         return;
       }
 

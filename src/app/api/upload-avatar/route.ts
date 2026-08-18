@@ -16,8 +16,19 @@ export async function POST(request: Request) {
     const file = formData.get('image') as File | null;
     const userId = formData.get('userId') as string | null;
 
+    const ALLOWED_MIME_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/gif', 'image/jpg'];
+    const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
+
     if (!file) {
       return NextResponse.json({ error: 'No image file provided' }, { status: 400 });
+    }
+
+    if (!ALLOWED_MIME_TYPES.includes(file.type.toLowerCase())) {
+      return NextResponse.json({ error: 'Invalid file format. Only JPG, PNG, WEBP, and GIF images are supported.' }, { status: 400 });
+    }
+
+    if (file.size > MAX_FILE_SIZE) {
+      return NextResponse.json({ error: 'File size exceeds 5MB limit.' }, { status: 400 });
     }
 
     // We allow updating another user's avatar ONLY if the current user is an admin
