@@ -167,21 +167,7 @@ export async function getClassTeacherPendingRequests() {
     // 3. Fetch requests matching classIds
     const { data: requests, error } = await supabaseAdmin
       .from('profile_change_requests')
-      .select(`
-        id,
-        user_id,
-        role,
-        class_id,
-        target_approver,
-        current_data,
-        requested_data,
-        status,
-        review_notes,
-        reviewed_by,
-        reviewed_at,
-        created_at,
-        classes ( id, class_name, section )
-      `)
+      .select('id, user_id, role, class_id, target_approver, current_data, requested_data, status, review_notes, reviewed_by, reviewed_at, created_at')
       .in('class_id', classIds)
       .eq('status', 'pending')
       .order('created_at', { ascending: false })
@@ -189,19 +175,24 @@ export async function getClassTeacherPendingRequests() {
     if (error) return { data: [], error: error.message }
     if (!requests || requests.length === 0) return { data: [], error: null }
 
-    // 4. Batch fetch profiles to avoid PostgREST relationship ambiguity
+    // 4. Batch fetch profiles and classes to avoid PostgREST relationship ambiguity
     const userIds = Array.from(new Set(requests.map((r) => r.user_id).filter(Boolean)))
-    const { data: profileList } = userIds.length > 0
-      ? await supabaseAdmin
-          .from('profiles')
-          .select('id, full_name, mobile, profile_photo_url')
-          .in('id', userIds)
-      : { data: [] }
+    const reqClassIds = Array.from(new Set(requests.map((r) => r.class_id).filter(Boolean)))
+
+    const [{ data: profileList }, { data: classList }] = await Promise.all([
+      userIds.length > 0
+        ? supabaseAdmin.from('profiles').select('id, full_name, mobile, profile_photo_url').in('id', userIds)
+        : Promise.resolve({ data: [] }),
+      reqClassIds.length > 0
+        ? supabaseAdmin.from('classes').select('id, class_name, section').in('id', reqClassIds)
+        : Promise.resolve({ data: [] }),
+    ])
 
     const profileMap = new Map((profileList || []).map((p) => [p.id, p]))
+    const classMap = new Map((classList || []).map((c) => [c.id, c]))
 
     const formatted: ProfileChangeRequestItem[] = requests.map((r) => {
-      const c = Array.isArray(r.classes) ? r.classes[0] : r.classes
+      const c = r.class_id ? classMap.get(r.class_id) : null
       const prof = profileMap.get(r.user_id)
       return {
         id: r.id,
@@ -241,21 +232,7 @@ export async function getAdminProfileRequests(filterRole?: 'all' | 'student' | '
 
     let query = supabaseAdmin
       .from('profile_change_requests')
-      .select(`
-        id,
-        user_id,
-        role,
-        class_id,
-        target_approver,
-        current_data,
-        requested_data,
-        status,
-        review_notes,
-        reviewed_by,
-        reviewed_at,
-        created_at,
-        classes ( id, class_name, section )
-      `)
+      .select('id, user_id, role, class_id, target_approver, current_data, requested_data, status, review_notes, reviewed_by, reviewed_at, created_at')
       .order('created_at', { ascending: false })
 
     if (filterRole && filterRole !== 'all') {
@@ -267,19 +244,24 @@ export async function getAdminProfileRequests(filterRole?: 'all' | 'student' | '
     if (error) return { data: [], error: error.message }
     if (!requests || requests.length === 0) return { data: [], error: null }
 
-    // Batch fetch profiles to avoid PostgREST relationship ambiguity
+    // Batch fetch profiles and classes
     const userIds = Array.from(new Set(requests.map((r) => r.user_id).filter(Boolean)))
-    const { data: profileList } = userIds.length > 0
-      ? await supabaseAdmin
-          .from('profiles')
-          .select('id, full_name, mobile, profile_photo_url')
-          .in('id', userIds)
-      : { data: [] }
+    const classIds = Array.from(new Set(requests.map((r) => r.class_id).filter(Boolean)))
+
+    const [{ data: profileList }, { data: classList }] = await Promise.all([
+      userIds.length > 0
+        ? supabaseAdmin.from('profiles').select('id, full_name, mobile, profile_photo_url').in('id', userIds)
+        : Promise.resolve({ data: [] }),
+      classIds.length > 0
+        ? supabaseAdmin.from('classes').select('id, class_name, section').in('id', classIds)
+        : Promise.resolve({ data: [] }),
+    ])
 
     const profileMap = new Map((profileList || []).map((p) => [p.id, p]))
+    const classMap = new Map((classList || []).map((c) => [c.id, c]))
 
     const formatted: ProfileChangeRequestItem[] = requests.map((r) => {
-      const c = Array.isArray(r.classes) ? r.classes[0] : r.classes
+      const c = r.class_id ? classMap.get(r.class_id) : null
       const prof = profileMap.get(r.user_id)
       return {
         id: r.id,
