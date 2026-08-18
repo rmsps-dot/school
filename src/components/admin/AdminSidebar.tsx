@@ -38,7 +38,6 @@ const NAV_ITEMS = [
   { label: "Leave Approvals",   href: "/admin/leaves",    icon: CalendarClock   },
   { label: "Messages",          href: "/admin/chat",      icon: MessageSquare   },
   { label: "Manage Classes",    href: "/admin/classes",   icon: BookOpen        },
-  { label: "Assign Classes",    href: "/admin/assign-classes", icon: ClipboardList },
   { label: "School Gallery",    href: "/admin/gallery",   icon: ImageIcon       },
   { label: "Manage Students",   href: "/admin/students",  icon: GraduationCap   },
   { label: "Manage Teachers",   href: "/admin/teachers",  icon: UserCheck       },

@@ -268,6 +268,13 @@ export async function getStudentProfileData(studentId: string) {
   }
   const attPct = total === 0 ? 0 : Math.round((present / total) * 100)
 
+  // Fetch fees
+  const { data: fees } = await supabase
+    .from('student_fees')
+    .select('*')
+    .eq('student_id', student.student_id)
+    .order('due_date', { ascending: false })
+
   // Fetch results
   const { data: results } = await supabase
     .from('results')
@@ -279,9 +286,10 @@ export async function getStudentProfileData(studentId: string) {
     data: {
       student: studentProfile,
       attendanceStats: { present, total, percentage: attPct },
-      results: results || []
+      fees: fees || [],
+      results: results || [],
     },
-    error: null
+    error: null,
   }
 }
 

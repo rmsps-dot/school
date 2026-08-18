@@ -93,7 +93,7 @@ export async function updateTeacherClasses(teacherId: string, classIds: string[]
     if (insertError) return { success: false, error: insertError.message }
   }
 
-  revalidatePath('/admin/assign-classes')
+  revalidatePath('/admin/teachers')
   revalidatePath('/teacher')
   return { success: true }
 }

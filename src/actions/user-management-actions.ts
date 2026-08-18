@@ -214,13 +214,17 @@ export async function getAllTeachers() {
     .select(`
       id,
       full_name,
+      mobile,
+      address,
+      dob,
       profile_photo_url,
       created_at,
       teachers (
         id,
         teacher_id,
         qualification,
-        teacher_classes ( subject, classes ( class_name, section ) )
+        joining_date,
+        teacher_classes ( class_id, subject, classes ( id, class_name, section ) )
       )
     `)
     .eq('role', 'teacher')
@@ -237,9 +241,13 @@ export async function getAllTeachers() {
       profile_id: profile.id,
       teacher_id: teacherData?.teacher_id || 'Incomplete Profile (Delete & Recreate)',
       qualification: teacherData?.qualification || '',
+      joining_date: teacherData?.joining_date || null,
       profiles: {
         full_name: profile.full_name,
         avatar_url: profile.profile_photo_url,
+        mobile: profile.mobile,
+        address: profile.address,
+        dob: profile.dob,
       },
       teacher_classes: teacherData?.teacher_classes || []
     }
@@ -268,7 +276,7 @@ export async function getTeacherDetails(profileId: string) {
         teacher_id,
         qualification,
         joining_date,
-        teacher_classes ( subject, classes ( class_name, section ) ),
+        teacher_classes ( class_id, subject, classes ( id, class_name, section ) ),
         teacher_attendance ( id, date, status, check_in_at, photo_url ),
         teacher_payments ( id, amount, payment_date, status, remarks )
       )
@@ -379,6 +387,57 @@ export async function addTeacher(formData: FormData) {
 
   revalidatePath('/admin/teachers')
   return { success: true }
+}
+
+export async function updateTeacherProfile(
+  profileId: string,
+  data: {
+    full_name: string
+    qualification: string
+    mobile?: string | null
+    address?: string | null
+    dob?: string | null
+    joining_date?: string | null
+  }
+) {
+  try {
+    const auth = await requireAdmin()
+    if (!auth.ok) return { success: false, error: auth.error }
+    const supabase = await createClient()
+
+    // 1. Update Profile
+    const { error: profileError } = await supabase
+      .from('profiles')
+      .update({
+        full_name: data.full_name.trim(),
+        mobile: data.mobile?.trim() || null,
+        address: data.address?.trim() || null,
+        dob: data.dob || null,
+      })
+      .eq('id', profileId)
+
+    if (profileError) return { success: false, error: profileError.message }
+
+    // 2. Update Teacher Row
+    const teacherUpdatePayload: import('@/types/supabase').Database['public']['Tables']['teachers']['Update'] = {
+      qualification: data.qualification.trim(),
+    }
+    if (data.joining_date) {
+      teacherUpdatePayload.joining_date = new Date(data.joining_date).toISOString()
+    }
+
+    const { error: teacherError } = await supabase
+      .from('teachers')
+      .update(teacherUpdatePayload)
+      .eq('profile_id', profileId)
+
+    if (teacherError) return { success: false, error: teacherError.message }
+
+    revalidatePath('/admin/teachers')
+    return { success: true }
+  } catch (err) {
+    return { success: false, error: err instanceof Error ? err.message : 'Failed to update teacher profile' }
+  }
 }
 
 export async function deleteTeacher(profileId: string) {
