@@ -3,10 +3,12 @@
 import { useState, useTransition, useEffect } from 'react'
 import Image from 'next/image'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Search, Users, UserCircle, Loader2, GraduationCap, ArrowLeft, Plus } from 'lucide-react'
+import { Search, Users, UserCircle, Loader2, GraduationCap, ArrowLeft, Plus, Edit3, CheckCircle, AlertCircle } from 'lucide-react'
 import { getStudentsByClass } from '@/actions/class-actions'
 import type { StudentViewRecord } from '@/actions/class-actions'
 import type { ClassWithSubject } from '@/actions/result-actions'
+import { teacherUpdateStudent } from '@/actions/teacher-actions'
+import DateInput from '@/components/shared/DateInput'
 
 interface Props {
   classes: ClassWithSubject[]
@@ -22,6 +24,12 @@ export default function TeacherStudentsClient({ classes }: Props) {
   const [viewStudent, setViewStudent] = useState<StudentViewRecord | null>(null)
   const [rotateX, setRotateX] = useState(0)
   const [rotateY, setRotateY] = useState(0)
+
+  // Edit Modal State
+  const [editingStudent, setEditingStudent] = useState<StudentViewRecord | null>(null)
+  const [editDob, setEditDob] = useState('')
+  const [editError, setEditError] = useState('')
+  const [editSuccess, setEditSuccess] = useState('')
 
   useEffect(() => {
     startTransition(async () => {
@@ -62,6 +70,66 @@ export default function TeacherStudentsClient({ classes }: Props) {
     })
   }
 
+  const handleOpenEdit = (student: StudentViewRecord) => {
+    setEditingStudent(student)
+    setEditDob(student.profiles?.dob || '')
+    setEditError('')
+    setEditSuccess('')
+    setViewStudent(null)
+  }
+
+  const handleCloseEdit = () => {
+    setEditingStudent(null)
+    setEditError('')
+    setEditSuccess('')
+  }
+
+  const handleEditSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault()
+    setEditError('')
+    setEditSuccess('')
+
+    const fd = new FormData(e.currentTarget)
+    startTransition(async () => {
+      const res = await teacherUpdateStudent(fd)
+      if (res.error) {
+        setEditError(res.error)
+      } else {
+        const updatedFullName = fd.get('fullName') as string
+        const updatedStudentId = fd.get('studentId') as string
+        const updatedFatherName = fd.get('fatherName') as string
+        const updatedMotherName = fd.get('motherName') as string
+        const updatedPhone = fd.get('phone') as string
+        const updatedAddress = fd.get('address') as string
+
+        // Update in-memory state
+        setStudents(prev => prev.map(s => {
+          if (s.id === editingStudent?.id) {
+            return {
+              ...s,
+              student_id: updatedStudentId || s.student_id,
+              father_name: updatedFatherName || s.father_name,
+              mother_name: updatedMotherName || s.mother_name,
+              profiles: s.profiles ? {
+                ...s.profiles,
+                full_name: updatedFullName || s.profiles.full_name,
+                mobile: updatedPhone || s.profiles.mobile,
+                address: updatedAddress || s.profiles.address,
+                dob: editDob || s.profiles.dob,
+              } : null
+            }
+          }
+          return s
+        }))
+
+        setEditSuccess('Student details updated successfully!')
+        setTimeout(() => {
+          handleCloseEdit()
+        }, 1200)
+      }
+    })
+  }
+
   return (
     <div className="space-y-6">
       {/* Controls */}
@@ -94,7 +162,7 @@ export default function TeacherStudentsClient({ classes }: Props) {
       </div>
 
       <div className="min-h-[400px]">
-        {isPending ? (
+        {isPending && students.length === 0 ? (
           <div className="h-[400px] flex items-center justify-center">
             <Loader2 className="w-8 h-8 animate-spin text-coral" />
           </div>
@@ -217,14 +285,15 @@ export default function TeacherStudentsClient({ classes }: Props) {
                 
                 <div className="mt-6 w-full flex gap-2">
                    <button 
-                     onClick={() => alert("Edit request functionality coming soon!")}
-                     className="flex-1 bg-white/5 border border-hairline hover:bg-white/10 text-parchment py-2 rounded-xl text-xs font-bold transition-colors"
+                     onClick={() => handleOpenEdit(viewStudent)}
+                     className="flex-1 bg-coral/20 border border-coral/30 hover:bg-coral/30 text-coral py-2.5 rounded-xl text-xs font-bold transition-colors flex items-center justify-center gap-1.5"
                    >
-                     Request Edit
+                     <Edit3 className="w-3.5 h-3.5" />
+                     Edit Student
                    </button>
                    <button 
                      onClick={() => setViewStudent(null)}
-                     className="bg-red-500/10 text-red-400 hover:bg-red-500/20 px-4 py-2 rounded-xl text-xs font-bold transition-colors"
+                     className="bg-white/5 border border-hairline hover:bg-white/10 text-mist hover:text-parchment px-4 py-2.5 rounded-xl text-xs font-bold transition-colors"
                    >
                      Close
                    </button>
@@ -232,6 +301,139 @@ export default function TeacherStudentsClient({ classes }: Props) {
               </div>
             </motion.div>
           </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* ── EDIT STUDENT MODAL ── */}
+      <AnimatePresence>
+        {editingStudent && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-ink/80 backdrop-blur-sm">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.95 }}
+              className="surface-card shadow-2xl rounded-3xl border border-hairline w-full max-w-2xl max-h-[90vh] overflow-y-auto hide-scrollbar"
+            >
+              <div className="p-6 border-b border-hairline flex justify-between items-center sticky top-0 bg-ink/90 backdrop-blur-md z-10">
+                <div>
+                  <h2 className="font-display text-2xl font-bold text-parchment">Edit Student Details</h2>
+                  <p className="text-xs text-mist mt-0.5">
+                    Class: <span className="text-coral font-semibold">{editingStudent.classes?.class_name}-{editingStudent.classes?.section}</span>
+                  </p>
+                </div>
+                <button onClick={handleCloseEdit} className="text-mist hover:text-coral transition-colors">✕</button>
+              </div>
+
+              <form onSubmit={handleEditSubmit} className="p-6 space-y-6">
+                <input type="hidden" name="studentIdRow" value={editingStudent.id} />
+                <input type="hidden" name="profileId" value={editingStudent.profiles?.id || ''} />
+                <input type="hidden" name="dob" value={editDob} />
+                
+                <AnimatePresence>
+                  {editError && (
+                    <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} className="bg-red-500/10 border border-red-500/30 text-red-400 px-6 py-4 rounded-xl flex items-center gap-3 text-sm font-mono">
+                      <AlertCircle className="w-5 h-5 flex-shrink-0" />
+                      <p>{editError}</p>
+                    </motion.div>
+                  )}
+                  {editSuccess && (
+                    <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} className="bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 px-6 py-4 rounded-xl flex items-center gap-3 text-sm font-mono">
+                      <CheckCircle className="w-5 h-5 flex-shrink-0" />
+                      <p>{editSuccess}</p>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+                
+                <div className="space-y-4">
+                  <h3 className="text-xs font-bold text-coral uppercase tracking-widest border-b border-hairline pb-2">Academic & Personal Info</h3>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <label className="text-xs font-semibold text-mist uppercase tracking-wider">Full Name</label>
+                      <input 
+                        required 
+                        type="text" 
+                        name="fullName" 
+                        defaultValue={editingStudent.profiles?.full_name || ''} 
+                        className="w-full bg-ink border border-hairline rounded-xl px-4 py-2.5 text-sm text-parchment focus:outline-none focus:border-coral transition-colors" 
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <label className="text-xs font-semibold text-mist uppercase tracking-wider">Roll / Student ID</label>
+                      <input 
+                        required 
+                        type="text" 
+                        name="studentId" 
+                        defaultValue={editingStudent.student_id || ''} 
+                        className="w-full bg-ink border border-hairline rounded-xl px-4 py-2.5 text-sm text-parchment focus:outline-none focus:border-coral transition-colors" 
+                      />
+                    </div>
+                    <div className="space-y-2 sm:col-span-2">
+                      <DateInput label="Date of Birth" value={editDob} onChange={setEditDob} />
+                    </div>
+                  </div>
+                </div>
+
+                <div className="space-y-4">
+                  <h3 className="text-xs font-bold text-coral uppercase tracking-widest border-b border-hairline pb-2">Family & Contact Details</h3>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <label className="text-xs font-semibold text-mist uppercase tracking-wider">Father&apos;s Name</label>
+                      <input 
+                        type="text" 
+                        name="fatherName" 
+                        defaultValue={editingStudent.father_name || ''} 
+                        className="w-full bg-ink border border-hairline rounded-xl px-4 py-2.5 text-sm text-parchment focus:outline-none focus:border-coral transition-colors" 
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <label className="text-xs font-semibold text-mist uppercase tracking-wider">Mother&apos;s Name</label>
+                      <input 
+                        type="text" 
+                        name="motherName" 
+                        defaultValue={editingStudent.mother_name || ''} 
+                        className="w-full bg-ink border border-hairline rounded-xl px-4 py-2.5 text-sm text-parchment focus:outline-none focus:border-coral transition-colors" 
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <label className="text-xs font-semibold text-mist uppercase tracking-wider">Contact Number</label>
+                      <input 
+                        type="tel" 
+                        name="phone" 
+                        defaultValue={editingStudent.profiles?.mobile || ''} 
+                        className="w-full bg-ink border border-hairline rounded-xl px-4 py-2.5 text-sm text-parchment focus:outline-none focus:border-coral transition-colors" 
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <label className="text-xs font-semibold text-mist uppercase tracking-wider">Address</label>
+                      <input 
+                        type="text" 
+                        name="address" 
+                        defaultValue={editingStudent.profiles?.address || ''} 
+                        className="w-full bg-ink border border-hairline rounded-xl px-4 py-2.5 text-sm text-parchment focus:outline-none focus:border-coral transition-colors" 
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                <div className="pt-4 flex gap-3 border-t border-hairline">
+                  <button 
+                    type="button" 
+                    onClick={handleCloseEdit} 
+                    className="flex-1 px-5 py-3 rounded-xl font-semibold text-xs bg-ink border border-hairline text-parchment hover:border-mist transition-colors"
+                  >
+                    Cancel
+                  </button>
+                  <button 
+                    type="submit" 
+                    disabled={isPending} 
+                    className="flex-1 bg-coral text-ink py-3 px-5 rounded-xl font-semibold text-xs flex items-center justify-center gap-2 hover:bg-[#E67E6B] transition-colors"
+                  >
+                    {isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Save Changes'}
+                  </button>
+                </div>
+              </form>
+            </motion.div>
+          </div>
         )}
       </AnimatePresence>
 

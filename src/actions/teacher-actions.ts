@@ -171,3 +171,80 @@ export async function markTeacherAttendance(payload: {
     return { success: false, error: msg }
   }
 }
+
+/* ─────────────────────────────────────────────────────────────
+   TEACHER UPDATE STUDENT DETAILS
+───────────────────────────────────────────────────────────── */
+export async function teacherUpdateStudent(formData: FormData): Promise<{ success?: boolean; error?: string }> {
+  try {
+    const { teacher } = await getTeacherId()
+    const supabase = await createClient()
+
+    const studentIdRow = formData.get('studentIdRow') as string
+    const profileId = formData.get('profileId') as string
+    const fullName = formData.get('fullName') as string
+    const studentId = formData.get('studentId') as string
+    const fatherName = formData.get('fatherName') as string
+    const motherName = formData.get('motherName') as string
+    const address = formData.get('address') as string
+    const phone = formData.get('phone') as string
+    const dob = formData.get('dob') as string
+
+    if (!profileId || !studentIdRow) {
+      return { error: 'Student ID and Profile ID are required.' }
+    }
+
+    // Verify student exists
+    const { data: studentRecord, error: studentFetchErr } = await supabase
+      .from('students')
+      .select('id, class_id')
+      .eq('id', studentIdRow)
+      .single()
+
+    if (studentFetchErr || !studentRecord) {
+      return { error: 'Student record not found.' }
+    }
+
+    // Verify this teacher is assigned to student's class
+    const { data: classAssigned } = await supabase
+      .from('teacher_classes')
+      .select('class_id')
+      .eq('teacher_id', teacher.id)
+      .eq('class_id', studentRecord.class_id)
+      .maybeSingle()
+
+    if (!classAssigned) {
+      return { error: 'You are only authorized to edit students in your assigned classes.' }
+    }
+
+    // 1. Update Profile
+    const { error: profileError } = await supabaseAdmin.from('profiles').update({
+      full_name: fullName ? fullName.trim() : null,
+      mobile: phone ? phone.trim() : null,
+      address: address ? address.trim() : null,
+      dob: dob || null,
+    }).eq('id', profileId)
+
+    if (profileError) {
+      return { error: profileError.message }
+    }
+
+    // 2. Update Student
+    const { error: studentUpdateErr } = await supabaseAdmin.from('students').update({
+      student_id: studentId ? studentId.trim() : studentRecord.id,
+      father_name: fatherName ? fatherName.trim() : null,
+      mother_name: motherName ? motherName.trim() : null,
+    }).eq('id', studentIdRow)
+
+    if (studentUpdateErr) {
+      return { error: studentUpdateErr.message }
+    }
+
+    revalidatePath('/teacher/students')
+    return { success: true }
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : 'Failed to update student'
+    console.error('[teacherUpdateStudent]', msg)
+    return { error: msg }
+  }
+}
