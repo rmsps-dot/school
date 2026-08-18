@@ -32,12 +32,13 @@ type Phase =
   | "outside-range"
   | "camera-denied"
   | "location-denied"
-  | "ready"      // camera live, inside range
-  | "captured"   // photo taken, awaiting submit
+  | "ready"        // camera live, inside range
+  | "captured"     // photo taken, awaiting submit
   | "uploading"
   | "success"
   | "already-marked"
   | "unconfigured"
+  | "time-closed"
   | "error";
 
 interface AlreadyMarkedRecord {
@@ -96,7 +97,7 @@ function AlreadyMarkedCard({ record }: { record?: AlreadyMarkedRecord }) {
         <img
           src={record.photo_url}
           alt="Today's attendance photo"
-          className="w-36 h-36 rounded-2xl object-cover border border-hairline shadow-lg"
+          className="w-40 aspect-[3/4] rounded-2xl object-cover border border-hairline shadow-lg"
         />
       )}
 
@@ -153,13 +154,32 @@ export default function MarkAttendance({ alreadyMarked, record, teacherProfileId
     geofenceSetting.radius_meters > 0
   );
 
-  const initialPhase: Phase = alreadyMarked
-    ? "already-marked"
-    : !isGeofenceConfigured
-    ? "unconfigured"
-    : "idle";
+  const checkTimeAllowed = useCallback((): { allowed: boolean; currentTime: string } => {
+    const now = new Date();
+    const istTime = now.toLocaleTimeString("en-GB", {
+      timeZone: "Asia/Kolkata",
+      hour: "2-digit",
+      minute: "2-digit",
+      hour12: false,
+    }); // "HH:MM"
 
-  const [phase, setPhase] = useState<Phase>(initialPhase);
+    if (!geofenceSetting?.start_time || !geofenceSetting?.end_time) {
+      return { allowed: true, currentTime: istTime };
+    }
+
+    const isAllowed = istTime >= geofenceSetting.start_time && istTime <= geofenceSetting.end_time;
+    return { allowed: isAllowed, currentTime: istTime };
+  }, [geofenceSetting]);
+
+  const getInitialPhase = (): Phase => {
+    if (alreadyMarked) return "already-marked";
+    if (!isGeofenceConfigured) return "unconfigured";
+    const timeCheck = checkTimeAllowed();
+    if (!timeCheck.allowed) return "time-closed";
+    return "idle";
+  };
+
+  const [phase, setPhase] = useState<Phase>(getInitialPhase);
   const [errorMsg, setErrorMsg] = useState("");
   const [location, setLocation] = useState<{ lat: number; lng: number; distance: number } | null>(null);
   const [capturedImage, setCapturedImage] = useState<string | null>(null);
@@ -169,19 +189,31 @@ export default function MarkAttendance({ alreadyMarked, record, teacherProfileId
   const schoolLat = geofenceSetting?.lat;
   const schoolLng = geofenceSetting?.lng;
 
-  /* Auto-update phase if already marked or unconfigured changes */
+  /* Auto-update phase if already marked, unconfigured, or time changes */
   useEffect(() => {
     if (alreadyMarked) {
       setPhase("already-marked");
     } else if (!isGeofenceConfigured) {
       setPhase("unconfigured");
+    } else {
+      const { allowed } = checkTimeAllowed();
+      if (!allowed) {
+        setPhase("time-closed");
+      }
     }
-  }, [alreadyMarked, isGeofenceConfigured]);
+  }, [alreadyMarked, isGeofenceConfigured, checkTimeAllowed]);
 
   /* ── STEP 1: Verify location ── */
   const verifyLocation = useCallback(() => {
     if (!isGeofenceConfigured || schoolLat == null || schoolLng == null) {
       setPhase("unconfigured");
+      return;
+    }
+
+    const { allowed, currentTime } = checkTimeAllowed();
+    if (!allowed) {
+      setPhase("time-closed");
+      setErrorMsg(`Attendance window closed. Allowed: ${geofenceSetting?.start_time} - ${geofenceSetting?.end_time} (Current time: ${currentTime})`);
       return;
     }
 
@@ -223,7 +255,7 @@ export default function MarkAttendance({ alreadyMarked, record, teacherProfileId
       },
       { enableHighAccuracy: true, timeout: 15000, maximumAge: 0 }
     );
-  }, [isGeofenceConfigured, maxDistanceM, schoolLat, schoolLng]);
+  }, [isGeofenceConfigured, schoolLat, schoolLng, checkTimeAllowed, geofenceSetting, maxDistanceM]);
 
   /* ── STEP 2: Capture photo ── */
   const capturePhoto = useCallback(() => {
@@ -297,7 +329,10 @@ export default function MarkAttendance({ alreadyMarked, record, teacherProfileId
     setCapturedImage(null);
     setErrorMsg("");
     setLocation(null);
-    setPhase(isGeofenceConfigured ? "idle" : "unconfigured");
+    const { allowed } = checkTimeAllowed();
+    if (!isGeofenceConfigured) setPhase("unconfigured");
+    else if (!allowed) setPhase("time-closed");
+    else setPhase("idle");
   }
 
   /* ──────────────────────────────────────────────────────────── */
@@ -337,6 +372,58 @@ export default function MarkAttendance({ alreadyMarked, record, teacherProfileId
           </motion.div>
         )}
 
+        {/* ── TIME WINDOW CLOSED ALERT ── */}
+        {phase === "time-closed" && (
+          <motion.div
+            key="time-closed"
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0 }}
+            className="surface-card border border-amber-500/30 rounded-[2rem] p-10 flex flex-col items-center gap-6 text-center shadow-2xl bg-amber-500/5"
+          >
+            <div className="w-20 h-20 rounded-full bg-amber-500/10 border border-amber-500/30 flex items-center justify-center shadow-inner text-amber-400">
+              <Clock className="w-10 h-10" />
+            </div>
+
+            <div>
+              <span className="text-[10px] font-mono uppercase tracking-widest text-amber-400 font-bold px-3 py-1 rounded-full bg-amber-500/10 border border-amber-500/30">
+                Window Closed
+              </span>
+              <h2 className="font-display text-2xl font-bold text-parchment mt-3">
+                Attendance Window Closed
+              </h2>
+              <p className="text-mist text-xs mt-3 leading-relaxed max-w-sm mx-auto font-sans">
+                Teacher attendance sirf set kiye gaye time window ke dauran hi mark ki ja sakti hai.
+              </p>
+            </div>
+
+            <div className="w-full bg-ink/80 border border-hairline rounded-2xl p-5 space-y-3 text-left">
+              <div className="flex justify-between items-center text-xs">
+                <span className="text-mist font-mono uppercase tracking-wider">Allowed Time:</span>
+                <span className="text-coral font-bold font-mono text-sm">
+                  {geofenceSetting?.start_time} — {geofenceSetting?.end_time}
+                </span>
+              </div>
+              <div className="flex justify-between items-center text-xs border-t border-hairline pt-2">
+                <span className="text-mist font-mono uppercase tracking-wider">Current Time:</span>
+                <span className="text-parchment font-bold font-mono">
+                  {checkTimeAllowed().currentTime} (IST)
+                </span>
+              </div>
+            </div>
+
+            <button
+              onClick={() => {
+                const { allowed } = checkTimeAllowed();
+                if (allowed) setPhase("idle");
+              }}
+              className="w-full py-3.5 rounded-xl bg-ink border border-hairline hover:border-mist text-parchment font-bold text-xs uppercase tracking-wider transition-colors"
+            >
+              <RefreshCw className="w-3.5 h-3.5 inline mr-2" /> Check Timing Again
+            </button>
+          </motion.div>
+        )}
+
         {/* ── ALREADY MARKED ── */}
         {phase === "already-marked" && (
           <motion.div key="already-marked"
@@ -368,7 +455,7 @@ export default function MarkAttendance({ alreadyMarked, record, teacherProfileId
             {capturedImage && (
               // eslint-disable-next-line @next/next/no-img-element
               <img src={capturedImage} alt="Captured"
-                className="w-32 h-32 rounded-2xl object-cover border border-emerald-500/30 shadow-lg" />
+                className="w-40 aspect-[3/4] rounded-2xl object-cover border border-emerald-500/30 shadow-lg" />
             )}
             {location && (
               <div className="input-glass rounded-xl p-4 flex items-center justify-center gap-3 text-xs font-mono tracking-widest uppercase text-emerald-400 w-full">
@@ -395,16 +482,17 @@ export default function MarkAttendance({ alreadyMarked, record, teacherProfileId
                   weekday: "long", year: "numeric", month: "long", day: "numeric",
                 })}
               </p>
-              {geofenceSetting?.location_name && (
-                <p className="text-xs text-coral font-semibold mt-1">
-                  📍 {geofenceSetting.location_name}
-                </p>
+              {geofenceSetting?.start_time && geofenceSetting?.end_time && (
+                <div className="inline-flex items-center gap-1.5 mt-2 px-3 py-1 rounded-full bg-veena-blue/15 border border-veena-blue/30 text-veena-blue font-mono text-[11px] font-semibold">
+                  <Clock className="w-3 h-3" />
+                  Window: {geofenceSetting.start_time} - {geofenceSetting.end_time}
+                </div>
               )}
             </div>
 
             <div className="bg-ink border border-hairline rounded-2xl p-6 space-y-5">
               <Step n={1} icon={Navigation} label="Location Verify" desc={`GPS check (${maxDistanceM}m radius)`} />
-              <Step n={2} icon={Camera}    label="Live Photo" desc="Take a clear selfie" />
+              <Step n={2} icon={Camera}    label="Live Photo" desc="Take a clear portrait selfie" />
               <Step n={3} icon={Shield}    label="Secure Save" desc="Encrypted storage" />
             </div>
 
@@ -493,11 +581,11 @@ export default function MarkAttendance({ alreadyMarked, record, teacherProfileId
           </motion.div>
         )}
 
-        {/* ── CAMERA READY ── */}
+        {/* ── CAMERA READY (PORTRAIT 3:4 NATURAL SELFIE FRAMING) ── */}
         {phase === "ready" && (
           <motion.div key="camera"
             initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}
-            className="surface-card border-hairline rounded-[2rem] overflow-hidden shadow-2xl"
+            className="surface-card border-hairline rounded-[2rem] overflow-hidden shadow-2xl max-w-md mx-auto"
           >
             {/* Location badge */}
             <div className="flex items-center gap-3 px-6 py-4 bg-surface border-b border-hairline">
@@ -507,13 +595,18 @@ export default function MarkAttendance({ alreadyMarked, record, teacherProfileId
               </span>
             </div>
 
-            {/* Live webcam */}
-            <div className="relative bg-black aspect-video">
+            {/* Live portrait webcam container */}
+            <div className="relative bg-black aspect-[3/4] overflow-hidden">
               <Webcam
                 ref={webcamRef}
                 screenshotFormat="image/jpeg"
                 screenshotQuality={0.92}
-                videoConstraints={{ width: 1280, height: 720, facingMode: "user" }}
+                videoConstraints={{
+                  facingMode: "user",
+                  width: { ideal: 720 },
+                  height: { ideal: 960 },
+                  aspectRatio: 0.75,
+                }}
                 className="w-full h-full object-cover"
                 onUserMediaError={() => {
                   setPhase("camera-denied");
@@ -522,28 +615,37 @@ export default function MarkAttendance({ alreadyMarked, record, teacherProfileId
                   );
                 }}
               />
-              {/* Corner brackets overlay */}
-              <div className="absolute inset-6 pointer-events-none">
-                <div className="absolute top-0 left-0 w-10 h-10 border-t-2 border-l-2 border-veena-blue/70 rounded-tl" />
-                <div className="absolute top-0 right-0 w-10 h-10 border-t-2 border-r-2 border-veena-blue/70 rounded-tr" />
-                <div className="absolute bottom-0 left-0 w-10 h-10 border-b-2 border-l-2 border-veena-blue/70 rounded-bl" />
-                <div className="absolute bottom-0 right-0 w-10 h-10 border-b-2 border-r-2 border-veena-blue/70 rounded-br" />
+
+              {/* Natural Oval Face Guide Overlay */}
+              <div className="absolute inset-0 flex items-center justify-center pointer-events-none p-8">
+                <div className="w-48 h-64 border-2 border-dashed border-veena-blue/60 rounded-[50%] shadow-[0_0_20px_rgba(62,92,118,0.3)] flex items-center justify-center">
+                  <div className="w-1.5 h-1.5 bg-veena-blue/80 rounded-full" />
+                </div>
               </div>
-              {/* Record dot */}
-              <div className="absolute top-4 right-4 flex items-center gap-2 bg-black/60 backdrop-blur-sm rounded-full px-3 py-1.5 border border-hairline">
+
+              {/* Corner brackets overlay */}
+              <div className="absolute inset-4 pointer-events-none">
+                <div className="absolute top-0 left-0 w-8 h-8 border-t-2 border-l-2 border-veena-blue/80 rounded-tl-xl" />
+                <div className="absolute top-0 right-0 w-8 h-8 border-t-2 border-r-2 border-veena-blue/80 rounded-tr-xl" />
+                <div className="absolute bottom-0 left-0 w-8 h-8 border-b-2 border-l-2 border-veena-blue/80 rounded-bl-xl" />
+                <div className="absolute bottom-0 right-0 w-8 h-8 border-b-2 border-r-2 border-veena-blue/80 rounded-br-xl" />
+              </div>
+
+              {/* Live record dot */}
+              <div className="absolute top-4 right-4 flex items-center gap-2 bg-black/60 backdrop-blur-md rounded-full px-3 py-1.5 border border-hairline">
                 <div className="w-2 h-2 rounded-full bg-red-500 animate-pulse" />
-                <span className="text-[10px] text-white font-bold tracking-widest">LIVE</span>
+                <span className="text-[10px] text-white font-bold tracking-widest font-mono">LIVE</span>
               </div>
             </div>
 
-            <div className="p-8 space-y-6">
-              <p className="text-[10px] font-mono text-mist uppercase tracking-widest text-center">
-                Ensure your face is clearly visible.
+            <div className="p-6 space-y-4">
+              <p className="text-[11px] font-mono text-mist uppercase tracking-widest text-center">
+                Keep face centered in the frame
               </p>
               <button
                 id="capture-photo-btn"
                 onClick={capturePhoto}
-                className="w-full py-4 rounded-xl bg-veena-blue text-ink font-bold text-sm uppercase tracking-wider flex items-center justify-center gap-3 hover:bg-[#5C94FF] transition-all shadow-lg"
+                className="w-full py-3.5 rounded-xl bg-veena-blue text-ink font-bold text-sm uppercase tracking-wider flex items-center justify-center gap-3 hover:bg-[#5C94FF] transition-all shadow-lg"
               >
                 <Camera className="w-5 h-5" />
                 Capture Photo
@@ -552,11 +654,11 @@ export default function MarkAttendance({ alreadyMarked, record, teacherProfileId
           </motion.div>
         )}
 
-        {/* ── PHOTO CAPTURED — PREVIEW ── */}
+        {/* ── PHOTO CAPTURED — PREVIEW (PORTRAIT 3:4) ── */}
         {phase === "captured" && capturedImage && (
           <motion.div key="captured"
             initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}
-            className="surface-card border-hairline rounded-[2rem] overflow-hidden shadow-2xl"
+            className="surface-card border-hairline rounded-[2rem] overflow-hidden shadow-2xl max-w-md mx-auto"
           >
             <div className="flex items-center gap-3 px-6 py-4 bg-surface border-b border-hairline">
               <div className="w-2.5 h-2.5 rounded-full bg-veena-blue" />
@@ -564,27 +666,30 @@ export default function MarkAttendance({ alreadyMarked, record, teacherProfileId
             </div>
 
             {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src={capturedImage} alt="Captured"
-              className="w-full aspect-video object-cover" />
+            <div className="relative bg-black aspect-[3/4] overflow-hidden">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src={capturedImage} alt="Captured"
+                className="w-full h-full object-cover" />
+            </div>
 
-            <div className="p-8 space-y-6">
+            <div className="p-6 space-y-6">
               {location && (
-                <div className="input-glass rounded-xl p-4 flex items-center gap-3 text-[10px] font-mono uppercase tracking-widest text-mist">
+                <div className="input-glass rounded-xl p-3.5 flex items-center gap-3 text-[10px] font-mono uppercase tracking-widest text-mist">
                   <MapPin className="w-4 h-4 text-emerald-400 flex-shrink-0" />
                   {location.lat.toFixed(5)}, {location.lng.toFixed(5)} ·{" "}
                   <span className="text-emerald-400 font-bold">{Math.round(location.distance)} m</span> from school
                 </div>
               )}
 
-              <div className="flex flex-col sm:flex-row gap-4">
+              <div className="flex flex-col sm:flex-row gap-3">
                 <button onClick={reset}
-                  className="flex-1 py-4 rounded-xl bg-surface border border-hairline text-xs font-bold uppercase tracking-wider text-mist hover:border-mist hover:text-parchment flex items-center justify-center gap-2 transition-all">
+                  className="flex-1 py-3.5 rounded-xl bg-surface border border-hairline text-xs font-bold uppercase tracking-wider text-mist hover:border-mist hover:text-parchment flex items-center justify-center gap-2 transition-all">
                   <RefreshCw className="w-4 h-4" /> Retake
                 </button>
                 <button
                   id="submit-attendance-btn"
                   onClick={submitAttendance}
-                  className="flex-1 py-4 rounded-xl bg-veena-blue text-ink font-bold text-xs uppercase tracking-wider flex items-center justify-center gap-2 hover:bg-[#5C94FF] transition-all shadow-lg"
+                  className="flex-1 py-3.5 rounded-xl bg-veena-blue text-ink font-bold text-xs uppercase tracking-wider flex items-center justify-center gap-2 hover:bg-[#5C94FF] transition-all shadow-lg"
                 >
                   <Upload className="w-4 h-4" />
                   Submit Attendance

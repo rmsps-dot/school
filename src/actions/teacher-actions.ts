@@ -142,6 +142,25 @@ export async function markTeacherAttendance(payload: {
       end_time?: string
     } | null
 
+    // 1. Time Window Guard (Asia/Kolkata IST)
+    if (setting?.start_time && setting?.end_time) {
+      const now = new Date()
+      const istTime = now.toLocaleTimeString('en-GB', {
+        timeZone: 'Asia/Kolkata',
+        hour: '2-digit',
+        minute: '2-digit',
+        hour12: false,
+      }) // "HH:MM"
+
+      if (istTime < setting.start_time || istTime > setting.end_time) {
+        return {
+          success: false,
+          error: `Attendance window closed. Teacher attendance is only allowed between ${setting.start_time} and ${setting.end_time} (Current time: ${istTime}).`,
+        }
+      }
+    }
+
+    // 2. Geofence Location Guard
     if (!setting || setting.lat == null || setting.lng == null) {
       return {
         success: false,
