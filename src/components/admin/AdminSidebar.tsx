@@ -43,7 +43,6 @@ const NAV_ITEMS = [
   { label: "Manage Students",   href: "/admin/students",  icon: GraduationCap   },
   { label: "Manage Teachers",   href: "/admin/teachers",  icon: UserCheck       },
   { label: "Manage Parents",    href: "/admin/parents",   icon: Heart           },
-  { label: "Homework History",  href: "/admin/homework",  icon: BookOpen        },
   { label: "Settings",          href: "/admin/settings",  icon: Settings        },
 ];
 

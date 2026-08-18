@@ -541,7 +541,7 @@ export default function LocationMapPicker({
               className="px-3 py-1.5 rounded-lg bg-white/5 border border-hairline hover:border-mist text-parchment text-xs font-semibold transition-colors flex items-center gap-1.5"
             >
               <Maximize2 className="w-3.5 h-3.5 text-veena-blue" />
-              Fullscreen Map (Uber/Rapido style)
+              Full Screen
             </button>
           </div>
         </div>
@@ -728,10 +728,10 @@ export default function LocationMapPicker({
               <div className="absolute top-4 left-4 z-10 max-w-sm bg-ink/85 backdrop-blur-md p-3.5 rounded-2xl border border-hairline shadow-2xl text-xs space-y-2">
                 <div className="flex items-center gap-2 font-bold text-coral">
                   <Layers className="w-4 h-4" />
-                  <span>Uber / Rapido Location Pin</span>
+                  <span>Pin Location</span>
                 </div>
                 <p className="text-mist leading-relaxed">
-                  Map ko drag karein ya gate par tap karein pin place karne ke liye. Circle school ka allowed radius area show kar raha hai.
+                  Map ko drag karein ya school gate par tap karke pin place karein. Circle school ka allowed radius area show kar raha hai.
                 </p>
               </div>
 
