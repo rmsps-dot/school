@@ -14,7 +14,7 @@ export default async function AdminGalleryPage() {
           <ImageIcon className="w-8 h-8 text-emerald-400" /> School Gallery
         </h1>
         <p className="text-mist mt-2 text-sm max-w-xl">
-          Manage the URL-based media gallery. Add external photo and video links to share with the school.
+          Upload and manage school event, sports, and campus photos. Directly upload from your device with custom framing.
         </p>
       </div>
 
