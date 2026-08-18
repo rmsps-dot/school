@@ -8,6 +8,7 @@ import {
   Calendar,
   MapPin,
   Phone,
+  Mail,
   CreditCard,
   BookOpen,
   CalendarDays,
@@ -80,6 +81,7 @@ export default function StudentProfileClient({ data, classes }: StudentProfilePr
     fatherName: student.father_name || '',
     motherName: student.mother_name || '',
     mobile: profile?.mobile || '',
+    email: profile?.email || '',
     address: profile?.address || '',
     dob: profile?.dob ? profile.dob.split('T')[0] : '',
     admissionDate: student.admission_date ? student.admission_date.split('T')[0] : '',
@@ -196,6 +198,7 @@ export default function StudentProfileClient({ data, classes }: StudentProfilePr
           fatherName: editFatherName,
           motherName: editMotherName,
           mobile: editMobile,
+          email: studentInfo.email,
           address: editAddress,
           dob: editDob,
           admissionDate: studentInfo.admissionDate,
@@ -234,10 +237,15 @@ export default function StudentProfileClient({ data, classes }: StudentProfilePr
     setErrorMsg('')
 
     const numAmount = Number(feeAmount)
-    const numPaid = Number(feePaidAmount) || 0
-    let derivedStatus: 'paid' | 'due' | 'upcoming' = feeStatus
-    if (numPaid >= numAmount) derivedStatus = 'paid'
-    else if (derivedStatus === 'paid') derivedStatus = 'due'
+    let numPaid = Number(feePaidAmount) || 0
+    let targetStatus: 'paid' | 'due' | 'upcoming' = feeStatus
+
+    // If user selected 'paid', ensure paid_amount matches amount
+    if (targetStatus === 'paid' && numPaid < numAmount) {
+      numPaid = numAmount
+    } else if (numPaid >= numAmount) {
+      targetStatus = 'paid'
+    }
 
     startTransition(async () => {
       if (editingFeeId) {
@@ -247,7 +255,7 @@ export default function StudentProfileClient({ data, classes }: StudentProfilePr
           amount: numAmount,
           paid_amount: numPaid,
           due_date: feeDueDate,
-          status: derivedStatus,
+          status: targetStatus,
         })
         if (res.error) {
           setErrorMsg(res.error)
@@ -261,7 +269,7 @@ export default function StudentProfileClient({ data, classes }: StudentProfilePr
                     amount: numAmount,
                     paid_amount: numPaid,
                     due_date: feeDueDate,
-                    status: derivedStatus,
+                    status: targetStatus,
                   }
                 : f
             )
@@ -277,7 +285,7 @@ export default function StudentProfileClient({ data, classes }: StudentProfilePr
           amount: numAmount,
           paid_amount: numPaid,
           due_date: feeDueDate,
-          status: derivedStatus,
+          status: targetStatus,
         })
         if (res.error || !res.data) {
           setErrorMsg(res.error || 'Failed to record fee')
@@ -425,9 +433,9 @@ export default function StudentProfileClient({ data, classes }: StudentProfilePr
         <button
           type="button"
           onClick={handleOpenEditProfile}
-          className="px-4 py-2 rounded-xl bg-coral text-ink text-xs font-bold hover:bg-[#E67E6B] transition-colors flex items-center gap-1.5 shadow-md"
+          className="px-5 py-2.5 rounded-xl bg-coral text-ink text-xs font-bold hover:bg-[#E67E6B] transition-colors flex items-center gap-2 shadow-md"
         >
-          <Edit3 className="w-4 h-4" /> Edit Student Profile
+          <Edit3 className="w-4 h-4" /> Edit Student Data
         </button>
       </div>
 
@@ -457,14 +465,14 @@ export default function StudentProfileClient({ data, classes }: StudentProfilePr
       </AnimatePresence>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        {/* LEFT COL: 3D Digital ID Card */}
+        {/* ── LEFT COL: FULL RICH 3D DIGITAL ID CARD ── */}
         <div className="lg:col-span-1" style={{ perspective: '1000px' }}>
           <motion.div
             onMouseMove={handleMouseMove}
             onMouseLeave={handleMouseLeave}
             animate={{ rotateX, rotateY }}
             transition={{ type: 'spring', stiffness: 300, damping: 30, mass: 0.5 }}
-            className="relative rounded-3xl overflow-hidden cursor-pointer glass-panel"
+            className="relative rounded-3xl overflow-hidden cursor-pointer glass-panel shadow-2xl"
             style={{ transformStyle: 'preserve-3d' }}
           >
             {/* ID Card Header */}
@@ -481,52 +489,77 @@ export default function StudentProfileClient({ data, classes }: StudentProfilePr
                   STUDENT ID
                 </span>
               </div>
-              <span className="font-mono text-[10px] text-gold uppercase px-2 py-0.5 rounded border border-gold/30">
-                {studentInfo.className || 'N/A'}
-              </span>
+              <div
+                className="w-8 h-8 rounded-full overflow-hidden border border-coral/30 flex-shrink-0 flex items-center justify-center"
+                style={{ background: 'rgba(241,145,125,0.1)' }}
+              >
+                <Image src="/icon-192.png" alt="RMSPS Logo" width={32} height={32} className="object-cover" />
+              </div>
             </div>
 
             {/* ID Card Photo & Identity */}
-            <div className="p-6 flex flex-col items-center text-center space-y-4" style={{ transform: 'translateZ(30px)' }}>
-              <AvatarUpload
-                currentPhotoUrl={profile?.profile_photo_url}
-                userId={student.profile_id}
-                size="lg"
-                onUploadSuccess={() => router.refresh()}
-              />
-
-              <div>
-                <h3 className="font-display text-xl font-bold text-parchment">
-                  {studentInfo.fullName || 'Unnamed Student'}
-                </h3>
-                <p className="font-mono text-xs text-coral mt-1 font-bold">
-                  Roll / ID: {studentInfo.studentId}
-                </p>
+            <div className="p-6 flex flex-col items-center relative" style={{ transform: 'translateZ(30px)' }}>
+              <div className="relative mb-5">
+                <AvatarUpload
+                  currentPhotoUrl={profile?.profile_photo_url}
+                  userId={student.profile_id}
+                  size="xl"
+                  onUploadSuccess={() => router.refresh()}
+                />
+                <div
+                  className="absolute -bottom-3 -right-3 text-[10px] font-bold px-2.5 py-1 rounded-lg border border-coral/30 text-coral shadow-lg"
+                  style={{ background: 'var(--ink)', boxShadow: '0 0 12px rgba(241,145,125,0.2)' }}
+                >
+                  {studentInfo.className || 'CLASS'}
+                </div>
               </div>
 
-              {/* Quick Info Grid on ID Card */}
-              <div className="w-full grid grid-cols-2 gap-2 pt-4 border-t border-hairline text-left">
-                <div className="p-2.5 rounded-xl bg-ink/40 border border-hairline">
-                  <span className="text-[10px] text-mist font-mono uppercase block">Admission</span>
-                  <span className="text-xs font-bold text-parchment truncate block">
-                    {formatDate(studentInfo.admissionDate)}
-                  </span>
-                </div>
-                <div className="p-2.5 rounded-xl bg-ink/40 border border-hairline">
-                  <span className="text-[10px] text-mist font-mono uppercase block">Attendance</span>
-                  <span className="text-xs font-bold font-mono block" style={{ color: attendanceColor }}>
-                    {attendancePct}%
-                  </span>
-                </div>
+              <h2 className="font-display text-xl font-bold text-parchment mb-1 text-center leading-tight">
+                {studentInfo.fullName?.toUpperCase() || 'STUDENT NAME'}
+              </h2>
+              <p className="font-mono text-sm tracking-widest mb-6" style={{ color: 'var(--coral)' }}>
+                {studentInfo.studentId}
+              </p>
+
+              {/* Personal Details Table on ID Card */}
+              <div className="w-full space-y-3 text-xs">
+                {[
+                  { label: 'D.O.B', value: formatDate(studentInfo.dob) },
+                  { label: 'FATHER', value: studentInfo.fatherName || 'N/A' },
+                  { label: 'MOTHER', value: studentInfo.motherName || 'N/A' },
+                  { label: 'PHONE', value: studentInfo.mobile || 'N/A' },
+                ].map((row) => (
+                  <div key={row.label} className="flex justify-between border-b border-hairline pb-2">
+                    <span className="text-mist font-mono tracking-wider">{row.label}</span>
+                    <span className="text-parchment font-medium">{row.value}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Card Footer — Decorative Barcode */}
+            <div
+              className="px-6 pb-5 flex items-center justify-center border-t border-hairline"
+              style={{ transform: 'translateZ(10px)' }}
+            >
+              <div className="w-3/4 h-8 flex items-end justify-between opacity-20 mt-4">
+                {[...Array(22)].map((_, i) => (
+                  <div
+                    key={i}
+                    className={`bg-parchment ${
+                      i % 3 === 0 ? 'h-full w-[3px]' : i % 2 === 0 ? 'h-3/4 w-[1px]' : 'h-full w-[1px]'
+                    }`}
+                  />
+                ))}
               </div>
             </div>
           </motion.div>
         </div>
 
-        {/* RIGHT COL: Detailed Information & Management Tabs */}
+        {/* ── RIGHT COL: DATA SECTIONS & MANAGEMENT TABS ── */}
         <div className="lg:col-span-2 space-y-6">
-          {/* Tab Navigation */}
-          <div className="flex items-center gap-2 border-b border-hairline pb-2 overflow-x-auto hide-scrollbar">
+          {/* Navigation Tabs */}
+          <div className="surface-card rounded-2xl p-1.5 flex flex-wrap gap-1 border border-hairline">
             {tabs.map((tab) => {
               const Icon = tab.icon
               const isActive = activeTab === tab.id
@@ -534,11 +567,14 @@ export default function StudentProfileClient({ data, classes }: StudentProfilePr
                 <button
                   key={tab.id}
                   onClick={() => setActiveTab(tab.id)}
-                  className={`flex items-center gap-2 px-5 py-3 rounded-2xl text-xs md:text-sm font-bold transition-all whitespace-nowrap ${
-                    isActive
-                      ? 'bg-coral text-ink shadow-lg'
-                      : 'text-mist hover:text-parchment hover:bg-white/5'
+                  className={`flex-1 min-w-[100px] flex items-center justify-center gap-2 py-2.5 rounded-xl text-sm font-semibold transition-all ${
+                    isActive ? 'text-ink font-bold shadow-lg' : 'text-mist hover:text-parchment'
                   }`}
+                  style={
+                    isActive
+                      ? { background: 'var(--coral)', boxShadow: '0 0 20px rgba(241,145,125,0.25)' }
+                      : {}
+                  }
                 >
                   <Icon className="w-4 h-4" />
                   <span>{tab.label}</span>
@@ -552,64 +588,40 @@ export default function StudentProfileClient({ data, classes }: StudentProfilePr
             <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="space-y-6">
               <div className="surface-card rounded-3xl p-6 md:p-8 border border-hairline space-y-6">
                 <div className="flex items-center justify-between border-b border-hairline pb-4">
-                  <h3 className="font-display text-xl font-bold text-parchment">Personal & Family Details</h3>
+                  <h3 className="font-display text-xl font-bold text-parchment">Personal Details</h3>
                   <button
                     type="button"
                     onClick={handleOpenEditProfile}
-                    className="px-3.5 py-1.5 rounded-xl bg-surface border border-hairline text-xs font-bold text-mist hover:text-parchment flex items-center gap-1.5"
+                    className="flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition-all hover:scale-[1.02] text-ink bg-coral shadow-md"
                   >
-                    <Edit3 className="w-3.5 h-3.5 text-coral" /> Edit Details
+                    <Edit3 className="w-3.5 h-3.5" /> Edit Student Data
                   </button>
                 </div>
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-                  <div className="space-y-1">
-                    <span className="text-xs font-mono text-mist uppercase tracking-wider block">
-                      Father&apos;s Name
-                    </span>
-                    <p className="text-sm font-bold text-parchment">
-                      {studentInfo.fatherName || 'Not Recorded'}
-                    </p>
-                  </div>
-
-                  <div className="space-y-1">
-                    <span className="text-xs font-mono text-mist uppercase tracking-wider block">
-                      Mother&apos;s Name
-                    </span>
-                    <p className="text-sm font-bold text-parchment">
-                      {studentInfo.motherName || 'Not Recorded'}
-                    </p>
-                  </div>
-
-                  <div className="space-y-1">
-                    <span className="text-xs font-mono text-mist uppercase tracking-wider block">
-                      Date of Birth
-                    </span>
-                    <div className="flex items-center gap-2 text-sm text-parchment font-medium">
-                      <Calendar className="w-4 h-4 text-coral" />
-                      <span>{formatDate(studentInfo.dob)}</span>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  {[
+                    { icon: UserCircle, label: 'Full Name', value: studentInfo.fullName },
+                    { icon: GraduationCap, label: 'Roll / Student ID', value: studentInfo.studentId },
+                    { icon: BookOpen, label: 'Class & Section', value: studentInfo.className || 'N/A' },
+                    { icon: Calendar, label: 'Date of Birth', value: formatDate(studentInfo.dob) },
+                    { icon: UserCircle, label: "Father's Name", value: studentInfo.fatherName || 'N/A' },
+                    { icon: UserCircle, label: "Mother's Name", value: studentInfo.motherName || 'N/A' },
+                    { icon: Phone, label: 'Primary Phone', value: studentInfo.mobile || 'N/A' },
+                    { icon: Mail, label: 'Email Address', value: studentInfo.email || 'N/A', wide: false },
+                    {
+                      icon: MapPin,
+                      label: 'Residential Address',
+                      value: studentInfo.address || 'No address provided.',
+                      wide: true,
+                    },
+                  ].map((item, idx) => (
+                    <div key={idx} className={item.wide ? 'md:col-span-2' : ''}>
+                      <span className="text-xs text-mist uppercase font-semibold tracking-wider flex items-center gap-1.5 mb-1">
+                        <item.icon className="w-3.5 h-3.5 text-coral" /> {item.label}
+                      </span>
+                      <p className="text-parchment font-medium text-base break-all">{item.value}</p>
                     </div>
-                  </div>
-
-                  <div className="space-y-1">
-                    <span className="text-xs font-mono text-mist uppercase tracking-wider block">
-                      Contact Mobile
-                    </span>
-                    <div className="flex items-center gap-2 text-sm text-parchment font-medium">
-                      <Phone className="w-4 h-4 text-coral" />
-                      <span>{studentInfo.mobile || 'No contact provided'}</span>
-                    </div>
-                  </div>
-
-                  <div className="sm:col-span-2 space-y-1">
-                    <span className="text-xs font-mono text-mist uppercase tracking-wider block">
-                      Residential Address
-                    </span>
-                    <div className="flex items-center gap-2 text-sm text-parchment font-medium">
-                      <MapPin className="w-4 h-4 text-coral" />
-                      <span>{studentInfo.address || 'No address on file'}</span>
-                    </div>
-                  </div>
+                  ))}
                 </div>
               </div>
             </motion.div>
@@ -674,7 +686,7 @@ export default function StudentProfileClient({ data, classes }: StudentProfilePr
                         <div className="flex items-center justify-between">
                           <span className="font-semibold text-parchment text-sm">{f.fee_name}</span>
                           <span
-                            className={`px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider border ${
+                            className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider border ${
                               f.status === 'paid'
                                 ? 'text-emerald-400 border-emerald-500/30 bg-emerald-500/10'
                                 : f.status === 'upcoming'
@@ -854,40 +866,87 @@ export default function StudentProfileClient({ data, classes }: StudentProfilePr
             </motion.div>
           )}
 
-          {/* ── 4. ATTENDANCE TAB (WITH LOGS, EDIT STATUS & DELETE) ── */}
+          {/* ── 4. ATTENDANCE TAB (RICH SUMMARY + DAILY RECORDS WITH EDIT/DELETE) ── */}
           {activeTab === 'attendance' && (
             <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="space-y-6">
-              <div className="surface-card rounded-3xl p-6 md:p-8 border border-hairline space-y-6">
-                <h3 className="font-display text-xl font-bold text-parchment">Attendance Overview</h3>
-                <div className="grid grid-cols-3 gap-4 text-center">
-                  <div className="p-4 rounded-2xl bg-surface border border-hairline">
-                    <span className="text-[10px] text-mist font-mono uppercase block">Present Days</span>
-                    <span className="text-2xl font-bold font-display text-emerald-400 mt-1 block">
-                      {presentDays}
-                    </span>
+              <h3 className="font-display text-xl font-bold text-parchment border-b border-hairline pb-4">
+                Attendance Summary
+              </h3>
+
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                {[
+                  {
+                    label: 'Total Sessions',
+                    value: totalAttSessions || attendanceStats.total,
+                    color: 'text-mist',
+                    bg: 'rgba(138,143,152,0.06)',
+                  },
+                  {
+                    label: 'Present Days',
+                    value: presentDays || attendanceStats.present,
+                    color: 'text-emerald-400',
+                    bg: 'rgba(16,185,129,0.06)',
+                  },
+                  {
+                    label: 'Absent Days',
+                    value: (totalAttSessions || attendanceStats.total) - (presentDays || attendanceStats.present),
+                    color: 'text-red-400',
+                    bg: 'rgba(239,68,68,0.06)',
+                  },
+                  {
+                    label: 'Percentage',
+                    value: `${attendancePct}%`,
+                    color: 'text-coral',
+                    bg: 'rgba(241,145,125,0.06)',
+                  },
+                ].map((stat) => (
+                  <div key={stat.label} className="surface-card rounded-2xl p-4 text-center border border-hairline">
+                    <p className="text-xs text-mist font-semibold mb-2 uppercase tracking-wider">{stat.label}</p>
+                    <p className={`text-2xl font-bold font-display ${stat.color}`}>{stat.value}</p>
                   </div>
-                  <div className="p-4 rounded-2xl bg-surface border border-hairline">
-                    <span className="text-[10px] text-mist font-mono uppercase block">Total Sessions</span>
-                    <span className="text-2xl font-bold font-display text-parchment mt-1 block">
-                      {totalAttSessions}
-                    </span>
-                  </div>
-                  <div className="p-4 rounded-2xl bg-surface border border-hairline">
-                    <span className="text-[10px] text-mist font-mono uppercase block">Overall Percentage</span>
-                    <span className="text-2xl font-bold font-display text-coral mt-1 block">
-                      {attendancePct}%
-                    </span>
-                  </div>
-                </div>
+                ))}
               </div>
 
-              {/* Attendance Log Table */}
+              {/* Attendance Rate Bar */}
+              <div className="surface-card rounded-2xl p-5 border border-hairline">
+                <div className="flex justify-between items-center mb-3">
+                  <span className="text-sm font-medium text-mist">Attendance Rate</span>
+                  <span className="text-sm font-bold font-mono" style={{ color: attendanceColor }}>
+                    {attendancePct}%
+                  </span>
+                </div>
+                <div className="h-3 rounded-full bg-ink border border-hairline overflow-hidden">
+                  <motion.div
+                    initial={{ width: 0 }}
+                    animate={{ width: `${attendancePct}%` }}
+                    transition={{ duration: 1, ease: 'easeOut' }}
+                    className="h-full rounded-full"
+                    style={{ background: `linear-gradient(90deg, ${attendanceColor}, ${attendanceColor}80)` }}
+                  />
+                </div>
+                <p className="text-xs text-mist mt-3 text-center">
+                  {attendancePct >= 75
+                    ? '✓ Attendance is satisfactory'
+                    : attendancePct >= 50
+                    ? '⚠ Attendance is below recommended level'
+                    : '✗ Attendance is critically low — action required'}
+                </p>
+              </div>
+
+              {/* Daily Records List */}
               <div className="surface-card rounded-3xl p-6 border border-hairline space-y-4">
-                <h4 className="font-display text-lg font-bold text-parchment">Daily Attendance Records</h4>
+                <div className="flex items-center gap-2">
+                  <Clock className="w-5 h-5 text-coral" />
+                  <h4 className="font-display text-lg font-bold text-parchment">Daily Attendance Logs</h4>
+                </div>
+
                 {attendanceLogs.length === 0 ? (
-                  <p className="text-xs text-mist font-mono italic py-4">
-                    No attendance session logs recorded for this student yet.
-                  </p>
+                  <div className="flex flex-col items-center justify-center py-6 text-center border border-hairline rounded-2xl bg-white/[0.02]">
+                    <CalendarDays className="w-10 h-10 text-mist/30 mb-3" />
+                    <p className="text-mist text-sm max-w-md">
+                      No individual daily attendance logs recorded yet.
+                    </p>
+                  </div>
                 ) : (
                   <div className="overflow-x-auto">
                     <table className="w-full text-left">
