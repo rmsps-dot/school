@@ -54,7 +54,56 @@ export async function deleteTeacherAttendance(id: string) {
 }
 
 /* ════════════════════════════════════════════════════════════
-   2. TEACHER PAYMENT ACTIONS
+   2. STUDENT ATTENDANCE ACTIONS (EDIT & DELETE)
+════════════════════════════════════════════════════════════ */
+
+export async function editStudentAttendanceStatus(
+  id: string,
+  status: Database['public']['Enums']['attendance_status']
+) {
+  try {
+    const auth = await requireAdmin()
+    if (!auth.ok) return { success: false, error: auth.error }
+
+    const supabase = await createClient()
+    const { error } = await supabase
+      .from('student_attendance')
+      .update({ status })
+      .eq('id', id)
+
+    if (error) return { success: false, error: error.message }
+
+    revalidatePath('/admin/students')
+    revalidatePath('/admin/classes')
+    return { success: true }
+  } catch (err) {
+    return { success: false, error: err instanceof Error ? err.message : 'Failed to update student attendance' }
+  }
+}
+
+export async function deleteStudentAttendance(id: string) {
+  try {
+    const auth = await requireAdmin()
+    if (!auth.ok) return { success: false, error: auth.error }
+
+    const supabase = await createClient()
+    const { error } = await supabase
+      .from('student_attendance')
+      .delete()
+      .eq('id', id)
+
+    if (error) return { success: false, error: error.message }
+
+    revalidatePath('/admin/students')
+    revalidatePath('/admin/classes')
+    return { success: true }
+  } catch (err) {
+    return { success: false, error: err instanceof Error ? err.message : 'Failed to delete student attendance' }
+  }
+}
+
+/* ════════════════════════════════════════════════════════════
+   3. TEACHER PAYMENT ACTIONS
 ════════════════════════════════════════════════════════════ */
 
 export async function recordTeacherPayment(
@@ -145,7 +194,7 @@ export async function deleteTeacherPayment(id: string) {
 }
 
 /* ════════════════════════════════════════════════════════════
-   3. STUDENT FEE ACTIONS
+   4. STUDENT FEE ACTIONS
 ════════════════════════════════════════════════════════════ */
 
 export async function getStudentFeesList(studentIdStr: string) {
@@ -174,15 +223,22 @@ export async function recordStudentFee(
     amount: number
     paid_amount: number
     due_date: string
-    status: string
+    status?: string
   }
 ) {
   try {
     const auth = await requireAdmin()
-    if (!auth.ok) return { success: false, error: auth.error }
+    if (!auth.ok) return { data: null, error: auth.error }
 
     const supabase = await createClient()
-    const { error } = await supabase
+
+    // Validate status according to database constraint: ('paid', 'due', 'upcoming')
+    let validStatus = payload.status?.toLowerCase() || 'due'
+    if (validStatus !== 'paid' && validStatus !== 'due' && validStatus !== 'upcoming') {
+      validStatus = payload.paid_amount >= payload.amount ? 'paid' : 'due'
+    }
+
+    const { data, error } = await supabase
       .from('student_fees')
       .insert({
         student_id: studentIdStr,
@@ -190,16 +246,18 @@ export async function recordStudentFee(
         amount: payload.amount,
         paid_amount: payload.paid_amount || 0,
         due_date: payload.due_date,
-        status: payload.status || 'pending',
+        status: validStatus,
       })
+      .select()
+      .single()
 
-    if (error) return { success: false, error: error.message }
+    if (error) return { data: null, error: error.message }
 
     revalidatePath('/admin/students')
     revalidatePath('/parent/fees')
-    return { success: true }
+    return { data, error: null }
   } catch (err) {
-    return { success: false, error: err instanceof Error ? err.message : 'Failed to record student fee' }
+    return { data: null, error: err instanceof Error ? err.message : 'Failed to record student fee' }
   }
 }
 
@@ -210,7 +268,7 @@ export async function editStudentFee(
     amount: number
     paid_amount: number
     due_date: string
-    status: string
+    status?: string
   }
 ) {
   try {
@@ -218,6 +276,13 @@ export async function editStudentFee(
     if (!auth.ok) return { success: false, error: auth.error }
 
     const supabase = await createClient()
+
+    // Validate status according to database constraint: ('paid', 'due', 'upcoming')
+    let validStatus = payload.status?.toLowerCase() || 'due'
+    if (validStatus !== 'paid' && validStatus !== 'due' && validStatus !== 'upcoming') {
+      validStatus = payload.paid_amount >= payload.amount ? 'paid' : 'due'
+    }
+
     const { error } = await supabase
       .from('student_fees')
       .update({
@@ -225,7 +290,7 @@ export async function editStudentFee(
         amount: payload.amount,
         paid_amount: payload.paid_amount,
         due_date: payload.due_date,
-        status: payload.status,
+        status: validStatus,
       })
       .eq('id', id)
 
@@ -261,7 +326,7 @@ export async function deleteStudentFee(id: string) {
 }
 
 /* ════════════════════════════════════════════════════════════
-   4. STUDENT RESULTS (EDIT / DELETE)
+   5. STUDENT RESULTS (EDIT / DELETE)
 ════════════════════════════════════════════════════════════ */
 
 export async function editStudentResult(
@@ -322,7 +387,7 @@ export async function deleteStudentResult(resultId: string) {
 }
 
 /* ════════════════════════════════════════════════════════════
-   5. PARENT - STUDENT LINKING ACTIONS
+   6. PARENT - STUDENT LINKING ACTIONS
 ════════════════════════════════════════════════════════════ */
 
 export async function linkStudentToParent(parentId: string, studentId: string) {
@@ -394,7 +459,7 @@ export async function getAvailableStudentsForLinking() {
 }
 
 /* ════════════════════════════════════════════════════════════
-   6. ALL CLASSES LIST (FOR DIRECT ASSIGNMENT)
+   7. ALL CLASSES LIST (FOR DIRECT ASSIGNMENT)
 ════════════════════════════════════════════════════════════ */
 
 export async function getAllClassesList() {

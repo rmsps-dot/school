@@ -1,4 +1,5 @@
 import { getStudentProfileData } from '@/actions/class-actions'
+import { getAllClassesList } from '@/actions/admin-management-actions'
 import StudentProfileClient from './StudentProfileClient'
 import { AlertCircle, UserX } from 'lucide-react'
 
@@ -7,7 +8,10 @@ export const dynamic = 'force-dynamic'
 export default async function AdminStudentProfilePage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
   
-  const { data, error } = await getStudentProfileData(id)
+  const [{ data, error }, { data: classes }] = await Promise.all([
+    getStudentProfileData(id),
+    getAllClassesList(),
+  ])
 
   if (error || !data) {
     return (
@@ -25,7 +29,7 @@ export default async function AdminStudentProfilePage({ params }: { params: Prom
 
   return (
     <div className="max-w-6xl mx-auto">
-      <StudentProfileClient data={data} />
+      <StudentProfileClient data={data} classes={classes || []} />
     </div>
   )
 }

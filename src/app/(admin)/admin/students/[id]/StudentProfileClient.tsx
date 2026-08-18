@@ -8,13 +8,11 @@ import {
   Calendar,
   MapPin,
   Phone,
-  Mail,
   CreditCard,
   BookOpen,
   CalendarDays,
   ArrowLeft,
   GraduationCap,
-  TrendingUp,
   CheckCircle2,
   AlertCircle,
   Loader2,
@@ -24,28 +22,40 @@ import {
   Check,
   X,
   IndianRupee,
+  Clock,
 } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import AvatarUpload from '@/components/ui/AvatarUpload'
 import { getStudentProfileData } from '@/actions/class-actions'
+import { updateStudent } from '@/actions/user-management-actions'
 import {
   recordStudentFee,
   editStudentFee,
   deleteStudentFee,
   editStudentResult,
   deleteStudentResult,
+  editStudentAttendanceStatus,
+  deleteStudentAttendance,
 } from '@/actions/admin-management-actions'
 import DateInput from '@/components/shared/DateInput'
+import type { Database } from '@/types/supabase'
 
 type StudentProfileDataPayload = Exclude<Awaited<ReturnType<typeof getStudentProfileData>>['data'], null>
 
+interface ClassItem {
+  id: string
+  class_name: string
+  section: string
+}
+
 interface StudentProfileProps {
   data: StudentProfileDataPayload
+  classes: ClassItem[]
 }
 
 type TabType = 'details' | 'fees' | 'progress' | 'attendance'
 
-export default function StudentProfileClient({ data }: StudentProfileProps) {
+export default function StudentProfileClient({ data, classes }: StudentProfileProps) {
   const router = useRouter()
   const [activeTab, setActiveTab] = useState<TabType>('details')
   const [isPending, startTransition] = useTransition()
@@ -59,6 +69,32 @@ export default function StudentProfileClient({ data }: StudentProfileProps) {
   // State for dynamic items
   const [fees, setFees] = useState(data.fees || [])
   const [results, setResults] = useState(data.results || [])
+  const [attendanceLogs, setAttendanceLogs] = useState(data.attendanceLogs || [])
+
+  // Student Profile state
+  const [studentInfo, setStudentInfo] = useState({
+    fullName: profile?.full_name || '',
+    studentId: student.student_id || '',
+    classId: student.class_id || '',
+    className: cls ? `${cls.class_name} - ${cls.section}` : '',
+    fatherName: student.father_name || '',
+    motherName: student.mother_name || '',
+    mobile: profile?.mobile || '',
+    address: profile?.address || '',
+    dob: profile?.dob ? profile.dob.split('T')[0] : '',
+    admissionDate: student.admission_date ? student.admission_date.split('T')[0] : '',
+  })
+
+  // ── Edit Profile Modal State ──
+  const [isEditProfileOpen, setIsEditProfileOpen] = useState(false)
+  const [editFullName, setEditFullName] = useState(studentInfo.fullName)
+  const [editStudentId, setEditStudentId] = useState(studentInfo.studentId)
+  const [editClassId, setEditClassId] = useState(studentInfo.classId)
+  const [editFatherName, setEditFatherName] = useState(studentInfo.fatherName)
+  const [editMotherName, setEditMotherName] = useState(studentInfo.motherName)
+  const [editMobile, setEditMobile] = useState(studentInfo.mobile)
+  const [editAddress, setEditAddress] = useState(studentInfo.address)
+  const [editDob, setEditDob] = useState(studentInfo.dob)
 
   // ── Fee Modals State ──
   const [isFeeModalOpen, setIsFeeModalOpen] = useState(false)
@@ -67,13 +103,17 @@ export default function StudentProfileClient({ data }: StudentProfileProps) {
   const [feeAmount, setFeeAmount] = useState<number | ''>('')
   const [feePaidAmount, setFeePaidAmount] = useState<number | ''>('')
   const [feeDueDate, setFeeDueDate] = useState(new Date().toISOString().split('T')[0])
-  const [feeStatus, setFeeStatus] = useState<'paid' | 'partial' | 'pending'>('pending')
+  const [feeStatus, setFeeStatus] = useState<'paid' | 'due' | 'upcoming'>('due')
 
   // ── Result Modals State ──
   const [editingResult, setEditingResult] = useState<typeof results[0] | null>(null)
   const [resultMarks, setResultMarks] = useState<number | ''>('')
   const [resultTotal, setResultTotal] = useState<number | ''>('')
   const [resultSubject, setResultSubject] = useState('')
+
+  // ── Attendance Status Edit Modal State ──
+  const [editingAttendance, setEditingAttendance] = useState<typeof attendanceLogs[0] | null>(null)
+  const [attendanceNewStatus, setAttendanceNewStatus] = useState<Database['public']['Enums']['attendance_status']>('present')
 
   // 3D Tilt effect handlers for ID card
   const [rotateX, setRotateX] = useState(0)
@@ -104,13 +144,68 @@ export default function StudentProfileClient({ data }: StudentProfileProps) {
     })
   }
 
-  const attendancePct = attendanceStats.percentage
+  const presentDays = attendanceLogs.filter((a) => a.status === 'present').length
+  const totalAttSessions = attendanceLogs.length
+  const attendancePct = totalAttSessions === 0 ? attendanceStats.percentage : Math.round((presentDays / totalAttSessions) * 100)
   const attendanceColor = attendancePct >= 75 ? 'var(--coral)' : attendancePct >= 50 ? '#D4AF6A' : '#EF4444'
 
   // Calculations for Fee
   const totalBilled = fees.reduce((sum, f) => sum + Number(f.amount), 0)
   const totalPaid = fees.reduce((sum, f) => sum + Number(f.paid_amount || 0), 0)
   const totalDue = totalBilled - totalPaid
+
+  // ── Profile Edit Handler ──
+  const handleOpenEditProfile = () => {
+    setEditFullName(studentInfo.fullName)
+    setEditStudentId(studentInfo.studentId)
+    setEditClassId(studentInfo.classId)
+    setEditFatherName(studentInfo.fatherName)
+    setEditMotherName(studentInfo.motherName)
+    setEditMobile(studentInfo.mobile)
+    setEditAddress(studentInfo.address)
+    setEditDob(studentInfo.dob)
+    setIsEditProfileOpen(true)
+  }
+
+  const handleSaveProfile = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setErrorMsg('')
+
+    const fd = new FormData()
+    fd.append('profileId', student.profile_id)
+    fd.append('fullName', editFullName.trim())
+    fd.append('studentId', editStudentId.trim())
+    fd.append('classId', editClassId)
+    fd.append('fatherName', editFatherName.trim())
+    fd.append('motherName', editMotherName.trim())
+    fd.append('phone', editMobile.trim())
+    fd.append('address', editAddress.trim())
+    fd.append('dob', editDob)
+
+    startTransition(async () => {
+      const res = await updateStudent(fd)
+      if (res.error) {
+        setErrorMsg(res.error)
+      } else {
+        const selectedCls = classes.find((c) => c.id === editClassId)
+        setStudentInfo({
+          fullName: editFullName,
+          studentId: editStudentId,
+          classId: editClassId,
+          className: selectedCls ? `${selectedCls.class_name} - ${selectedCls.section}` : studentInfo.className,
+          fatherName: editFatherName,
+          motherName: editMotherName,
+          mobile: editMobile,
+          address: editAddress,
+          dob: editDob,
+          admissionDate: studentInfo.admissionDate,
+        })
+        setIsEditProfileOpen(false)
+        setSuccessMsg('Student profile updated successfully.')
+        setTimeout(() => setSuccessMsg(''), 3000)
+      }
+    })
+  }
 
   // ── Fee Actions ──
   const handleOpenAddFee = () => {
@@ -119,7 +214,7 @@ export default function StudentProfileClient({ data }: StudentProfileProps) {
     setFeeAmount('')
     setFeePaidAmount(0)
     setFeeDueDate(new Date().toISOString().split('T')[0])
-    setFeeStatus('pending')
+    setFeeStatus('due')
     setIsFeeModalOpen(true)
   }
 
@@ -129,7 +224,7 @@ export default function StudentProfileClient({ data }: StudentProfileProps) {
     setFeeAmount(f.amount)
     setFeePaidAmount(f.paid_amount || 0)
     setFeeDueDate(f.due_date ? f.due_date.split('T')[0] : new Date().toISOString().split('T')[0])
-    setFeeStatus((f.status as 'paid' | 'partial' | 'pending') || 'pending')
+    setFeeStatus((f.status as 'paid' | 'due' | 'upcoming') || 'due')
     setIsFeeModalOpen(true)
   }
 
@@ -140,10 +235,9 @@ export default function StudentProfileClient({ data }: StudentProfileProps) {
 
     const numAmount = Number(feeAmount)
     const numPaid = Number(feePaidAmount) || 0
-    let derivedStatus = feeStatus
+    let derivedStatus: 'paid' | 'due' | 'upcoming' = feeStatus
     if (numPaid >= numAmount) derivedStatus = 'paid'
-    else if (numPaid > 0) derivedStatus = 'partial'
-    else derivedStatus = 'pending'
+    else if (derivedStatus === 'paid') derivedStatus = 'due'
 
     startTransition(async () => {
       if (editingFeeId) {
@@ -178,29 +272,17 @@ export default function StudentProfileClient({ data }: StudentProfileProps) {
         }
       } else {
         // Record new fee
-        const res = await recordStudentFee(student.student_id, {
+        const res = await recordStudentFee(studentInfo.studentId, {
           fee_name: feeName.trim(),
           amount: numAmount,
           paid_amount: numPaid,
           due_date: feeDueDate,
           status: derivedStatus,
         })
-        if (res.error) {
-          setErrorMsg(res.error)
+        if (res.error || !res.data) {
+          setErrorMsg(res.error || 'Failed to record fee')
         } else {
-          setFees([
-            {
-              id: `fee-${Date.now()}`,
-              student_id: student.student_id,
-              fee_name: feeName.trim(),
-              amount: numAmount,
-              paid_amount: numPaid,
-              due_date: feeDueDate,
-              status: derivedStatus,
-              created_at: new Date().toISOString(),
-            },
-            ...fees,
-          ])
+          setFees([res.data, ...fees])
           setIsFeeModalOpen(false)
           setSuccessMsg('Fee record created.')
           setTimeout(() => setSuccessMsg(''), 3000)
@@ -281,6 +363,46 @@ export default function StudentProfileClient({ data }: StudentProfileProps) {
     })
   }
 
+  // ── Student Attendance Actions (Edit Status & Delete) ──
+  const handleOpenEditAttendance = (att: typeof attendanceLogs[0]) => {
+    setEditingAttendance(att)
+    setAttendanceNewStatus(att.status as Database['public']['Enums']['attendance_status'])
+  }
+
+  const handleSaveAttendanceStatus = async () => {
+    if (!editingAttendance) return
+    setErrorMsg('')
+
+    startTransition(async () => {
+      const res = await editStudentAttendanceStatus(editingAttendance.id, attendanceNewStatus)
+      if (res.error) {
+        setErrorMsg(res.error)
+      } else {
+        setAttendanceLogs((prev) =>
+          prev.map((a) => (a.id === editingAttendance.id ? { ...a, status: attendanceNewStatus } : a))
+        )
+        setEditingAttendance(null)
+        setSuccessMsg('Student attendance status updated.')
+        setTimeout(() => setSuccessMsg(''), 3000)
+      }
+    })
+  }
+
+  const handleDeleteAttendance = (id: string) => {
+    if (!confirm('Are you sure you want to delete this student attendance record?')) return
+
+    startTransition(async () => {
+      const res = await deleteStudentAttendance(id)
+      if (res.error) {
+        setErrorMsg(res.error)
+      } else {
+        setAttendanceLogs((prev) => prev.filter((a) => a.id !== id))
+        setSuccessMsg('Attendance record deleted.')
+        setTimeout(() => setSuccessMsg(''), 3000)
+      }
+    })
+  }
+
   const tabs: { id: TabType; label: string; icon: React.ElementType }[] = [
     { id: 'details', label: 'Details', icon: UserCircle },
     { id: 'fees', label: 'Fees & Invoices', icon: CreditCard },
@@ -290,14 +412,24 @@ export default function StudentProfileClient({ data }: StudentProfileProps) {
 
   return (
     <div className="space-y-8 pb-20 max-w-6xl mx-auto">
-      {/* Back Button */}
-      <button
-        onClick={() => router.back()}
-        className="flex items-center gap-2 text-mist hover:text-parchment transition-colors group"
-      >
-        <ArrowLeft className="w-4 h-4 group-hover:-translate-x-1 transition-transform" />
-        <span className="text-sm font-medium">Back to Students</span>
-      </button>
+      {/* Top Header */}
+      <div className="flex items-center justify-between gap-4">
+        <button
+          onClick={() => router.back()}
+          className="flex items-center gap-2 text-mist hover:text-parchment transition-colors group"
+        >
+          <ArrowLeft className="w-4 h-4 group-hover:-translate-x-1 transition-transform" />
+          <span className="text-sm font-medium">Back to Students</span>
+        </button>
+
+        <button
+          type="button"
+          onClick={handleOpenEditProfile}
+          className="px-4 py-2 rounded-xl bg-coral text-ink text-xs font-bold hover:bg-[#E67E6B] transition-colors flex items-center gap-1.5 shadow-md"
+        >
+          <Edit3 className="w-4 h-4" /> Edit Student Profile
+        </button>
+      </div>
 
       <AnimatePresence>
         {errorMsg && (
@@ -350,7 +482,7 @@ export default function StudentProfileClient({ data }: StudentProfileProps) {
                 </span>
               </div>
               <span className="font-mono text-[10px] text-gold uppercase px-2 py-0.5 rounded border border-gold/30">
-                {cls ? `${cls.class_name} - ${cls.section}` : 'N/A'}
+                {studentInfo.className || 'N/A'}
               </span>
             </div>
 
@@ -365,10 +497,10 @@ export default function StudentProfileClient({ data }: StudentProfileProps) {
 
               <div>
                 <h3 className="font-display text-xl font-bold text-parchment">
-                  {profile?.full_name || 'Unnamed Student'}
+                  {studentInfo.fullName || 'Unnamed Student'}
                 </h3>
                 <p className="font-mono text-xs text-coral mt-1 font-bold">
-                  Roll / ID: {student.student_id}
+                  Roll / ID: {studentInfo.studentId}
                 </p>
               </div>
 
@@ -377,7 +509,7 @@ export default function StudentProfileClient({ data }: StudentProfileProps) {
                 <div className="p-2.5 rounded-xl bg-ink/40 border border-hairline">
                   <span className="text-[10px] text-mist font-mono uppercase block">Admission</span>
                   <span className="text-xs font-bold text-parchment truncate block">
-                    {formatDate(student.admission_date)}
+                    {formatDate(studentInfo.admissionDate)}
                   </span>
                 </div>
                 <div className="p-2.5 rounded-xl bg-ink/40 border border-hairline">
@@ -419,9 +551,16 @@ export default function StudentProfileClient({ data }: StudentProfileProps) {
           {activeTab === 'details' && (
             <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="space-y-6">
               <div className="surface-card rounded-3xl p-6 md:p-8 border border-hairline space-y-6">
-                <h3 className="font-display text-xl font-bold text-parchment border-b border-hairline pb-4">
-                  Personal & Family Details
-                </h3>
+                <div className="flex items-center justify-between border-b border-hairline pb-4">
+                  <h3 className="font-display text-xl font-bold text-parchment">Personal & Family Details</h3>
+                  <button
+                    type="button"
+                    onClick={handleOpenEditProfile}
+                    className="px-3.5 py-1.5 rounded-xl bg-surface border border-hairline text-xs font-bold text-mist hover:text-parchment flex items-center gap-1.5"
+                  >
+                    <Edit3 className="w-3.5 h-3.5 text-coral" /> Edit Details
+                  </button>
+                </div>
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                   <div className="space-y-1">
@@ -429,7 +568,7 @@ export default function StudentProfileClient({ data }: StudentProfileProps) {
                       Father&apos;s Name
                     </span>
                     <p className="text-sm font-bold text-parchment">
-                      {student.father_name || 'Not Recorded'}
+                      {studentInfo.fatherName || 'Not Recorded'}
                     </p>
                   </div>
 
@@ -438,7 +577,7 @@ export default function StudentProfileClient({ data }: StudentProfileProps) {
                       Mother&apos;s Name
                     </span>
                     <p className="text-sm font-bold text-parchment">
-                      {student.mother_name || 'Not Recorded'}
+                      {studentInfo.motherName || 'Not Recorded'}
                     </p>
                   </div>
 
@@ -448,7 +587,7 @@ export default function StudentProfileClient({ data }: StudentProfileProps) {
                     </span>
                     <div className="flex items-center gap-2 text-sm text-parchment font-medium">
                       <Calendar className="w-4 h-4 text-coral" />
-                      <span>{formatDate(profile?.dob)}</span>
+                      <span>{formatDate(studentInfo.dob)}</span>
                     </div>
                   </div>
 
@@ -458,7 +597,7 @@ export default function StudentProfileClient({ data }: StudentProfileProps) {
                     </span>
                     <div className="flex items-center gap-2 text-sm text-parchment font-medium">
                       <Phone className="w-4 h-4 text-coral" />
-                      <span>{profile?.mobile || 'No contact provided'}</span>
+                      <span>{studentInfo.mobile || 'No contact provided'}</span>
                     </div>
                   </div>
 
@@ -468,7 +607,7 @@ export default function StudentProfileClient({ data }: StudentProfileProps) {
                     </span>
                     <div className="flex items-center gap-2 text-sm text-parchment font-medium">
                       <MapPin className="w-4 h-4 text-coral" />
-                      <span>{profile?.address || 'No address on file'}</span>
+                      <span>{studentInfo.address || 'No address on file'}</span>
                     </div>
                   </div>
                 </div>
@@ -538,8 +677,8 @@ export default function StudentProfileClient({ data }: StudentProfileProps) {
                             className={`px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider border ${
                               f.status === 'paid'
                                 ? 'text-emerald-400 border-emerald-500/30 bg-emerald-500/10'
-                                : f.status === 'partial'
-                                ? 'text-gold border-gold/30 bg-gold/10'
+                                : f.status === 'upcoming'
+                                ? 'text-veena-blue border-veena-blue/30 bg-veena-blue/10'
                                 : 'text-red-400 border-red-500/30 bg-red-500/10'
                             }`}
                           >
@@ -601,8 +740,8 @@ export default function StudentProfileClient({ data }: StudentProfileProps) {
                                 className={`px-2.5 py-1 rounded text-xs font-bold uppercase tracking-wider border ${
                                   f.status === 'paid'
                                     ? 'text-emerald-400 border-emerald-500/30 bg-emerald-500/10'
-                                    : f.status === 'partial'
-                                    ? 'text-gold border-gold/30 bg-gold/10'
+                                    : f.status === 'upcoming'
+                                    ? 'text-veena-blue border-veena-blue/30 bg-veena-blue/10'
                                     : 'text-red-400 border-red-500/30 bg-red-500/10'
                                 }`}
                               >
@@ -686,7 +825,7 @@ export default function StudentProfileClient({ data }: StudentProfileProps) {
                         <div className="flex items-center gap-3">
                           <span
                             className={`text-xs font-bold px-2.5 py-1 rounded-lg border ${gradeColor}`}
-                            style={{ background: 'rgba(255,255,255,0.03)' }}
+                            style={{ background: 'rgba(255,255,200,0.03)' }}
                           >
                             {calculatedGrade}
                           </span>
@@ -715,7 +854,7 @@ export default function StudentProfileClient({ data }: StudentProfileProps) {
             </motion.div>
           )}
 
-          {/* ── 4. ATTENDANCE TAB ── */}
+          {/* ── 4. ATTENDANCE TAB (WITH LOGS, EDIT STATUS & DELETE) ── */}
           {activeTab === 'attendance' && (
             <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="space-y-6">
               <div className="surface-card rounded-3xl p-6 md:p-8 border border-hairline space-y-6">
@@ -724,13 +863,13 @@ export default function StudentProfileClient({ data }: StudentProfileProps) {
                   <div className="p-4 rounded-2xl bg-surface border border-hairline">
                     <span className="text-[10px] text-mist font-mono uppercase block">Present Days</span>
                     <span className="text-2xl font-bold font-display text-emerald-400 mt-1 block">
-                      {attendanceStats.present}
+                      {presentDays}
                     </span>
                   </div>
                   <div className="p-4 rounded-2xl bg-surface border border-hairline">
                     <span className="text-[10px] text-mist font-mono uppercase block">Total Sessions</span>
                     <span className="text-2xl font-bold font-display text-parchment mt-1 block">
-                      {attendanceStats.total}
+                      {totalAttSessions}
                     </span>
                   </div>
                   <div className="p-4 rounded-2xl bg-surface border border-hairline">
@@ -741,10 +880,228 @@ export default function StudentProfileClient({ data }: StudentProfileProps) {
                   </div>
                 </div>
               </div>
+
+              {/* Attendance Log Table */}
+              <div className="surface-card rounded-3xl p-6 border border-hairline space-y-4">
+                <h4 className="font-display text-lg font-bold text-parchment">Daily Attendance Records</h4>
+                {attendanceLogs.length === 0 ? (
+                  <p className="text-xs text-mist font-mono italic py-4">
+                    No attendance session logs recorded for this student yet.
+                  </p>
+                ) : (
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-left">
+                      <thead>
+                        <tr className="border-b border-hairline bg-ink/30">
+                          <th className="p-3 text-xs font-bold text-mist uppercase tracking-wider">Date</th>
+                          <th className="p-3 text-xs font-bold text-mist uppercase tracking-wider">Status</th>
+                          <th className="p-3 text-xs font-bold text-mist uppercase tracking-wider text-right">
+                            Actions
+                          </th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-hairline">
+                        {attendanceLogs.map((att) => (
+                          <tr key={att.id} className="hover:bg-white/[0.01] transition-colors">
+                            <td className="p-3 font-medium text-parchment text-sm">{formatDate(att.date)}</td>
+                            <td className="p-3">
+                              <span
+                                className={`px-2.5 py-0.5 rounded text-xs font-bold uppercase tracking-wider border ${
+                                  att.status === 'present'
+                                    ? 'text-emerald-400 border-emerald-500/30 bg-emerald-500/10'
+                                    : att.status === 'absent'
+                                    ? 'text-red-400 border-red-500/30 bg-red-500/10'
+                                    : 'text-amber-400 border-amber-500/30 bg-amber-500/10'
+                                }`}
+                              >
+                                {att.status}
+                              </span>
+                            </td>
+                            <td className="p-3 text-right">
+                              <div className="flex items-center justify-end gap-2">
+                                <button
+                                  type="button"
+                                  onClick={() => handleOpenEditAttendance(att)}
+                                  className="px-2.5 py-1 rounded-lg bg-surface border border-hairline text-xs font-bold text-mist hover:text-parchment hover:border-coral/40 transition-colors flex items-center gap-1"
+                                >
+                                  <Edit3 className="w-3.5 h-3.5 text-coral" /> Edit
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={() => handleDeleteAttendance(att.id)}
+                                  className="p-1.5 rounded-lg bg-red-500/10 hover:bg-red-500/20 text-red-400 border border-red-500/30 transition-colors"
+                                  title="Delete Attendance Entry"
+                                >
+                                  <Trash2 className="w-4 h-4" />
+                                </button>
+                              </div>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
+              </div>
             </motion.div>
           )}
         </div>
       </div>
+
+      {/* ─────────────────────────────────────────────────────────────
+          MODAL: EDIT STUDENT PROFILE
+      ───────────────────────────────────────────────────────────── */}
+      <AnimatePresence>
+        {isEditProfileOpen && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-ink/80 backdrop-blur-sm">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.95 }}
+              className="surface-card shadow-2xl rounded-3xl border border-hairline w-full max-w-2xl max-h-[90vh] overflow-y-auto hide-scrollbar bg-ink text-parchment"
+            >
+              <div className="p-6 border-b border-hairline flex justify-between items-center sticky top-0 bg-ink/90 backdrop-blur-md z-10">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-xl bg-coral/10 text-coral flex items-center justify-center">
+                    <Edit3 className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <h2 className="font-display text-xl font-bold text-parchment">Edit Student Profile</h2>
+                    <p className="text-xs text-mist font-mono">{studentInfo.studentId}</p>
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setIsEditProfileOpen(false)}
+                  className="text-mist hover:text-coral transition-colors"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+
+              <form onSubmit={handleSaveProfile} className="p-6 space-y-6">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div>
+                    <label className="text-xs font-semibold text-mist uppercase tracking-wider block mb-1">
+                      Full Name
+                    </label>
+                    <input
+                      type="text"
+                      required
+                      value={editFullName}
+                      onChange={(e) => setEditFullName(e.target.value)}
+                      className="w-full input-glass rounded-xl p-3 text-sm text-parchment focus:outline-none focus:border-coral"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="text-xs font-semibold text-mist uppercase tracking-wider block mb-1">
+                      Roll / Student ID
+                    </label>
+                    <input
+                      type="text"
+                      required
+                      value={editStudentId}
+                      onChange={(e) => setEditStudentId(e.target.value)}
+                      className="w-full input-glass rounded-xl p-3 text-sm text-parchment font-mono focus:outline-none focus:border-coral"
+                    />
+                  </div>
+
+                  <div className="sm:col-span-2">
+                    <label className="text-xs font-semibold text-mist uppercase tracking-wider block mb-1">
+                      Class & Section
+                    </label>
+                    <select
+                      value={editClassId}
+                      onChange={(e) => setEditClassId(e.target.value)}
+                      className="w-full input-glass rounded-xl p-3 text-sm text-parchment focus:outline-none focus:border-coral"
+                    >
+                      {classes.map((c) => (
+                        <option key={c.id} value={c.id} className="bg-ink text-parchment">
+                          {c.class_name} {c.section ? `- Section ${c.section}` : ''}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="text-xs font-semibold text-mist uppercase tracking-wider block mb-1">
+                      Father&apos;s Name
+                    </label>
+                    <input
+                      type="text"
+                      value={editFatherName}
+                      onChange={(e) => setEditFatherName(e.target.value)}
+                      className="w-full input-glass rounded-xl p-3 text-sm text-parchment focus:outline-none focus:border-coral"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="text-xs font-semibold text-mist uppercase tracking-wider block mb-1">
+                      Mother&apos;s Name
+                    </label>
+                    <input
+                      type="text"
+                      value={editMotherName}
+                      onChange={(e) => setEditMotherName(e.target.value)}
+                      className="w-full input-glass rounded-xl p-3 text-sm text-parchment focus:outline-none focus:border-coral"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="text-xs font-semibold text-mist uppercase tracking-wider block mb-1">
+                      Contact Mobile
+                    </label>
+                    <input
+                      type="tel"
+                      value={editMobile}
+                      onChange={(e) => setEditMobile(e.target.value)}
+                      className="w-full input-glass rounded-xl p-3 text-sm text-parchment focus:outline-none focus:border-coral"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="text-xs font-semibold text-mist uppercase tracking-wider block mb-1">
+                      Date of Birth
+                    </label>
+                    <DateInput name="editDob" value={editDob} onChange={setEditDob} />
+                  </div>
+
+                  <div className="sm:col-span-2">
+                    <label className="text-xs font-semibold text-mist uppercase tracking-wider block mb-1">
+                      Residential Address
+                    </label>
+                    <input
+                      type="text"
+                      value={editAddress}
+                      onChange={(e) => setEditAddress(e.target.value)}
+                      className="w-full input-glass rounded-xl p-3 text-sm text-parchment focus:outline-none focus:border-coral"
+                    />
+                  </div>
+                </div>
+
+                <div className="pt-4 flex justify-end gap-3 border-t border-hairline">
+                  <button
+                    type="button"
+                    onClick={() => setIsEditProfileOpen(false)}
+                    className="px-6 py-3 rounded-xl border border-hairline text-mist hover:text-parchment font-semibold text-sm transition-colors"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={isPending}
+                    className="bg-coral text-ink px-8 py-3 rounded-xl font-bold text-sm hover:bg-[#E67E6B] transition-colors flex items-center gap-2 shadow-lg"
+                  >
+                    {isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Check className="w-4 h-4" />}
+                    Save Profile
+                  </button>
+                </div>
+              </form>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
 
       {/* ─────────────────────────────────────────────────────────────
           MODAL: RECORD / EDIT STUDENT FEE
@@ -767,7 +1124,7 @@ export default function StudentProfileClient({ data }: StudentProfileProps) {
                     <h2 className="font-display text-xl font-bold text-parchment">
                       {editingFeeId ? 'Edit Fee Record' : 'Record Fee Deposit'}
                     </h2>
-                    <p className="text-xs text-mist">{profile?.full_name} · {student.student_id}</p>
+                    <p className="text-xs text-mist">{studentInfo.fullName} · {studentInfo.studentId}</p>
                   </div>
                 </div>
                 <button
@@ -787,7 +1144,7 @@ export default function StudentProfileClient({ data }: StudentProfileProps) {
                   <input
                     type="text"
                     required
-                    placeholder="e.g. Term 1 Tuition Fee, Annual Sports Fee"
+                    placeholder="e.g. Tuition Fee Q1, Annual Sports Fee"
                     value={feeName}
                     onChange={(e) => setFeeName(e.target.value)}
                     className="w-full input-glass rounded-xl p-3 text-sm text-parchment focus:outline-none focus:border-coral"
@@ -839,12 +1196,12 @@ export default function StudentProfileClient({ data }: StudentProfileProps) {
                     </label>
                     <select
                       value={feeStatus}
-                      onChange={(e) => setFeeStatus(e.target.value as 'paid' | 'partial' | 'pending')}
+                      onChange={(e) => setFeeStatus(e.target.value as 'paid' | 'due' | 'upcoming')}
                       className="w-full input-glass rounded-xl p-3 text-sm text-parchment focus:outline-none focus:border-coral"
                     >
+                      <option value="due" className="bg-ink text-parchment">Due</option>
                       <option value="paid" className="bg-ink text-parchment">Paid</option>
-                      <option value="partial" className="bg-ink text-parchment">Partial</option>
-                      <option value="pending" className="bg-ink text-parchment">Pending</option>
+                      <option value="upcoming" className="bg-ink text-parchment">Upcoming</option>
                     </select>
                   </div>
                 </div>
@@ -964,6 +1321,88 @@ export default function StudentProfileClient({ data }: StudentProfileProps) {
                   </button>
                 </div>
               </form>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      {/* ─────────────────────────────────────────────────────────────
+          MODAL: EDIT STUDENT ATTENDANCE STATUS
+      ───────────────────────────────────────────────────────────── */}
+      <AnimatePresence>
+        {editingAttendance && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-ink/80 backdrop-blur-sm">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.95 }}
+              className="surface-card shadow-2xl rounded-3xl border border-hairline w-full max-w-md overflow-hidden bg-ink text-parchment"
+            >
+              <div className="p-6 border-b border-hairline flex justify-between items-center bg-ink/90">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-xl bg-coral/10 text-coral flex items-center justify-center">
+                    <Clock className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <h2 className="font-display text-lg font-bold text-parchment">Edit Attendance Status</h2>
+                    <p className="text-xs text-mist font-mono">{formatDate(editingAttendance.date)}</p>
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setEditingAttendance(null)}
+                  className="text-mist hover:text-coral transition-colors"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+
+              <div className="p-6 space-y-6">
+                <div>
+                  <label className="text-xs font-semibold text-mist uppercase tracking-wider block mb-2">
+                    Select New Status
+                  </label>
+                  <div className="grid grid-cols-3 gap-2">
+                    {(['present', 'absent', 'late'] as const).map((st) => (
+                      <button
+                        key={st}
+                        type="button"
+                        onClick={() => setAttendanceNewStatus(st)}
+                        className={`py-3 px-2 rounded-xl text-xs font-bold uppercase tracking-wider border transition-all ${
+                          attendanceNewStatus === st
+                            ? st === 'present'
+                              ? 'bg-emerald-500/20 border-emerald-400 text-emerald-400 shadow-md'
+                              : st === 'absent'
+                              ? 'bg-red-500/20 border-red-400 text-red-400 shadow-md'
+                              : 'bg-amber-500/20 border-amber-400 text-amber-400 shadow-md'
+                            : 'bg-surface border-hairline text-mist hover:border-mist'
+                        }`}
+                      >
+                        {st}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="pt-4 flex justify-end gap-3 border-t border-hairline">
+                  <button
+                    type="button"
+                    onClick={() => setEditingAttendance(null)}
+                    className="px-6 py-3 rounded-xl border border-hairline text-mist hover:text-parchment font-semibold text-sm transition-colors"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleSaveAttendanceStatus}
+                    disabled={isPending}
+                    className="bg-coral text-ink px-8 py-3 rounded-xl font-bold text-sm hover:bg-[#E67E6B] transition-colors flex items-center gap-2 shadow-lg"
+                  >
+                    {isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Check className="w-4 h-4" />}
+                    Update Status
+                  </button>
+                </div>
+              </div>
             </motion.div>
           </div>
         )}
