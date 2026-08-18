@@ -31,7 +31,7 @@ const NAV_ITEMS = [
   { label: "Class Attendance",href:"/teacher/class-attendance",icon: Users        },
   { label: "Leave Application",href:"/teacher/leave",      icon: CalendarClock   },
   { label: "Messages",       href: "/teacher/chat",        icon: MessageSquare   },
-  { label: "My Classes",     href: "/teacher/classes",     icon: BookOpen        },
+  { label: "Upload Results", href: "/teacher/classes",     icon: Upload          },
   { label: "Manage Students",href: "/teacher/students",    icon: Users           },
   { label: "Manage Results", href: "/teacher/manage-results",icon: Upload          },
   { label: "Daily Homework", href: "/teacher/homework",    icon: BookOpen        },

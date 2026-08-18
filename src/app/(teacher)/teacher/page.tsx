@@ -19,15 +19,15 @@ export default async function TeacherDashboard() {
     },
     {
       href: '/teacher/classes',
-      icon: BookOpen,
-      label: 'My Classes',
-      desc: 'View assigned classes & students',
-    },
-    {
-      href: '/teacher/results',
       icon: Upload,
       label: 'Upload Results',
-      desc: 'Submit student result sheets',
+      desc: 'Select assigned class & upload marks',
+    },
+    {
+      href: '/teacher/manage-results',
+      icon: BookOpen,
+      label: 'Manage Results',
+      desc: 'View & manage uploaded result sheets',
     },
   ]
 
