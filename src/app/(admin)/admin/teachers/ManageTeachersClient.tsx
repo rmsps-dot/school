@@ -148,11 +148,10 @@ export default function ManageTeachersClient({
     // Extract assigned class ids
     const currentClassIds = (t.teacher_classes || [])
       .map((tc) => {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const raw = tc as any
-        return raw.class_id || raw.classes?.id
+        const c = Array.isArray(tc.classes) ? tc.classes[0] : tc.classes
+        return tc.class_id || c?.id
       })
-      .filter(Boolean)
+      .filter((id): id is string => Boolean(id))
     setSelectedClassIds(currentClassIds)
   }
 
@@ -344,8 +343,7 @@ export default function ManageTeachersClient({
                 {t.teacher_classes && t.teacher_classes.length > 0 ? (
                   <div className="flex flex-wrap gap-1.5">
                     {t.teacher_classes.map((tc, i: number) => {
-                      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                      const cls = Array.isArray((tc as any).classes) ? (tc as any).classes[0] : (tc as any).classes
+                      const cls = Array.isArray(tc.classes) ? tc.classes[0] : tc.classes
                       return (
                         <span
                           key={i}

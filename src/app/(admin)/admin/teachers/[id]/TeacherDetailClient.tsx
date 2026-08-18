@@ -80,11 +80,10 @@ export default function TeacherDetailClient({ teacher, classes: allAvailableClas
   const [selectedClassIds, setSelectedClassIds] = useState<string[]>(() =>
     teacherClasses
       .map((tc) => {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const raw = tc as any
-        return raw.class_id || raw.classes?.[0]?.id || raw.classes?.id
+        const c = Array.isArray(tc.classes) ? tc.classes[0] : tc.classes
+        return tc.class_id || c?.id
       })
-      .filter(Boolean)
+      .filter((id): id is string => Boolean(id))
   )
 
   // Payment Modal (Add / Edit)
@@ -149,7 +148,7 @@ export default function TeacherDetailClient({ teacher, classes: allAvailableClas
       if (res.error) {
         setErrorMsg(res.error)
       } else {
-        const updated = selectedClassIds.map((cid) => {
+        const updated: NonNullable<TeacherDetailData['teacher_classes']> = selectedClassIds.map((cid) => {
           const cls = allAvailableClasses.find((c) => c.id === cid)
           return {
             class_id: cid,
@@ -157,8 +156,7 @@ export default function TeacherDetailClient({ teacher, classes: allAvailableClas
             classes: cls ? { id: cls.id, class_name: cls.class_name, section: cls.section } : null,
           }
         })
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        setTeacherClasses(updated as any)
+        setTeacherClasses(updated)
         setIsAssignClassesOpen(false)
         setSuccessMsg('Assigned classes updated successfully.')
         setTimeout(() => setSuccessMsg(''), 3000)
@@ -486,8 +484,7 @@ export default function TeacherDetailClient({ teacher, classes: allAvailableClas
               ) : (
                 <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
                   {teacherClasses.map((tc, idx) => {
-                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                    const cls = Array.isArray((tc as any).classes) ? (tc as any).classes[0] : (tc as any).classes
+                    const cls = Array.isArray(tc.classes) ? tc.classes[0] : tc.classes
                     return (
                       <div
                         key={idx}
