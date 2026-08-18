@@ -1,11 +1,13 @@
 import Link from 'next/link'
+import Image from 'next/image'
 import { Camera, BookOpen, Upload, ArrowRight, Calendar, UserCheck } from 'lucide-react'
-import { supabaseAdmin } from '@/utils/supabase/admin'
-import { cookies } from 'next/headers'
+import { getTeacherProfile } from '@/actions/teacher-actions'
 
 export const dynamic = 'force-dynamic'
 
 export default async function TeacherDashboard() {
+  const { data: teacher } = await getTeacherProfile()
+
   const dateStr = new Date().toLocaleDateString('en-IN', {
     weekday: 'long', year: 'numeric', month: 'long', day: 'numeric',
   })
@@ -57,17 +59,36 @@ export default async function TeacherDashboard() {
         <div className="lg:col-span-1 space-y-6">
           
           {/* Digital ID Card with Masterplan Glass + Light Sweep */}
-          <div className="relative group overflow-hidden rounded-[2rem] glass-panel p-6 border border-hairline hover:border-veena-blue/40 transition-all duration-500 shadow-xl">
+          <Link 
+            href="/teacher/profile"
+            className="block relative group overflow-hidden rounded-[2rem] glass-panel p-6 border border-hairline hover:border-veena-blue/40 transition-all duration-500 shadow-xl cursor-pointer"
+          >
             {/* Light sweep animation on hover */}
             <div className="absolute inset-0 -translate-x-full group-hover:animate-[shimmer_1.5s_ease-out] bg-gradient-to-r from-transparent via-white/5 to-transparent skew-x-12 pointer-events-none" />
             
             <div className="flex items-center gap-4 mb-6">
-              <div className="w-16 h-16 rounded-full bg-veena-blue/20 flex items-center justify-center border border-veena-blue/30 text-veena-blue">
-                <UserCheck className="w-8 h-8" />
-              </div>
-              <div>
-                <p className="font-display text-xl font-bold text-parchment">Teacher ID</p>
-                <p className="text-veena-blue font-mono text-sm tracking-widest mt-1">ACTIVE</p>
+              {teacher?.profiles?.profile_photo_url ? (
+                <div className="w-16 h-16 rounded-full overflow-hidden relative border border-veena-blue/40 shadow-inner flex-shrink-0">
+                  <Image 
+                    src={teacher.profiles.profile_photo_url} 
+                    alt={teacher.profiles.full_name || 'Teacher Photo'} 
+                    fill 
+                    sizes="64px" 
+                    className="object-cover" 
+                  />
+                </div>
+              ) : (
+                <div className="w-16 h-16 rounded-full bg-veena-blue/20 flex items-center justify-center border border-veena-blue/30 text-veena-blue flex-shrink-0">
+                  <UserCheck className="w-8 h-8" />
+                </div>
+              )}
+              <div className="min-w-0 flex-1">
+                <p className="font-display text-lg font-bold text-parchment truncate">
+                  {teacher?.profiles?.full_name || 'Teacher ID'}
+                </p>
+                <p className="text-veena-blue font-mono text-xs tracking-widest mt-0.5 truncate">
+                  {teacher?.teacher_id || 'ACTIVE'}
+                </p>
               </div>
             </div>
             <div className="space-y-4">
@@ -80,7 +101,7 @@ export default async function TeacherDashboard() {
                 <span className="text-parchment font-mono text-sm">Classroom / Web</span>
               </div>
             </div>
-          </div>
+          </Link>
 
         </div>
 

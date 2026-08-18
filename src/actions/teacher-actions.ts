@@ -91,10 +91,14 @@ export async function getTeacherProfile() {
     // Fetch the user's email safely using their own session
     const { data: { user } } = await supabase.auth.getUser()
     
+    const profile = Array.isArray(teacherData.profiles) 
+      ? teacherData.profiles[0] 
+      : teacherData.profiles
+
     const teacherProfile = {
       ...teacherData,
-      profiles: teacherData.profiles ? {
-        ...teacherData.profiles,
+      profiles: profile ? {
+        ...profile,
         email: user?.email || null
       } : null
     }
