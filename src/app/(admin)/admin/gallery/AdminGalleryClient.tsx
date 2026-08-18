@@ -19,6 +19,8 @@ import {
   Eye,
   Calendar,
   AlertCircle,
+  Maximize2,
+  Sparkles,
 } from 'lucide-react'
 import { deleteGalleryItem, type GalleryItem, type GalleryCategory } from '@/actions/gallery-actions'
 
@@ -78,7 +80,7 @@ async function getCroppedImg(
   return new Promise((resolve) => {
     canvas.toBlob((blob) => {
       resolve(blob)
-    }, 'image/jpeg', 0.92)
+    }, 'image/jpeg', 0.94)
   })
 }
 
@@ -92,6 +94,7 @@ export default function AdminGalleryClient({ initialItems }: Props) {
   const fileInputRef = useRef<HTMLInputElement>(null)
   const [title, setTitle] = useState('')
   const [category, setCategory] = useState<GalleryCategory>('Event')
+  const [originalFile, setOriginalFile] = useState<File | null>(null)
   const [rawImageSrc, setRawImageSrc] = useState<string | null>(null)
   const [croppedImageBlob, setCroppedImageBlob] = useState<Blob | null>(null)
   const [croppedPreviewUrl, setCroppedPreviewUrl] = useState<string | null>(null)
@@ -124,17 +127,29 @@ export default function AdminGalleryClient({ initialItems }: Props) {
         return
       }
 
+      setOriginalFile(file)
       const reader = new FileReader()
       reader.addEventListener('load', () => {
         const res = reader.result?.toString() || null
         setRawImageSrc(res)
+        setCrop({ x: 0, y: 0 })
+        setZoom(1)
         setIsCropModalOpen(true)
       })
       reader.readAsDataURL(file)
     }
   }
 
-  // Handle crop save
+  // ── ACTION: Use 100% Original Photo Without Any Cropping ──
+  const handleUseOriginalFullImage = () => {
+    if (!originalFile) return
+    setCroppedImageBlob(originalFile)
+    const previewUrl = URL.createObjectURL(originalFile)
+    setCroppedPreviewUrl(previewUrl)
+    setIsCropModalOpen(false)
+  }
+
+  // ── ACTION: Apply Custom Crop ──
   const handleApplyCrop = async () => {
     if (!rawImageSrc || !croppedAreaPixels) return
 
@@ -155,7 +170,7 @@ export default function AdminGalleryClient({ initialItems }: Props) {
   const handleUploadSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!croppedImageBlob) {
-      setUploadError('Please select and crop a photo first.')
+      setUploadError('Please select a photo first.')
       return
     }
     if (!title.trim()) {
@@ -193,6 +208,7 @@ export default function AdminGalleryClient({ initialItems }: Props) {
       // Reset form
       setTitle('')
       setCategory('Event')
+      setOriginalFile(null)
       setRawImageSrc(null)
       setCroppedImageBlob(null)
       setCroppedPreviewUrl(null)
@@ -235,7 +251,7 @@ export default function AdminGalleryClient({ initialItems }: Props) {
           <div>
             <h2 className="text-xl md:text-2xl font-bold text-parchment font-display">Upload Gallery Photo</h2>
             <p className="text-xs md:text-sm text-mist">
-              Directly upload photos from your device, crop to your desired framing, and publish instantly.
+              Select any photo from your phone or PC. Post in full original size or crop as desired.
             </p>
           </div>
         </div>
@@ -259,7 +275,7 @@ export default function AdminGalleryClient({ initialItems }: Props) {
             {/* Left: Photo Drop / Select & Crop Preview */}
             <div className="lg:col-span-5 space-y-3">
               <label className="text-xs font-semibold text-mist uppercase tracking-wider block">
-                Select & Crop Photo
+                Photo Selection
               </label>
 
               {croppedPreviewUrl ? (
@@ -267,10 +283,10 @@ export default function AdminGalleryClient({ initialItems }: Props) {
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img
                     src={croppedPreviewUrl}
-                    alt="Cropped Preview"
+                    alt="Ready to Upload"
                     className="w-full h-full object-cover"
                   />
-                  <div className="absolute inset-0 bg-ink/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-3">
+                  <div className="absolute inset-0 bg-ink/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2.5 p-4 flex-wrap">
                     <button
                       type="button"
                       onClick={() => setIsCropModalOpen(true)}
@@ -280,10 +296,17 @@ export default function AdminGalleryClient({ initialItems }: Props) {
                     </button>
                     <button
                       type="button"
+                      onClick={handleUseOriginalFullImage}
+                      className="px-3.5 py-2 rounded-xl bg-veena-blue text-ink font-bold text-xs flex items-center gap-1.5 shadow-lg hover:bg-veena-blue/90 transition-all"
+                    >
+                      <Sparkles className="w-3.5 h-3.5" /> Use Original
+                    </button>
+                    <button
+                      type="button"
                       onClick={() => fileInputRef.current?.click()}
                       className="px-3.5 py-2 rounded-xl bg-white/10 text-parchment font-bold text-xs flex items-center gap-1.5 border border-hairline hover:bg-white/20 transition-all"
                     >
-                      <Upload className="w-3.5 h-3.5" /> Change Photo
+                      <Upload className="w-3.5 h-3.5" /> Change
                     </button>
                   </div>
                 </div>
@@ -506,7 +529,7 @@ export default function AdminGalleryClient({ initialItems }: Props) {
       </div>
 
       {/* ─────────────────────────────────────────────────────────────
-          CROP PHOTO MODAL (REACT-EASY-CROP)
+          CROP PHOTO MODAL (FLEXIBLE LAYOUT + USE ORIGINAL BYPASS)
       ───────────────────────────────────────────────────────────── */}
       {mounted &&
         rawImageSrc &&
@@ -518,32 +541,45 @@ export default function AdminGalleryClient({ initialItems }: Props) {
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0.95 }}
-              className="surface-card w-full max-w-2xl rounded-3xl border border-hairline overflow-hidden shadow-2xl flex flex-col bg-ink text-parchment"
+              className="surface-card w-full max-w-3xl rounded-3xl border border-hairline overflow-hidden shadow-2xl flex flex-col bg-ink text-parchment max-h-[95vh]"
             >
               {/* Header */}
               <div className="p-4 md:p-5 border-b border-hairline flex items-center justify-between bg-ink/90">
                 <div className="flex items-center gap-2">
                   <Crop className="w-5 h-5 text-coral" />
                   <h3 className="font-display font-bold text-base md:text-lg text-parchment">
-                    Crop & Frame Photo
+                    Crop Photo
                   </h3>
                 </div>
-                <button
-                  type="button"
-                  onClick={() => setIsCropModalOpen(false)}
-                  className="p-2 rounded-xl hover:bg-white/10 text-mist hover:text-parchment transition-colors"
-                >
-                  <X className="w-5 h-5" />
-                </button>
+                <div className="flex items-center gap-2">
+                  {/* One-click Original Bypass in header */}
+                  <button
+                    type="button"
+                    onClick={handleUseOriginalFullImage}
+                    className="px-3.5 py-1.5 rounded-xl bg-veena-blue/20 hover:bg-veena-blue text-parchment hover:text-ink border border-veena-blue/40 text-xs font-bold transition-all flex items-center gap-1.5"
+                  >
+                    <Sparkles className="w-3.5 h-3.5" />
+                    Use Original (No Crop)
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setIsCropModalOpen(false)}
+                    className="p-2 rounded-xl hover:bg-white/10 text-mist hover:text-parchment transition-colors"
+                  >
+                    <X className="w-5 h-5" />
+                  </button>
+                </div>
               </div>
 
               {/* Cropper Canvas */}
-              <div className="relative h-[360px] md:h-[420px] w-full bg-black">
+              <div className="relative h-[360px] md:h-[440px] w-full bg-black">
                 <Cropper
                   image={rawImageSrc}
                   crop={crop}
                   zoom={zoom}
                   aspect={aspectRatio}
+                  showGrid={true}
+                  restrictPosition={false}
                   onCropChange={setCrop}
                   onZoomChange={setZoom}
                   onCropComplete={(_, croppedPixels) => setCroppedAreaPixels(croppedPixels)}
@@ -567,23 +603,34 @@ export default function AdminGalleryClient({ initialItems }: Props) {
                   <span className="text-xs font-mono text-coral font-bold">{zoom.toFixed(1)}x</span>
                 </div>
 
-                {/* Aspect Ratio Presets */}
+                {/* Aspect Ratio Presets & Actions */}
                 <div className="flex items-center justify-between flex-wrap gap-3">
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-2 flex-wrap">
                     <span className="text-xs text-mist font-semibold">Aspect Ratio:</span>
+                    
+                    {/* Free / Original Full button */}
+                    <button
+                      type="button"
+                      onClick={handleUseOriginalFullImage}
+                      className="px-3 py-1.5 rounded-lg text-xs font-mono font-bold transition-all bg-veena-blue text-ink shadow-md flex items-center gap-1"
+                    >
+                      <Sparkles className="w-3 h-3" />
+                      Free (Original Full)
+                    </button>
+
                     {[
-                      { label: '16:9', val: 16 / 9 },
-                      { label: '4:3', val: 4 / 3 },
-                      { label: '1:1', val: 1 },
-                      { label: 'Free', val: undefined },
+                      { label: '16:9 (Landscape)', val: 16 / 9 },
+                      { label: '4:3 (Standard)', val: 4 / 3 },
+                      { label: '1:1 (Square)', val: 1 },
+                      { label: '3:4 (Portrait)', val: 3 / 4 },
                     ].map((ar) => (
                       <button
                         key={ar.label}
                         type="button"
                         onClick={() => setAspectRatio(ar.val)}
-                        className={`px-3 py-1 rounded-lg text-xs font-mono font-semibold transition-all ${
+                        className={`px-3 py-1.5 rounded-lg text-xs font-mono font-semibold transition-all ${
                           aspectRatio === ar.val
-                            ? 'bg-coral text-ink font-bold'
+                            ? 'bg-coral text-ink font-bold shadow-md'
                             : 'bg-ink border border-hairline text-parchment hover:border-mist'
                         }`}
                       >
