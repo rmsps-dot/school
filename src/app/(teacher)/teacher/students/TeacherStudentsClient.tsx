@@ -46,10 +46,8 @@ export default function TeacherStudentsClient({ classes, initialPendingRequests 
   // Action status message
   const [actionMessage, setActionMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null)
 
-  // 3D ID Card State
+  // ID Card State
   const [viewStudent, setViewStudent] = useState<StudentViewRecord | null>(null)
-  const [rotateX, setRotateX] = useState(0)
-  const [rotateY, setRotateY] = useState(0)
 
   // Edit Modal State
   const [editingStudent, setEditingStudent] = useState<StudentViewRecord | null>(null)
@@ -69,26 +67,6 @@ export default function TeacherStudentsClient({ classes, initialPendingRequests 
       s.profiles?.full_name?.toLowerCase().includes(search.toLowerCase()) ||
       s.student_id?.toLowerCase().includes(search.toLowerCase())
   )
-
-  const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
-    const card = e.currentTarget
-    const box = card.getBoundingClientRect()
-    const x = e.clientX - box.left
-    const y = e.clientY - box.top
-    const centerX = box.width / 2
-    const centerY = box.height / 2
-
-    const rotateXValue = ((y - centerY) / centerY) * -10
-    const rotateYValue = ((x - centerX) / centerX) * 10
-
-    setRotateX(rotateXValue)
-    setRotateY(rotateYValue)
-  }
-
-  const handleMouseLeave = () => {
-    setRotateX(0)
-    setRotateY(0)
-  }
 
   const formatDate = (dateStr?: string | null) => {
     if (!dateStr) return 'N/A'
@@ -514,15 +492,11 @@ export default function TeacherStudentsClient({ classes, initialPendingRequests 
             onClick={() => setViewStudent(null)}
           >
             <div
-              className="relative max-w-sm w-full perspective-1000"
+              className="relative max-w-sm w-full"
               onClick={(e) => e.stopPropagation()}
             >
-              <motion.div
-                onMouseMove={handleMouseMove}
-                onMouseLeave={handleMouseLeave}
-                animate={{ rotateX, rotateY }}
-                transition={{ type: 'spring', stiffness: 300, damping: 30, mass: 0.5 }}
-                className="surface-card preserve-3d border border-hairline rounded-3xl p-6 shadow-2xl relative overflow-hidden flex flex-col items-center text-center"
+              <div
+                className="surface-card border border-hairline rounded-2xl p-6 shadow-xl relative overflow-hidden flex flex-col items-center text-center"
               >
                 {/* School Branding Header */}
                 <div className="w-full flex items-center justify-between border-b border-hairline pb-4 mb-6">
@@ -628,13 +602,13 @@ export default function TeacherStudentsClient({ classes, initialPendingRequests 
                     <button
                       type="button"
                       onClick={() => setViewStudent(null)}
-                      className="flex-1 bg-ink border border-hairline hover:border-mist text-mist hover:text-parchment py-2.5 rounded-xl font-bold text-xs transition-colors"
+                      className="flex-1 bg-surface hover:bg-surface-hover border border-hairline text-mist hover:text-parchment py-2.5 rounded-xl font-bold text-xs transition-colors"
                     >
                       Close
                     </button>
                   </div>
                 </div>
-              </motion.div>
+              </div>
             </div>
           </motion.div>
         )}
@@ -796,18 +770,6 @@ export default function TeacherStudentsClient({ classes, initialPendingRequests 
         )}
       </AnimatePresence>
 
-      <style
-        dangerouslySetInnerHTML={{
-          __html: `
-        .perspective-1000 {
-          perspective: 1000px;
-        }
-        .preserve-3d {
-          transform-style: preserve-3d;
-        }
-      `,
-        }}
-      />
     </div>
   )
 }

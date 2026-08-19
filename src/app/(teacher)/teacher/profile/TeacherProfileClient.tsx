@@ -60,24 +60,6 @@ export default function TeacherProfileClient({ teacher, pendingRequest: initialP
   const [address, setAddress] = useState(teacher.profiles?.address || '')
   const [dob, setDob] = useState(teacher.profiles?.dob ? teacher.profiles.dob.split('T')[0] : '')
 
-  // 3D tilt
-  const [rotateX, setRotateX] = useState(0)
-  const [rotateY, setRotateY] = useState(0)
-
-  const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
-    const card = e.currentTarget
-    const box = card.getBoundingClientRect()
-    const x = e.clientX - box.left
-    const y = e.clientY - box.top
-    setRotateX(((y - box.height / 2) / (box.height / 2)) * -8)
-    setRotateY(((x - box.width / 2) / (box.width / 2)) * 8)
-  }
-
-  const handleMouseLeave = () => {
-    setRotateX(0)
-    setRotateY(0)
-  }
-
   const formatDate = (dateStr?: string | null) => {
     if (!dateStr) return 'N/A'
     return new Date(dateStr).toLocaleDateString('en-IN', {
@@ -202,24 +184,11 @@ export default function TeacherProfileClient({ teacher, pendingRequest: initialP
         </motion.div>
       )}
 
-      {/* 3D Digital ID Card */}
-      <div className="flex flex-col items-center justify-center" style={{ perspective: '1000px' }}>
-        <motion.div
-          onMouseMove={handleMouseMove}
-          onMouseLeave={handleMouseLeave}
-          animate={{ rotateX, rotateY }}
-          transition={{ type: 'spring', stiffness: 300, damping: 30, mass: 0.5 }}
-          className="relative rounded-3xl overflow-hidden w-full glass-panel border border-hairline shadow-2xl"
-          style={{ transformStyle: 'preserve-3d' }}
-        >
+      {/* Digital ID Card */}
+      <div className="flex flex-col items-center justify-center">
+        <div className="relative rounded-2xl overflow-hidden w-full surface-card border border-hairline shadow-md">
           {/* ID Card Header */}
-          <div
-            className="p-5 flex items-center justify-between border-b border-hairline"
-            style={{
-              background: 'linear-gradient(135deg, rgba(62,92,118,0.2) 0%, rgba(62,92,118,0.08) 100%)',
-              transform: 'translateZ(20px)',
-            }}
-          >
+          <div className="p-5 flex items-center justify-between border-b border-hairline bg-veena-blue/10">
             <div className="flex items-center gap-3">
               <BookOpen className="w-6 h-6 text-veena-blue" />
               <span className="font-display font-bold text-parchment tracking-wider text-sm">
@@ -227,25 +196,21 @@ export default function TeacherProfileClient({ teacher, pendingRequest: initialP
               </span>
             </div>
             <div
-              className="w-8 h-8 rounded-full overflow-hidden border border-veena-blue/30 flex-shrink-0 flex items-center justify-center"
-              style={{ background: 'rgba(62,92,118,0.1)' }}
+              className="w-8 h-8 rounded-full overflow-hidden border border-veena-blue/30 flex-shrink-0 flex items-center justify-center bg-veena-blue/10"
             >
               <Image src="/icon-192.png" alt="RMSPS Logo" width={32} height={32} className="object-cover" />
             </div>
           </div>
 
           {/* ID Card Content */}
-          <div className="p-8 flex flex-col items-center relative" style={{ transform: 'translateZ(30px)' }}>
+          <div className="p-8 flex flex-col items-center relative">
             <div className="relative mb-6">
               <AvatarUpload
                 currentPhotoUrl={teacher.profiles?.profile_photo_url}
                 size="xl"
                 onUploadSuccess={() => router.refresh()}
               />
-              <div
-                className="absolute -bottom-3 -right-3 text-[10px] font-bold px-2.5 py-1 rounded-lg border border-veena-blue/30 text-veena-blue shadow-lg"
-                style={{ background: 'var(--ink)', boxShadow: '0 0 12px rgba(62,92,118,0.2)' }}
-              >
+              <div className="absolute -bottom-3 -right-3 text-[10px] font-bold px-2.5 py-1 rounded-lg border border-veena-blue/30 text-veena-blue bg-ink shadow-md">
                 FACULTY
               </div>
             </div>
@@ -274,7 +239,7 @@ export default function TeacherProfileClient({ teacher, pendingRequest: initialP
               <button
                 type="button"
                 onClick={handleOpenModal}
-                className="w-full py-3 rounded-2xl bg-veena-blue/20 hover:bg-veena-blue/30 border border-veena-blue/40 text-parchment text-xs font-bold transition-all flex items-center justify-center gap-2 shadow-lg"
+                className="w-full py-3 rounded-xl bg-veena-blue/20 hover:bg-veena-blue/30 border border-veena-blue/40 text-parchment text-xs font-bold transition-colors flex items-center justify-center gap-2 shadow-sm"
               >
                 <Edit3 className="w-4 h-4 text-veena-blue" />
                 Request Profile Update
@@ -282,11 +247,8 @@ export default function TeacherProfileClient({ teacher, pendingRequest: initialP
             </div>
           </div>
 
-          {/* Decorative barcode footer */}
-          <div
-            className="px-8 pb-6 flex items-center justify-center border-t border-hairline"
-            style={{ transform: 'translateZ(10px)' }}
-          >
+          {/* Barcode footer */}
+          <div className="px-8 pb-6 flex items-center justify-center border-t border-hairline">
             <div className="w-3/4 h-7 flex items-end justify-between opacity-20 mt-4">
               {[...Array(22)].map((_, i) => (
                 <div
@@ -298,7 +260,7 @@ export default function TeacherProfileClient({ teacher, pendingRequest: initialP
               ))}
             </div>
           </div>
-        </motion.div>
+        </div>
       </div>
 
       {/* ─────────────────────────────────────────────────────────────

@@ -117,26 +117,6 @@ export default function StudentProfileClient({ data, classes }: StudentProfilePr
   const [editingAttendance, setEditingAttendance] = useState<typeof attendanceLogs[0] | null>(null)
   const [attendanceNewStatus, setAttendanceNewStatus] = useState<Database['public']['Enums']['attendance_status']>('present')
 
-  // 3D Tilt effect handlers for ID card
-  const [rotateX, setRotateX] = useState(0)
-  const [rotateY, setRotateY] = useState(0)
-
-  const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
-    const card = e.currentTarget
-    const box = card.getBoundingClientRect()
-    const x = e.clientX - box.left
-    const y = e.clientY - box.top
-    const centerX = box.width / 2
-    const centerY = box.height / 2
-    setRotateX(((y - centerY) / centerY) * -8)
-    setRotateY(((x - centerX) / centerX) * 8)
-  }
-
-  const handleMouseLeave = () => {
-    setRotateX(0)
-    setRotateY(0)
-  }
-
   const formatDate = (dateStr?: string | null) => {
     if (!dateStr) return 'N/A'
     return new Date(dateStr).toLocaleDateString('en-IN', {
@@ -465,24 +445,11 @@ export default function StudentProfileClient({ data, classes }: StudentProfilePr
       </AnimatePresence>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        {/* ── LEFT COL: FULL RICH 3D DIGITAL ID CARD ── */}
-        <div className="lg:col-span-1" style={{ perspective: '1000px' }}>
-          <motion.div
-            onMouseMove={handleMouseMove}
-            onMouseLeave={handleMouseLeave}
-            animate={{ rotateX, rotateY }}
-            transition={{ type: 'spring', stiffness: 300, damping: 30, mass: 0.5 }}
-            className="relative rounded-3xl overflow-hidden cursor-pointer glass-panel shadow-2xl"
-            style={{ transformStyle: 'preserve-3d' }}
-          >
+        {/* ── LEFT COL: DIGITAL ID CARD ── */}
+        <div className="lg:col-span-1">
+          <div className="relative rounded-2xl overflow-hidden surface-card border border-hairline shadow-md">
             {/* ID Card Header */}
-            <div
-              className="p-5 flex items-center justify-between border-b border-hairline"
-              style={{
-                background: 'linear-gradient(135deg, rgba(241,145,125,0.15) 0%, rgba(212,175,106,0.08) 100%)',
-                transform: 'translateZ(20px)',
-              }}
-            >
+            <div className="p-5 flex items-center justify-between border-b border-hairline bg-coral/10">
               <div className="flex items-center gap-2">
                 <GraduationCap className="w-5 h-5 text-coral" />
                 <span className="font-display font-bold text-parchment tracking-wider text-sm">
@@ -490,15 +457,14 @@ export default function StudentProfileClient({ data, classes }: StudentProfilePr
                 </span>
               </div>
               <div
-                className="w-8 h-8 rounded-full overflow-hidden border border-coral/30 flex-shrink-0 flex items-center justify-center"
-                style={{ background: 'rgba(241,145,125,0.1)' }}
+                className="w-8 h-8 rounded-full overflow-hidden border border-coral/30 flex-shrink-0 flex items-center justify-center bg-coral/10"
               >
                 <Image src="/icon-192.png" alt="RMSPS Logo" width={32} height={32} className="object-cover" />
               </div>
             </div>
 
             {/* ID Card Photo & Identity */}
-            <div className="p-6 flex flex-col items-center relative" style={{ transform: 'translateZ(30px)' }}>
+            <div className="p-6 flex flex-col items-center relative">
               <div className="relative mb-5">
                 <AvatarUpload
                   currentPhotoUrl={profile?.profile_photo_url}
@@ -506,10 +472,7 @@ export default function StudentProfileClient({ data, classes }: StudentProfilePr
                   size="xl"
                   onUploadSuccess={() => router.refresh()}
                 />
-                <div
-                  className="absolute -bottom-3 -right-3 text-[10px] font-bold px-2.5 py-1 rounded-lg border border-coral/30 text-coral shadow-lg"
-                  style={{ background: 'var(--ink)', boxShadow: '0 0 12px rgba(241,145,125,0.2)' }}
-                >
+                <div className="absolute -bottom-3 -right-3 text-[10px] font-bold px-2.5 py-1 rounded-lg border border-coral/30 text-coral bg-ink shadow-md">
                   {studentInfo.className || 'CLASS'}
                 </div>
               </div>
@@ -537,11 +500,8 @@ export default function StudentProfileClient({ data, classes }: StudentProfilePr
               </div>
             </div>
 
-            {/* Card Footer — Decorative Barcode */}
-            <div
-              className="px-6 pb-5 flex items-center justify-center border-t border-hairline"
-              style={{ transform: 'translateZ(10px)' }}
-            >
+            {/* Card Footer — Barcode */}
+            <div className="px-6 pb-5 flex items-center justify-center border-t border-hairline">
               <div className="w-3/4 h-8 flex items-end justify-between opacity-20 mt-4">
                 {[...Array(22)].map((_, i) => (
                   <div
@@ -553,7 +513,7 @@ export default function StudentProfileClient({ data, classes }: StudentProfilePr
                 ))}
               </div>
             </div>
-          </motion.div>
+          </div>
         </div>
 
         {/* ── RIGHT COL: DATA SECTIONS & MANAGEMENT TABS ── */}

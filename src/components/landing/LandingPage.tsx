@@ -244,8 +244,16 @@ function InfiniteMarquee() {
     "Residential Hostels",
   ];
   return (
-    <div className="w-full bg-ink/60 border-y border-hairline py-4 overflow-hidden relative">
-      <div className="animate-marquee flex items-center gap-12 text-sm font-semibold tracking-wider uppercase text-mist">
+    <div className="w-full bg-ink/60 border-y border-hairline py-4 overflow-hidden relative select-none">
+      <motion.div
+        className="flex items-center gap-12 text-sm font-semibold tracking-wider uppercase text-mist w-max animate-marquee"
+        animate={{ x: ["0%", "-50%"] }}
+        transition={{
+          ease: "linear",
+          duration: 25,
+          repeat: Infinity,
+        }}
+      >
         {[...items, ...items, ...items, ...items].map((item, idx) => (
           <div key={idx} className="flex items-center gap-8 shrink-0">
             <span className="flex items-center gap-2 text-parchment/90 hover:text-coral transition-colors cursor-default">
@@ -255,7 +263,7 @@ function InfiniteMarquee() {
             <span className="text-mist/30 font-mono">✦</span>
           </div>
         ))}
-      </div>
+      </motion.div>
     </div>
   );
 }
