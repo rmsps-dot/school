@@ -261,23 +261,29 @@ function Navbar({
         }`}
       >
         <div className="max-w-7xl mx-auto px-4 sm:px-8 flex items-center justify-between">
-          <Link href="/" className="flex items-center gap-2.5 group">
-            <div className="w-8 h-8 rounded-full overflow-hidden border border-[#FB7339] p-0.5 bg-black shrink-0">
+          <Link href="/" className="flex items-center gap-3.5 group">
+            <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-full overflow-hidden border-2 border-[#FB7339] p-0.5 bg-black shrink-0 shadow-lg transition-transform duration-300 group-hover:scale-105">
               <Image
                 src="/icon-192.png"
-                alt="RMSPS"
-                width={32}
-                height={32}
+                alt="RMSPS Logo"
+                width={56}
+                height={56}
                 className="w-full h-full object-cover rounded-full"
+                priority
               />
             </div>
-            <span
-              className={`text-xl sm:text-2xl font-display font-black tracking-tighter uppercase transition-colors ${
-                isLight ? "text-[#0B0B10]" : "text-white"
-              }`}
-            >
-              RMSPS
-            </span>
+            <div className="flex flex-col">
+              <span
+                className={`text-2xl sm:text-3xl font-display font-black tracking-widest uppercase leading-none transition-colors ${
+                  isLight ? "text-[#0B0B10]" : "text-white"
+                }`}
+              >
+                RMSPS
+              </span>
+              <span className="text-[9px] sm:text-[10px] font-mono tracking-widest uppercase text-[#FB7339] font-bold mt-0.5">
+                Pipra, Bihar
+              </span>
+            </div>
           </Link>
 
           {/* Desktop Radix/Shadcn Navigation Menu */}
@@ -455,9 +461,20 @@ function Navbar({
                 isLight ? "border-black/10" : "border-white/10"
               }`}
             >
-              <span className="text-2xl font-display font-black tracking-tighter uppercase">
-                RMSPS
-              </span>
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-full overflow-hidden border-2 border-[#FB7339] p-0.5 bg-black shrink-0">
+                  <Image
+                    src="/icon-192.png"
+                    alt="RMSPS Logo"
+                    width={40}
+                    height={40}
+                    className="w-full h-full object-cover rounded-full"
+                  />
+                </div>
+                <span className="text-2xl font-display font-black tracking-widest uppercase">
+                  RMSPS
+                </span>
+              </div>
               <button
                 onClick={() => setMobileMenuOpen(false)}
                 className="p-2"
@@ -1222,31 +1239,31 @@ export default function LandingPage({
       {/* 4. Infinite Marquee */}
       <InfiniteMarquee theme={theme} />
 
-      {/* 5. Intro Text Reveal */}
-      <IntroText theme={theme} />
-
-      {/* 6. On/Off-Grid Reveal */}
-      <GridReveal theme={theme} />
-
-      {/* 7. Press & Accreditation Header */}
-      <PressHeader theme={theme} />
-
-      {/* 8. Community Stories (Bounded Parallax Gliding Reviews) */}
-      <CredibilitySlider theme={theme} />
-
-      {/* 9. Core Institutional Pillars (Bounded Parallax Gliding Pillars) */}
-      <FeatureStickySlider />
-
-      {/* 9.5. 4 Expanded Digital Portals */}
-      <PortalsSection theme={theme} />
-
-      {/* 9.8. Live Notices */}
+      {/* 5. (Rank 2) Live Circulars & Notice Board */}
       <NoticesSection notices={displayNotices} onOpenNotice={setSelectedNotice} theme={theme} />
 
-      {/* 10. Pre-Footer CTA */}
+      {/* 6. (Rank 3) Apply for Admission & Call Admission Desk CTA */}
       <PreFooter />
 
-      {/* 11. Footer */}
+      {/* 7. (Rank 4) 4 Dedicated Digital Portals */}
+      <PortalsSection theme={theme} />
+
+      {/* 8. Institutional Mission Statement */}
+      <IntroText theme={theme} />
+
+      {/* 9. The 3-Dimensional Campus (Bounded Parallax Slider) */}
+      <GridReveal theme={theme} />
+
+      {/* 10. Press & Accreditation Badges */}
+      <PressHeader theme={theme} />
+
+      {/* 11. Community Stories (Bounded Parallax Reviews) */}
+      <CredibilitySlider theme={theme} />
+
+      {/* 12. Core Institutional Pillars (Bounded Parallax Pillars) */}
+      <FeatureStickySlider />
+
+      {/* 13. Footer */}
       <Footer />
 
       {/* Notice Inspection Modal */}
