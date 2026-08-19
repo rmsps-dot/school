@@ -16,6 +16,7 @@ import {
   Star, CheckCircle, Mail, ChevronRight,
   Bell, GraduationCap, Zap, Award, BookOpen, Phone, MapPin,
   Sparkles, Calendar, ArrowUpRight, Compass, Laptop, HeartHandshake,
+  CheckCircle2, Clock, MapPinCheck, School,
 } from "lucide-react";
 
 import IntroPreloader from "@/components/landing/IntroPreloader";
@@ -119,29 +120,30 @@ function SectionHeader({
 /* ─── INFINITE MARQUEE STRIP ─── */
 function InfiniteMarquee() {
   const items = [
-    "BSEB Affiliated Institution",
-    "Smart Geofenced Campus ERP",
+    "Residential Maa Saraswati Public School",
+    "BSEB Affiliated Co-Educational Campus",
+    "Smart Geofenced Attendance ERP",
     "100% Board Examination Pass Record",
-    "Robotics & Advanced Science Labs",
-    "Secure Residential Hostels",
-    "Holistic Moral & Physical Education",
+    "Advanced Science, Computer & Robotics Labs",
+    "Supervised Residential Hostels & Dining",
+    "Integrated Olympiad & Competitive Coaching",
   ];
 
   return (
-    <div className="w-full bg-ink/70 border-y border-hairline py-4 overflow-hidden relative select-none backdrop-blur-md">
+    <div className="w-full bg-ink/75 border-y border-hairline py-4 overflow-hidden relative select-none backdrop-blur-md">
       <motion.div
         className="flex items-center gap-12 text-xs sm:text-sm font-semibold tracking-wider uppercase text-mist w-max animate-marquee"
         animate={{ x: ["0%", "-50%"] }}
         transition={{
           ease: "linear",
-          duration: 28,
+          duration: 30,
           repeat: Infinity,
         }}
       >
         {[...items, ...items, ...items, ...items].map((item, idx) => (
           <div key={idx} className="flex items-center gap-8 shrink-0">
             <span className="flex items-center gap-2.5 text-parchment/90 hover:text-coral transition-colors cursor-default">
-              <span className="w-2 h-2 rounded-full bg-coral inline-block shadow-sm" />
+              <span className="w-2 h-2 rounded-full bg-coral inline-block shadow-[0_0_8px_rgba(241,145,125,0.6)]" />
               {item}
             </span>
             <span className="text-mist/30 font-mono text-xs">✦</span>
@@ -176,7 +178,7 @@ function NoticeCard({
       animate={isInView ? { opacity: 1, y: 0 } : {}}
       transition={{ duration: 0.4, delay }}
       onClick={onOpen}
-      className="group w-80 sm:w-96 shrink-0 snap-start spotlight-card rounded-2xl p-6 border-l-4 border-coral border-y border-r border-hairline hover:border-coral/40 transition-all flex flex-col cursor-pointer bg-ink/60"
+      className="group w-80 sm:w-96 shrink-0 snap-start spotlight-card rounded-2xl p-6 border-l-4 border-coral border-y border-r border-hairline hover:border-coral/40 transition-all flex flex-col cursor-pointer bg-ink/70 shadow-lg"
     >
       <div className="flex items-center justify-between gap-2 mb-3">
         <div className="flex items-center gap-2">
@@ -189,8 +191,8 @@ function NoticeCard({
             })}
           </span>
         </div>
-        <span className="text-[10px] font-mono uppercase tracking-widest px-2 py-0.5 rounded-md bg-coral/10 text-coral border border-coral/20">
-          Official
+        <span className="text-[10px] font-mono uppercase tracking-widest px-2.5 py-0.5 rounded-full bg-coral/10 text-coral border border-coral/20 font-bold">
+          Circular
         </span>
       </div>
       <h3 className="font-display text-lg font-bold text-parchment mb-2 group-hover:text-coral transition-colors line-clamp-2">
@@ -199,15 +201,15 @@ function NoticeCard({
       <p className="text-mist text-sm leading-relaxed line-clamp-3 mb-4 flex-1">
         {content}
       </p>
-      <div className="flex items-center text-xs font-semibold text-coral group-hover:translate-x-1 transition-transform">
-        <span>Read Full Notice</span>
+      <div className="flex items-center text-xs font-semibold text-coral group-hover:translate-x-1.5 transition-transform">
+        <span>View Full Notice</span>
         <ArrowRight className="w-3.5 h-3.5 ml-1.5" />
       </div>
     </motion.div>
   );
 }
 
-/* ─── DIGITAL PORTAL CARD ─── */
+/* ─── DIGITAL PORTAL BENTO CARD ─── */
 function PortalCard({
   title,
   role,
@@ -238,14 +240,14 @@ function PortalCard({
       transition={{ duration: 0.5, delay, ease: [0.21, 0.47, 0.32, 0.98] }}
       className="group relative spotlight-card rounded-3xl p-8 flex flex-col justify-between border border-hairline overflow-hidden cursor-pointer"
       style={{
-        background: "linear-gradient(180deg, rgba(255, 255, 255, 0.03) 0%, rgba(11, 11, 16, 0.8) 100%)",
+        background: "linear-gradient(180deg, rgba(255, 255, 255, 0.03) 0%, rgba(11, 11, 16, 0.85) 100%)",
       }}
     >
       {/* Radiant Hover Ambient Glow */}
       <div
         className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none"
         style={{
-          background: `radial-gradient(ellipse at 0% 0%, ${colorVar}18 0%, transparent 65%)`,
+          background: `radial-gradient(ellipse at 0% 0%, ${colorVar}20 0%, transparent 65%)`,
         }}
       />
 
@@ -293,12 +295,12 @@ function PortalCard({
       {/* Enter Action Button */}
       <Link
         href={link}
-        className="mt-auto inline-flex items-center justify-between w-full py-3.5 px-5 rounded-xl border border-hairline group-hover:border-mist text-sm font-bold text-parchment transition-all"
+        className="mt-auto inline-flex items-center justify-between w-full py-3.5 px-5 rounded-xl border border-hairline group-hover:border-mist text-sm font-bold text-parchment transition-all shadow-md"
         style={{
-          background: "rgba(11, 11, 16, 0.6)",
+          background: "rgba(11, 11, 16, 0.7)",
         }}
       >
-        <span>Access Dashboard</span>
+        <span>Enter Portal</span>
         <ArrowUpRight className="w-4 h-4 transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5" style={{ color: colorVar }} />
       </Link>
     </motion.div>
@@ -337,7 +339,7 @@ function TestimonialCard({
           <Star key={i} className="w-4 h-4 fill-gold text-gold" />
         ))}
       </div>
-      <p className="text-parchment/85 leading-relaxed text-sm flex-1 font-body">
+      <p className="text-parchment/90 leading-relaxed text-sm flex-1 font-body">
         &quot;{quote}&quot;
       </p>
       <div className="flex items-center gap-3.5 pt-4 border-t border-hairline/60">
@@ -379,40 +381,40 @@ export default function LandingPage({
     {
       label: "Primary Wing",
       grades: "Classes I – V",
-      board: "Foundational Learning",
-      tagline: "Nurturing curiosity, foundational literacy, and social confidence.",
-      subjects: ["English", "Hindi", "Mathematics", "Environmental Science", "Art & Craft", "Yoga & Sports"],
+      board: "Foundational & Activity-Based",
+      tagline: "Nurturing curiosity, foundational literacy, character building, and social confidence.",
+      subjects: ["English Language & Phonics", "Hindi & Sanskrit Basics", "Mathematics & Logic", "Environmental Studies (EVS)", "Art, Craft & Creative Expression", "Daily Yoga & Morning Assembly"],
       highlights: [
         "Interactive activity-based learning modules",
-        "Morning meditation, prayer & character building",
-        "Dedicated music, art & creative expression hours",
-        "Safe, monitored residential environment",
+        "Morning meditation, prayer & moral value education",
+        "Dedicated music, art & creative expression sessions",
+        "Safe, nurturing residential supervision",
       ],
     },
     {
       label: "Secondary Wing",
       grades: "Classes VI – X",
       board: "BSEB Affiliated Curriculum",
-      tagline: "Rigorous academic preparation with science laboratory practicals.",
-      subjects: ["English", "Hindi", "Mathematics", "Science (Phy/Chem/Bio)", "Social Studies", "Sanskrit & Computers"],
+      tagline: "Rigorous academic preparation with modern science & computer laboratory practicals.",
+      subjects: ["English Language & Literature", "Hindi & Sanskrit", "Mathematics & Geometry", "Science (Physics, Chemistry, Biology)", "Social Sciences (History, Civics, Geo)", "Computer Science & Digital Literacy"],
       highlights: [
-        "Hands-on Science & Computer Lab practicals",
+        "Hands-on Science & Computer Lab practical sessions",
         "Comprehensive BSEB Board examination preparation",
-        "Regular Olympiad & competitive aptitude tests",
+        "Regular Olympiad & competitive aptitude test series",
         "Structured daily evening study halls for boarders",
       ],
     },
     {
       label: "Senior Secondary",
       grades: "Classes XI – XII",
-      board: "BSEB Advanced Streams",
-      tagline: "Specialized streams in Science, Commerce & Arts with entrance support.",
-      subjects: ["Physics, Chemistry, Math / Bio", "Accountancy & Economics", "Humanities & Social Sciences", "English Core & Informatics"],
+      board: "BSEB Specialized Streams",
+      tagline: "Focused streams in Science, Commerce & Arts with entrance exam orientation.",
+      subjects: ["Physics, Chemistry, Mathematics / Biology", "Accountancy, Business Studies & Economics", "History, Political Science & Sociology", "English Core & Informatics Practices"],
       highlights: [
-        "Subject-matter expert faculty for each discipline",
-        "Rigorous mock board test series & evaluation",
-        "Integrated coaching orientation for JEE / NEET / CA",
-        "Individual career counselling & guidance",
+        "Subject-matter expert faculty for each academic discipline",
+        "Rigorous mock board test series & individual evaluation",
+        "Integrated coaching support for JEE, NEET, and CA Foundation",
+        "Individual career counselling & guidance mentorship",
       ],
     },
   ];
@@ -420,7 +422,7 @@ export default function LandingPage({
   const stats = [
     { value: 98, suffix: "%", label: "Board Pass Rate", icon: Trophy },
     { value: 15, suffix: "+", label: "Years of Excellence", icon: Award },
-    { value: 1000, suffix: "+", label: "Enrolled Scholars", icon: Users },
+    { value: 1000, suffix: "+", label: "Active Scholars", icon: Users },
     { value: 20, suffix: "+", label: "Master Faculty", icon: GraduationCap },
   ];
 
@@ -428,37 +430,37 @@ export default function LandingPage({
     {
       title: "Admin Portal",
       role: "Governance & ERP",
-      desc: "Full institutional oversight: verify registrations, manage staff, configure attendance geofence, and inspect ledgers.",
+      desc: "Full institutional governance: approve registrations, manage faculty assignments, configure attendance geofence, and inspect financial ledgers.",
       icon: Shield,
       colorVar: "#F1917D",
-      features: ["Admissions verification", "Faculty assignment", "Location geofence control", "Financial audits"],
+      features: ["Admissions verification & approvals", "Faculty & classroom assignments", "Location geofence control", "Financial ledgers & fee audits"],
       link: "/login?role=admin",
     },
     {
       title: "Teacher Portal",
       role: "Faculty & Academics",
-      desc: "Instant geofenced attendance, result publishing, homework management, and direct student guidance.",
+      desc: "Instant geofenced attendance marking, examination result entries, homework distribution, and direct student communication.",
       icon: BookOpen,
       colorVar: "#3E5C76",
-      features: ["Geofence attendance marking", "Exam result entries", "Homework assignments", "Student communication"],
+      features: ["Geofenced instant attendance", "Terminal exam marks publishing", "Homework assignments & tracking", "Direct scholar mentorship chat"],
       link: "/login?role=teacher",
     },
     {
       title: "Parent Portal",
       role: "Guardian View",
-      desc: "Live visibility into your child's educational progress, attendance history, fee receipts, and school notices.",
+      desc: "Real-time visibility into your ward's daily attendance records, examination report cards, fee deposit ledgers, and official circulars.",
       icon: Users,
       colorVar: "#D4AF6A",
-      features: ["Live attendance records", "Fee deposits & receipts", "Report card summaries", "Official school circulars"],
+      features: ["Live attendance notification", "Fee deposits & digital receipts", "Terminal report card summaries", "Official school circulars"],
       link: "/login?role=parent",
     },
     {
       title: "Student Portal",
-      role: "Student Hub",
-      desc: "Your personal academic dashboard: check examination results, homework tasks, attendance status, and submit requests.",
+      role: "Scholar Hub",
+      desc: "Personal academic dashboard: check subject marks, download homework assignments, monitor attendance percentage, and apply for leave.",
       icon: GraduationCap,
       colorVar: "#81B29A",
-      features: ["Exam scorecards", "Homework submission", "Leave applications", "Faculty chat portal"],
+      features: ["Exam scorecards & analytics", "Homework tasks & submissions", "Leave applications & tracking", "Direct teacher query portal"],
       link: "/login?role=student",
     },
   ];
@@ -466,30 +468,30 @@ export default function LandingPage({
   const facilities = [
     {
       title: "Advanced Science & Robotics Labs",
-      desc: "Well-equipped physics, chemistry, biology, and robotics laboratories fostering scientific curiosity.",
+      desc: "State-of-the-art physics, chemistry, biology, and robotics laboratories fostering scientific curiosity and practical experiments.",
       icon: Microscope,
-      tag: "Practical Learning",
+      tag: "Practical Science",
       image: "https://images.unsplash.com/photo-1509062522246-3755977927d7?q=80&w=800",
     },
     {
-      title: "Modern Smart Classrooms",
-      desc: "Spacious, ventilated classrooms equipped with digital learning aids for immersive audio-visual education.",
+      title: "Smart Digital Classrooms",
+      desc: "Spacious, well-ventilated classrooms equipped with digital learning displays for immersive audio-visual education.",
       icon: Laptop,
       tag: "Digital Infrastructure",
       image: "https://images.unsplash.com/photo-1580582932707-520aed937b7b?q=80&w=800",
     },
     {
-      title: "Secure Residential Hostels",
-      desc: "Safe, hygienic hostel facilities with nutritious dining, 24/7 warden supervision, and evening study halls.",
+      title: "Supervised Residential Hostels",
+      desc: "Safe, hygienic hostel facilities with nutritious dining, 24/7 warden supervision, medical care, and disciplined study hours.",
       icon: HeartHandshake,
       tag: "Campus Living",
       image: "https://images.unsplash.com/photo-1546410531-bb4caa6b424d?q=80&w=800",
     },
     {
-      title: "Sports Complex & Athletics",
-      desc: "Large athletic fields for cricket, football, volleyball, and indoor sports promoting physical vigor.",
+      title: "Athletic Grounds & Sports Complex",
+      desc: "Large outdoor athletic fields for cricket, football, volleyball, and indoor sports promoting physical vigor and team spirit.",
       icon: Trophy,
-      tag: "Athletic Excellence",
+      tag: "Physical Fitness",
       image: "https://images.unsplash.com/photo-1523240795612-9a054b0db644?q=80&w=800",
     },
   ];
@@ -497,7 +499,7 @@ export default function LandingPage({
   const testimonials = [
     {
       quote:
-        "The parent portal has completely transformed how I stay updated with my son's daily attendance and terminal results. As a working parent, this transparency is invaluable.",
+        "The parent portal has completely transformed how I stay connected with my son's daily attendance and terminal results. As a working parent, this real-time transparency is remarkable.",
       name: "Ramesh Kumar Sinha",
       role: "Parent, Class IX Student",
       initial: "R",
@@ -505,7 +507,7 @@ export default function LandingPage({
     },
     {
       quote:
-        "RMSPS provided me the discipline, faculty guidance, and conceptual clarity that helped me excel in my BSEB board exams and secure engineering admission.",
+        "RMSPS gave me the academic discipline, faculty guidance, and conceptual foundations that helped me excel in my BSEB board exams and secure competitive admission.",
       name: "Priya Sharma",
       role: "Alumni, Batch of 2024",
       initial: "P",
@@ -513,7 +515,7 @@ export default function LandingPage({
     },
     {
       quote:
-        "The geofenced smart attendance system and digital gradebook save valuable administrative time, allowing us teachers to dedicate our full focus to each child.",
+        "The geofenced smart attendance system and digital gradebook save valuable administrative hours, allowing us teachers to dedicate our full energy to each student's progress.",
       name: "Mrs. Kavita Pandey",
       role: "Senior Faculty, Mathematics",
       initial: "K",
@@ -523,21 +525,21 @@ export default function LandingPage({
 
   const defaultNotices = [
     {
-      title: "Admissions Open — Session 2026–27",
+      title: "Admissions Open — Academic Session 2026–27",
       content:
-        "Online and offline registrations are officially open for Primary, Secondary, and Senior Secondary classes. Limited residential seats available.",
+        "Online and offline registrations are officially open for Primary, Secondary, and Senior Secondary classes. Limited residential hostel seats available for boys and girls.",
       created_at: new Date().toISOString(),
     },
     {
       title: "BSEB Board Examination Guidance & Mock Series",
       content:
-        "Special practical labs and structured mock evaluation tests for BSEB board candidates will commence this month. Consult your teacher portal timetable.",
+        "Special practical labs and structured mock evaluation tests for BSEB board candidates will commence this month. Consult your teacher portal for timetable schedules.",
       created_at: new Date().toISOString(),
     },
     {
       title: "Annual Science Exhibition & Sports Meet",
       content:
-        "The annual inter-house science exhibition and athletics tournament schedule is published. Parents are cordially invited to attend.",
+        "The annual inter-house science exhibition and athletics tournament schedule is officially published. Parents and guardians are cordially invited to attend.",
       created_at: new Date().toISOString(),
     },
   ];
@@ -668,8 +670,8 @@ export default function LandingPage({
         </AnimatePresence>
       </motion.nav>
 
-      {/* ── HERO SECTION ── */}
-      <div className="relative min-h-[100svh] w-full flex items-center justify-center pt-24 pb-16 overflow-hidden">
+      {/* ── HERO SECTION: PRESTIGIOUS SCHOOL IDENTITY ── */}
+      <div className="relative min-h-[100svh] w-full flex items-center justify-center pt-28 pb-16 overflow-hidden">
         {/* Background Image with Dark Vignette */}
         <div className="absolute inset-0 z-0">
           <Image
@@ -688,7 +690,7 @@ export default function LandingPage({
           style={{ opacity: heroOpacity, y: prefersReducedMotion ? "0%" : heroY }}
           className="relative z-10 w-full max-w-7xl mx-auto px-6 grid grid-cols-1 lg:grid-cols-12 gap-12 items-center"
         >
-          {/* Left Column: Headline & Action CTAs */}
+          {/* Left Column: Official School Name Headline & Action CTAs */}
           <div className="lg:col-span-7 space-y-6 text-left">
             {/* Live Admissions Status Badge */}
             <motion.div
@@ -701,18 +703,20 @@ export default function LandingPage({
               <span>Admissions Open • Session 2026–27</span>
             </motion.div>
 
-            {/* Main Headline */}
-            <h1 className="font-display font-extrabold text-4xl sm:text-5xl md:text-6xl lg:text-[4.2rem] leading-[1.1] tracking-tight text-parchment">
-              Shaping Tomorrow&apos;s{" "}
-              <span className="text-coral underline decoration-coral/30 decoration-wavy underline-offset-8">
-                Leaders
-              </span>
-              , Today.
-            </h1>
+            {/* Official School Name Headline */}
+            <div className="space-y-2">
+              <h1 className="font-display font-extrabold text-3xl sm:text-5xl md:text-6xl lg:text-[4rem] leading-[1.1] tracking-tight text-parchment">
+                Residential Maa Saraswati Public School
+              </h1>
+              <p className="font-mono text-sm sm:text-base text-coral tracking-widest uppercase font-bold flex items-center gap-2">
+                <span className="w-1.5 h-1.5 rounded-full bg-coral inline-block" />
+                <span>R.M.S. Public School • Pipra, Bihar</span>
+              </p>
+            </div>
 
-            {/* Sub-headline */}
+            {/* Sub-headline / Mission Statement */}
             <p className="text-mist text-base sm:text-lg max-w-xl leading-relaxed">
-              Residential Maa Saraswati Public School — a premier BSEB-affiliated residential institution in Bihar, fostering academic rigour, discipline, and holistic character since 2016.
+              A premier BSEB-affiliated residential institution delivering academic excellence, modern science practicals, and disciplined character education since 2016.
             </p>
 
             {/* Primary Action Buttons */}
@@ -757,14 +761,14 @@ export default function LandingPage({
                   </div>
                   <div>
                     <h3 className="font-display font-bold text-parchment text-base">
-                      Institutional Highlights
+                      Institutional Credentials
                     </h3>
-                    <p className="text-[11px] font-mono text-mist">BSEB Code: 852109</p>
+                    <p className="text-[11px] font-mono text-mist">BSEB Code: 852109 • Est. 2016</p>
                   </div>
                 </div>
                 <span className="flex items-center gap-1.5 text-xs font-mono text-emerald-400 bg-emerald-500/10 px-2.5 py-1 rounded-full border border-emerald-500/20">
                   <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
-                  Live ERP
+                  Active ERP
                 </span>
               </div>
 
@@ -791,7 +795,7 @@ export default function LandingPage({
               {/* Key Trust Check */}
               <div className="p-4 rounded-2xl bg-coral/5 border border-coral/20 flex items-center gap-3 text-xs text-mist">
                 <Shield className="w-5 h-5 text-coral shrink-0" />
-                <span>Geofenced automated attendance & instant SMS circulars for parents.</span>
+                <span>Geofenced smart attendance & verified terminal gradebooks for all students.</span>
               </div>
             </motion.div>
           </div>
@@ -814,7 +818,7 @@ export default function LandingPage({
       {/* ── STATS BAR ── */}
       <div className="w-full border-y border-hairline bg-surface/40 backdrop-blur-md">
         <div className="max-w-7xl mx-auto px-6 py-10 grid grid-cols-2 md:grid-cols-4 gap-8">
-          {stats.map(({ value, suffix, label, icon: Icon }, i) => (
+          {stats.map(({ value, suffix, label, icon: Icon }) => (
             <div key={label} className="flex flex-col items-center text-center gap-2">
               <Icon className="w-6 h-6 text-coral mb-1" />
               <div className="font-display text-4xl md:text-5xl font-bold text-parchment">
@@ -832,7 +836,7 @@ export default function LandingPage({
           <SectionHeader
             label="Latest Announcements"
             title="Official Notice Board"
-            subtitle="Real-time circulars, academic schedules, and institutional events."
+            subtitle="Real-time circulars, examination schedules, and institutional events."
             badgeIcon={Bell}
           />
 
@@ -951,7 +955,7 @@ export default function LandingPage({
                 </div>
 
                 <div className="p-4 rounded-2xl bg-surface-hover border border-hairline flex items-center justify-between text-xs text-mist">
-                  <span>Standard BSEB Board Curriculum with Continuous Assessment</span>
+                  <span>Standard BSEB Board Curriculum with Continuous Practical Labs</span>
                   <Award className="w-4 h-4 text-gold" />
                 </div>
               </div>
@@ -966,12 +970,12 @@ export default function LandingPage({
           <SectionHeader
             label="Campus Infrastructure"
             title="World-Class Learning Environment"
-            subtitle="Equipped with specialized labs, smart classrooms, safe hostels, and athletic grounds."
+            subtitle="Equipped with specialized laboratories, digital classrooms, secure residential hostels, and athletic grounds."
             badgeIcon={Sparkles}
           />
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-            {facilities.map((fac, idx) => (
+            {facilities.map((fac) => (
               <div
                 key={fac.title}
                 className="group spotlight-card rounded-3xl overflow-hidden border border-hairline relative flex flex-col justify-end min-h-[320px] p-8"
@@ -988,7 +992,7 @@ export default function LandingPage({
 
                 {/* Content Overlay */}
                 <div className="relative z-10 space-y-3">
-                  <span className="text-[11px] font-mono uppercase tracking-widest text-coral px-3 py-1 rounded-full bg-coral/10 border border-coral/20 inline-block">
+                  <span className="text-[11px] font-mono uppercase tracking-widest text-coral px-3 py-1 rounded-full bg-coral/10 border border-coral/20 inline-block font-bold">
                     {fac.tag}
                   </span>
                   <h3 className="font-display text-2xl font-bold text-parchment group-hover:text-coral transition-colors">
@@ -1035,13 +1039,13 @@ export default function LandingPage({
             <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_50%_0%,rgba(241,145,125,0.15),transparent_65%)] pointer-events-none" />
 
             <div className="relative z-10 max-w-3xl mx-auto space-y-6">
-              <span className="inline-flex items-center gap-2 px-4 py-2 rounded-full border border-coral/40 bg-coral/15 text-coral text-xs font-mono uppercase tracking-widest">
+              <span className="inline-flex items-center gap-2 px-4 py-2 rounded-full border border-coral/40 bg-coral/15 text-coral text-xs font-mono uppercase tracking-widest font-bold">
                 <span className="w-2 h-2 rounded-full bg-coral animate-pulse" />
                 Session 2026–27 Open
               </span>
 
               <h2 className="font-display text-3xl sm:text-5xl md:text-6xl font-bold text-parchment tracking-tight">
-                Begin Your Journey with RMSPS.
+                Begin Your Journey at RMSPS.
               </h2>
 
               <p className="text-mist text-base sm:text-lg leading-relaxed">
@@ -1201,7 +1205,7 @@ export default function LandingPage({
               <div className="flex items-center justify-between border-b border-hairline pb-4">
                 <div className="flex items-center gap-2 text-xs font-mono text-coral">
                   <Bell className="w-4 h-4" />
-                  <span>Official Notice</span>
+                  <span>Official Circular</span>
                 </div>
                 <button
                   onClick={() => setSelectedNotice(null)}
@@ -1233,7 +1237,7 @@ export default function LandingPage({
                   onClick={() => setSelectedNotice(null)}
                   className="btn-primary px-6 py-2.5 rounded-xl text-xs font-bold"
                 >
-                  Close Notice
+                  Close Circular
                 </button>
               </div>
             </motion.div>
