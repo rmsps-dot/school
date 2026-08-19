@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
-import { motion, AnimatePresence } from "framer-motion";
 import Image from "next/image";
 
 export type PreloaderRole = "admin" | "teacher" | "student" | "parent" | "public";
@@ -15,69 +14,64 @@ export default function IntroPreloader({
   role = "public",
   onComplete,
 }: IntroPreloaderProps) {
-  const [phase, setPhase] = useState<"logo-center" | "brand-expanded">("logo-center");
+  const [isExpanded, setIsExpanded] = useState(false);
   const [progress, setProgress] = useState(1);
   const [isExiting, setIsExiting] = useState(false);
-  const [isRemoved, setIsRemoved] = useState(false);
-  const [isMounted, setIsMounted] = useState(false);
+  const [isDone, setIsDone] = useState(false);
   const animFrameRef = useRef<number | null>(null);
 
   useEffect(() => {
-    setIsMounted(true);
-
-    // Step 1 -> Step 2: Trigger logo shift to left & text reveal after 400ms
+    // 1. Snappy logo shift + text reveal after 200ms
     const expandTimer = setTimeout(() => {
-      setPhase("brand-expanded");
-    }, 400);
+      setIsExpanded(true);
+    }, 250);
 
-    // Step 3: Run smooth 1 to 100% counter
-    const counterStartDelay = 500;
-    const counterDuration = 1300; // Snappy & fast
+    // 2. Smooth 1 to 100% counter (~1.1s duration, hardware-accelerated)
+    const counterDelay = 350;
+    const counterDuration = 1100;
     let startTime: number | null = null;
 
-    const startCounterTimer = setTimeout(() => {
-      const updateCounter = (timestamp: number) => {
+    const counterTimer = setTimeout(() => {
+      const step = (timestamp: number) => {
         if (!startTime) startTime = timestamp;
         const elapsed = timestamp - startTime;
-        const linearProgress = Math.min(1, elapsed / counterDuration);
+        const linear = Math.min(1, elapsed / counterDuration);
 
-        // Smooth cubic ease-out curve
-        const eased = 1 - Math.pow(1 - linearProgress, 3);
-        const currentPct = Math.max(1, Math.min(100, Math.round(eased * 100)));
+        // Smooth cubic ease-out
+        const eased = 1 - Math.pow(1 - linear, 3);
+        const current = Math.max(1, Math.min(100, Math.round(eased * 100)));
+        setProgress(current);
 
-        setProgress(currentPct);
-
-        if (linearProgress < 1) {
-          animFrameRef.current = requestAnimationFrame(updateCounter);
+        if (linear < 1) {
+          animFrameRef.current = requestAnimationFrame(step);
         } else {
-          // Reached 100% -> Brief pause then curtain exit
+          // Reached 100% -> Smooth curtain slide up
           setTimeout(() => {
             setIsExiting(true);
             if (onComplete) {
               onComplete();
             }
             setTimeout(() => {
-              setIsRemoved(true);
-            }, 750);
-          }, 180);
+              setIsDone(true);
+            }, 650);
+          }, 150);
         }
       };
 
-      animFrameRef.current = requestAnimationFrame(updateCounter);
-    }, counterStartDelay);
+      animFrameRef.current = requestAnimationFrame(step);
+    }, counterDelay);
 
     return () => {
       clearTimeout(expandTimer);
-      clearTimeout(startCounterTimer);
+      clearTimeout(counterTimer);
       if (animFrameRef.current) {
         cancelAnimationFrame(animFrameRef.current);
       }
     };
   }, [onComplete]);
 
-  if (!isMounted || isRemoved) return null;
+  if (isDone) return null;
 
-  // Role-specific badge and status configurations
   const roleConfig: Record<
     PreloaderRole,
     {
@@ -90,59 +84,59 @@ export default function IntroPreloader({
     admin: {
       badge: "ADMIN PORTAL",
       color: "#F1917D",
-      glow: "rgba(241,145,125,0.4)",
+      glow: "rgba(241,145,125,0.35)",
       status: (pct) =>
         pct < 35
-          ? "Authenticating Administrator Session..."
+          ? "Authenticating Admin Session..."
           : pct < 75
-          ? "Loading Governance & ERP Ledgers..."
+          ? "Loading Governance & ERP..."
           : pct < 100
-          ? "Preparing Administrator Workspace..."
+          ? "Preparing Workspace..."
           : "Access Granted • Welcome Admin",
     },
     teacher: {
       badge: "TEACHER PORTAL",
       color: "#3E5C76",
-      glow: "rgba(62,92,118,0.4)",
+      glow: "rgba(62,92,118,0.35)",
       status: (pct) =>
         pct < 35
           ? "Verifying Faculty Credentials..."
           : pct < 75
-          ? "Syncing Classrooms & Attendance Geofence..."
+          ? "Syncing Attendance Geofence..."
           : pct < 100
-          ? "Preparing Academic Workspace..."
+          ? "Preparing Workspace..."
           : "Access Granted • Welcome Faculty",
     },
     parent: {
       badge: "PARENT PORTAL",
       color: "#D4AF6A",
-      glow: "rgba(212,175,106,0.4)",
+      glow: "rgba(212,175,106,0.35)",
       status: (pct) =>
         pct < 35
           ? "Connecting Ward Records..."
           : pct < 75
-          ? "Syncing Daily Attendance & Fee Receipts..."
+          ? "Syncing Daily Attendance..."
           : pct < 100
-          ? "Preparing Parent Dashboard..."
+          ? "Preparing Dashboard..."
           : "Access Granted • Welcome Guardian",
     },
     student: {
       badge: "STUDENT PORTAL",
       color: "#81B29A",
-      glow: "rgba(129,178,154,0.4)",
+      glow: "rgba(129,178,154,0.35)",
       status: (pct) =>
         pct < 35
           ? "Loading Scholar Profile..."
           : pct < 75
-          ? "Syncing Gradebooks & Homework Tasks..."
+          ? "Syncing Gradebooks & Tasks..."
           : pct < 100
-          ? "Preparing Scholar Workspace..."
+          ? "Preparing Workspace..."
           : "Access Granted • Welcome Scholar",
     },
     public: {
       badge: "BSEB",
       color: "#F1917D",
-      glow: "rgba(241,145,125,0.4)",
+      glow: "rgba(241,145,125,0.35)",
       status: (pct) =>
         pct < 40
           ? "Initializing ERP Network..."
@@ -157,163 +151,105 @@ export default function IntroPreloader({
   const currentRole = roleConfig[role] || roleConfig.public;
 
   return (
-    <AnimatePresence>
-      {!isExiting && (
-        <motion.div
-          key="rmsps-cinematic-preloader"
-          initial={{ opacity: 1 }}
-          exit={{
-            y: "-100%",
-            opacity: 0.9,
-            transition: {
-              duration: 0.7,
-              ease: [0.76, 0, 0.24, 1], // Smooth exponential curtain lift
-            },
-          }}
-          className="fixed inset-0 z-[100] flex flex-col items-center justify-center bg-[#0B0B10] text-[#F3EFE6] overflow-hidden select-none"
-          style={{ willChange: "transform, opacity" }}
-        >
-          {/* ── GPU-Accelerated Optimized Ambient Light Aura ── */}
-          <div className="absolute inset-0 pointer-events-none overflow-hidden">
-            <div
-              className="absolute -top-24 -left-24 w-96 h-96 rounded-full blur-[90px] transform-gpu"
-              style={{ background: `${currentRole.color}20` }}
-            />
-            <div className="absolute -bottom-24 -right-24 w-96 h-96 rounded-full bg-[#D4AF6A]/12 blur-[90px] transform-gpu" />
-            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] rounded-full bg-[#3E5C76]/10 blur-[100px] transform-gpu" />
-          </div>
-
-          {/* ── Central Brand Container ── */}
-          <div className="relative z-10 flex flex-col items-center text-center px-6 max-w-xl w-full">
-            {/* Step 1 & 2: Logo + Expanding RMSPS Text Lockup */}
-            <motion.div
-              layout
-              transition={{
-                duration: 0.65,
-                ease: [0.16, 1, 0.3, 1], // Apple & Linear luxury ease
-              }}
-              className="flex items-center justify-center gap-4 sm:gap-5 mb-8"
-            >
-              {/* 1. Compact Logo Emblem with Glow Ring */}
-              <motion.div
-                layout
-                initial={{ scale: 0.6, opacity: 0 }}
-                animate={{ scale: 1, opacity: 1 }}
-                transition={{ duration: 0.45, ease: [0.21, 0.47, 0.32, 0.98] }}
-                className="relative shrink-0"
-              >
-                {/* Luminous Aura Ring */}
-                <div
-                  className="absolute -inset-2 rounded-full border bg-opacity-10 blur-[4px] animate-pulse"
-                  style={{
-                    borderColor: `${currentRole.color}60`,
-                    background: `${currentRole.color}15`,
-                  }}
-                />
-
-                {/* Compact Logo Frame (56px) */}
-                <div
-                  className="relative w-14 h-14 sm:w-16 sm:h-16 rounded-full overflow-hidden border-2 bg-[#0B0B10] p-1"
-                  style={{
-                    borderColor: `${currentRole.color}80`,
-                    boxShadow: `0 0 24px ${currentRole.glow}`,
-                  }}
-                >
-                  <Image
-                    src="/icon-192.png"
-                    alt="RMSPS Logo"
-                    width={64}
-                    height={64}
-                    priority
-                    className="w-full h-full object-cover rounded-full"
-                  />
-                </div>
-              </motion.div>
-
-              {/* 2. RMSPS Text Reveal (Appears beside logo as it slides left) */}
-              <AnimatePresence>
-                {phase === "brand-expanded" && (
-                  <motion.div
-                    initial={{ opacity: 0, x: -24, filter: "blur(6px)" }}
-                    animate={{ opacity: 1, x: 0, filter: "blur(0px)" }}
-                    transition={{ duration: 0.55, ease: [0.16, 1, 0.3, 1] }}
-                    className="flex flex-col text-left overflow-hidden"
-                  >
-                    <div className="flex items-baseline gap-2">
-                      <span
-                        className="font-display font-extrabold text-3xl sm:text-4xl tracking-[0.14em]"
-                        style={{
-                          color: currentRole.color,
-                          filter: `drop-shadow(0 0 16px ${currentRole.glow})`,
-                        }}
-                      >
-                        RMSPS
-                      </span>
-                      <span
-                        className="text-[10px] sm:text-xs font-mono font-bold uppercase tracking-widest px-2 py-0.5 rounded border"
-                        style={{
-                          background: `${currentRole.color}15`,
-                          borderColor: `${currentRole.color}40`,
-                          color: currentRole.color,
-                        }}
-                      >
-                        {currentRole.badge}
-                      </span>
-                    </div>
-                    <span className="font-display text-xs sm:text-sm font-semibold tracking-wider text-[#F3EFE6]/90 truncate max-w-[280px] sm:max-w-none">
-                      Residential Maa Saraswati Public School
-                    </span>
-                  </motion.div>
-                )}
-              </AnimatePresence>
-            </motion.div>
-
-            {/* Step 3: Progress Bar & 1 to 100% Counter */}
-            <motion.div
-              initial={{ opacity: 0, y: 12 }}
-              animate={{
-                opacity: phase === "brand-expanded" ? 1 : 0,
-                y: phase === "brand-expanded" ? 0 : 12,
-              }}
-              transition={{ duration: 0.4, delay: 0.1 }}
-              className="w-64 sm:w-80 space-y-2.5"
-            >
-              {/* Progress Line */}
-              <div className="h-1.5 w-full bg-white/5 rounded-full overflow-hidden border border-white/10 relative p-[1px]">
-                <motion.div
-                  className="h-full rounded-full transition-all duration-75"
-                  style={{
-                    width: `${progress}%`,
-                    background: `linear-gradient(90deg, ${currentRole.color}, #D4AF6A, ${currentRole.color})`,
-                    boxShadow: `0 0 12px ${currentRole.glow}`,
-                  }}
-                />
-              </div>
-
-              {/* Status Indicator & Live Counter */}
-              <div className="flex justify-between items-center text-xs font-mono text-[#8A8F98]">
-                <span className="tracking-wider uppercase text-[11px] truncate text-left">
-                  {currentRole.status(progress)}
-                </span>
-                <span className="text-[#F3EFE6] font-bold text-sm tracking-tight tabular-nums ml-2">
-                  {progress}%
-                </span>
-              </div>
-            </motion.div>
-          </div>
-
-          {/* ── Bottom Institutional Stamp ── */}
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: 0.3 }}
-            className="absolute bottom-5 flex items-center gap-2 text-[10px] font-mono text-[#8A8F98]/60 uppercase tracking-widest"
+    <div
+      className={`fixed inset-0 z-[9999] flex flex-col items-center justify-center bg-[#0B0B10] text-[#F3EFE6] select-none transition-transform duration-700 ease-[cubic-bezier(0.76,0,0.24,1)] ${
+        isExiting ? "-translate-y-full opacity-90 pointer-events-none" : "translate-y-0 opacity-100"
+      }`}
+      style={{
+        willChange: "transform",
+        backgroundImage: `radial-gradient(circle at 50% 45%, ${currentRole.color}15 0%, rgba(11,11,16,0.98) 70%)`,
+      }}
+    >
+      {/* ── Center Brand Lockup ── */}
+      <div className="flex flex-col items-center text-center px-6 max-w-lg w-full">
+        
+        {/* Brand Row */}
+        <div className="flex items-center justify-center gap-3 sm:gap-4 mb-6">
+          {/* Logo Crest */}
+          <div
+            className="relative w-13 h-13 sm:w-15 sm:h-15 w-[54px] h-[54px] sm:w-[60px] sm:h-[60px] rounded-full overflow-hidden border-2 bg-[#0B0B10] p-1 shrink-0 transition-transform duration-500"
+            style={{
+              borderColor: currentRole.color,
+              boxShadow: `0 0 20px ${currentRole.glow}`,
+            }}
           >
-            <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
-            <span>Secure Campus System • Kating Chowk, Pipra</span>
-          </motion.div>
-        </motion.div>
-      )}
-    </AnimatePresence>
+            <Image
+              src="/icon-192.png"
+              alt="RMSPS Logo"
+              width={60}
+              height={60}
+              priority
+              className="w-full h-full object-cover rounded-full"
+            />
+          </div>
+
+          {/* Text Container with Smooth CSS Reveal (0 Layout Reflows) */}
+          <div
+            className={`flex flex-col text-left overflow-hidden transition-all duration-500 ease-out ${
+              isExpanded
+                ? "max-w-[320px] opacity-100 translate-x-0"
+                : "max-w-0 opacity-0 -translate-x-3 pointer-events-none"
+            }`}
+          >
+            <div className="flex items-baseline gap-2 whitespace-nowrap">
+              <span
+                className="font-display font-extrabold text-2xl sm:text-3xl tracking-[0.14em]"
+                style={{ color: currentRole.color }}
+              >
+                RMSPS
+              </span>
+              <span
+                className="text-[10px] font-mono font-bold uppercase tracking-widest px-2 py-0.5 rounded border"
+                style={{
+                  background: `${currentRole.color}15`,
+                  borderColor: `${currentRole.color}40`,
+                  color: currentRole.color,
+                }}
+              >
+                {currentRole.badge}
+              </span>
+            </div>
+            <span className="font-display text-[11px] sm:text-xs font-semibold tracking-wider text-[#F3EFE6]/90 whitespace-nowrap">
+              Residential Maa Saraswati Public School
+            </span>
+          </div>
+        </div>
+
+        {/* Progress Bar & Counter Container */}
+        <div
+          className={`w-64 sm:w-72 space-y-2 transition-all duration-500 ${
+            isExpanded ? "opacity-100 translate-y-0" : "opacity-0 translate-y-2"
+          }`}
+        >
+          {/* Hardware-Accelerated Progress Track */}
+          <div className="h-1.5 w-full bg-white/10 rounded-full overflow-hidden border border-white/10 relative">
+            <div
+              className="h-full rounded-full transition-transform duration-75 origin-left"
+              style={{
+                transform: `scaleX(${progress / 100})`,
+                backgroundColor: currentRole.color,
+                boxShadow: `0 0 8px ${currentRole.glow}`,
+              }}
+            />
+          </div>
+
+          {/* Status Text & Tabular Percentage */}
+          <div className="flex justify-between items-center text-[11px] font-mono text-[#8A8F98]">
+            <span className="tracking-wider uppercase truncate text-left">
+              {currentRole.status(progress)}
+            </span>
+            <span className="text-[#F3EFE6] font-bold text-xs tabular-nums ml-2 shrink-0">
+              {progress}%
+            </span>
+          </div>
+        </div>
+      </div>
+
+      {/* Bottom Institutional Stamp */}
+      <div className="absolute bottom-5 flex items-center gap-2 text-[10px] font-mono text-[#8A8F98]/70 uppercase tracking-widest">
+        <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+        <span>Secure Campus System • Kating Chowk, Pipra</span>
+      </div>
+    </div>
   );
 }
