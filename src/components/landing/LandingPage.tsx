@@ -710,7 +710,7 @@ export default function LandingPage({
               </h1>
               <p className="font-mono text-sm sm:text-base text-coral tracking-widest uppercase font-bold flex items-center gap-2">
                 <span className="w-1.5 h-1.5 rounded-full bg-coral inline-block" />
-                <span>R.M.S. Public School • Pipra, Bihar</span>
+                <span>R.M.S. Public School • Kating Chowk, Pipra</span>
               </p>
             </div>
 
