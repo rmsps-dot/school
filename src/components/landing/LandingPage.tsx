@@ -15,9 +15,10 @@ import {
   ArrowRight, Globe, Shield, Microscope, Trophy, Users, Menu, X,
   Star, CheckCircle, Mail, ChevronRight,
   Bell, GraduationCap, Zap, Award, BookOpen, Phone, MapPin,
+  Sparkles, Calendar, ArrowUpRight, Compass, Laptop, HeartHandshake,
 } from "lucide-react";
 
-import { ParallaxScrollFeatureSection } from "@/components/ui/parallax-scroll-feature-section";
+import IntroPreloader from "@/components/landing/IntroPreloader";
 
 /* ─── SINGLE ROLLING DIGIT COLUMN ─── */
 function DigitColumn({ digit, delay, isInView }: { digit: number; delay: number; isInView: boolean }) {
@@ -32,7 +33,7 @@ function DigitColumn({ digit, delay, isInView }: { digit: number; delay: number;
         transition={{
           duration: 2.2,
           delay,
-          ease: [0.16, 1, 0.3, 1], // Apple & Linear luxury ease-out
+          ease: [0.16, 1, 0.3, 1], // Luxury ease-out
         }}
         className="flex flex-col text-center"
       >
@@ -50,7 +51,6 @@ function DigitColumn({ digit, delay, isInView }: { digit: number; delay: number;
 function AnimatedCounter({ target, suffix = "" }: { target: number; suffix?: string }) {
   const ref = useRef<HTMLSpanElement>(null);
   const isInView = useInView(ref, { once: true, margin: "0px" });
-
   const digits = target.toString().split("");
 
   return (
@@ -77,75 +77,270 @@ function AnimatedCounter({ target, suffix = "" }: { target: number; suffix?: str
   );
 }
 
-
 /* ─── SECTION HEADER ─── */
-function SectionHeader({ label, title, subtitle }: { label: string; title: string; subtitle?: string }) {
+function SectionHeader({
+  label,
+  title,
+  subtitle,
+  badgeIcon: BadgeIcon,
+}: {
+  label: string;
+  title: string;
+  subtitle?: string;
+  badgeIcon?: React.ElementType;
+}) {
   const ref = useRef<HTMLDivElement>(null);
-  const isInView = useInView(ref, { once: true, margin: "-80px" });
+  const isInView = useInView(ref, { once: true, margin: "-60px" });
+
   return (
-    <motion.div ref={ref} initial={{ opacity: 0, y: 20 }} animate={isInView ? { opacity: 1, y: 0 } : {}} transition={{ duration: 0.6 }} className="text-center mb-16">
-      <span className="text-coral font-mono text-xs uppercase tracking-[0.2em] mb-3 block">{label}</span>
-      <h2 className="font-display text-4xl md:text-5xl font-bold text-parchment mb-4">{title}</h2>
-      {subtitle && <p className="text-mist text-lg max-w-2xl mx-auto">{subtitle}</p>}
+    <motion.div
+      ref={ref}
+      initial={{ opacity: 0, y: 20 }}
+      animate={isInView ? { opacity: 1, y: 0 } : {}}
+      transition={{ duration: 0.6 }}
+      className="text-center mb-16 space-y-3"
+    >
+      <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full border border-coral/30 bg-coral/10 text-coral text-xs font-mono uppercase tracking-[0.2em]">
+        {BadgeIcon && <BadgeIcon className="w-3.5 h-3.5" />}
+        <span>{label}</span>
+      </div>
+      <h2 className="font-display text-3xl sm:text-4xl md:text-5xl font-bold text-parchment tracking-tight">
+        {title}
+      </h2>
+      {subtitle && (
+        <p className="text-mist text-sm sm:text-base md:text-lg max-w-2xl mx-auto leading-relaxed">
+          {subtitle}
+        </p>
+      )}
     </motion.div>
   );
 }
 
-/* ─── PORTAL CARD ─── */
-function PortalCard({ title, desc, icon: Icon, colorVar, features, link, delay }: {
-  title: string; desc: string; icon: React.ElementType; colorVar: string; features: string[]; link: string; delay: number;
+/* ─── INFINITE MARQUEE STRIP ─── */
+function InfiniteMarquee() {
+  const items = [
+    "BSEB Affiliated Institution",
+    "Smart Geofenced Campus ERP",
+    "100% Board Examination Pass Record",
+    "Robotics & Advanced Science Labs",
+    "Secure Residential Hostels",
+    "Holistic Moral & Physical Education",
+  ];
+
+  return (
+    <div className="w-full bg-ink/70 border-y border-hairline py-4 overflow-hidden relative select-none backdrop-blur-md">
+      <motion.div
+        className="flex items-center gap-12 text-xs sm:text-sm font-semibold tracking-wider uppercase text-mist w-max animate-marquee"
+        animate={{ x: ["0%", "-50%"] }}
+        transition={{
+          ease: "linear",
+          duration: 28,
+          repeat: Infinity,
+        }}
+      >
+        {[...items, ...items, ...items, ...items].map((item, idx) => (
+          <div key={idx} className="flex items-center gap-8 shrink-0">
+            <span className="flex items-center gap-2.5 text-parchment/90 hover:text-coral transition-colors cursor-default">
+              <span className="w-2 h-2 rounded-full bg-coral inline-block shadow-sm" />
+              {item}
+            </span>
+            <span className="text-mist/30 font-mono text-xs">✦</span>
+          </div>
+        ))}
+      </motion.div>
+    </div>
+  );
+}
+
+/* ─── NOTICE CARD WITH MODAL PREVIEW ─── */
+function NoticeCard({
+  title,
+  content,
+  created_at,
+  delay,
+  onOpen,
+}: {
+  title: string;
+  content: string;
+  created_at: string;
+  delay: number;
+  onOpen: () => void;
 }) {
   const ref = useRef<HTMLDivElement>(null);
-  const isInView = useInView(ref, { once: true, margin: "-60px" });
+  const isInView = useInView(ref, { once: true });
+
   return (
-    <motion.div ref={ref} initial={{ opacity: 0, y: 32 }} animate={isInView ? { opacity: 1, y: 0 } : {}} transition={{ duration: 0.5, delay, ease: [0.21, 0.47, 0.32, 0.98] }}
-      className="group relative surface-card rounded-3xl p-8 flex flex-col gap-5 border border-hairline overflow-hidden cursor-pointer transition-all duration-300 hover:scale-[1.02]"
+    <motion.div
+      ref={ref}
+      initial={{ opacity: 0, y: 20 }}
+      animate={isInView ? { opacity: 1, y: 0 } : {}}
+      transition={{ duration: 0.4, delay }}
+      onClick={onOpen}
+      className="group w-80 sm:w-96 shrink-0 snap-start spotlight-card rounded-2xl p-6 border-l-4 border-coral border-y border-r border-hairline hover:border-coral/40 transition-all flex flex-col cursor-pointer bg-ink/60"
     >
-      <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none"
-        style={{ background: `radial-gradient(ellipse at 0% 0%, ${colorVar}18 0%, transparent 60%)` }} />
-      <div className="w-12 h-12 rounded-2xl flex items-center justify-center border"
-        style={{ background: `${colorVar}18`, borderColor: `${colorVar}40`, color: colorVar }}>
-        <Icon className="w-6 h-6" />
+      <div className="flex items-center justify-between gap-2 mb-3">
+        <div className="flex items-center gap-2">
+          <Bell className="w-4 h-4 text-coral shrink-0" />
+          <span className="text-mist text-xs font-mono">
+            {new Date(created_at).toLocaleDateString("en-IN", {
+              day: "2-digit",
+              month: "short",
+              year: "numeric",
+            })}
+          </span>
+        </div>
+        <span className="text-[10px] font-mono uppercase tracking-widest px-2 py-0.5 rounded-md bg-coral/10 text-coral border border-coral/20">
+          Official
+        </span>
       </div>
+      <h3 className="font-display text-lg font-bold text-parchment mb-2 group-hover:text-coral transition-colors line-clamp-2">
+        {title}
+      </h3>
+      <p className="text-mist text-sm leading-relaxed line-clamp-3 mb-4 flex-1">
+        {content}
+      </p>
+      <div className="flex items-center text-xs font-semibold text-coral group-hover:translate-x-1 transition-transform">
+        <span>Read Full Notice</span>
+        <ArrowRight className="w-3.5 h-3.5 ml-1.5" />
+      </div>
+    </motion.div>
+  );
+}
+
+/* ─── DIGITAL PORTAL CARD ─── */
+function PortalCard({
+  title,
+  role,
+  desc,
+  icon: Icon,
+  colorVar,
+  features,
+  link,
+  delay,
+}: {
+  title: string;
+  role: string;
+  desc: string;
+  icon: React.ElementType;
+  colorVar: string;
+  features: string[];
+  link: string;
+  delay: number;
+}) {
+  const ref = useRef<HTMLDivElement>(null);
+  const isInView = useInView(ref, { once: true, margin: "-50px" });
+
+  return (
+    <motion.div
+      ref={ref}
+      initial={{ opacity: 0, y: 28 }}
+      animate={isInView ? { opacity: 1, y: 0 } : {}}
+      transition={{ duration: 0.5, delay, ease: [0.21, 0.47, 0.32, 0.98] }}
+      className="group relative spotlight-card rounded-3xl p-8 flex flex-col justify-between border border-hairline overflow-hidden cursor-pointer"
+      style={{
+        background: "linear-gradient(180deg, rgba(255, 255, 255, 0.03) 0%, rgba(11, 11, 16, 0.8) 100%)",
+      }}
+    >
+      {/* Radiant Hover Ambient Glow */}
+      <div
+        className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none"
+        style={{
+          background: `radial-gradient(ellipse at 0% 0%, ${colorVar}18 0%, transparent 65%)`,
+        }}
+      />
+
       <div>
-        <h3 className="font-display text-xl font-bold text-parchment mb-2">{title}</h3>
-        <p className="text-mist text-sm leading-relaxed">{desc}</p>
+        {/* Top Role Header */}
+        <div className="flex items-center justify-between mb-6">
+          <div
+            className="w-14 h-14 rounded-2xl flex items-center justify-center border transition-all duration-300 group-hover:scale-105"
+            style={{
+              background: `${colorVar}15`,
+              borderColor: `${colorVar}40`,
+              color: colorVar,
+            }}
+          >
+            <Icon className="w-7 h-7" />
+          </div>
+          <span
+            className="text-[10px] font-mono font-bold uppercase tracking-widest px-3 py-1 rounded-full border"
+            style={{
+              background: `${colorVar}10`,
+              borderColor: `${colorVar}30`,
+              color: colorVar,
+            }}
+          >
+            {role}
+          </span>
+        </div>
+
+        <h3 className="font-display text-2xl font-bold text-parchment mb-2 group-hover:text-parchment transition-colors">
+          {title}
+        </h3>
+        <p className="text-mist text-sm leading-relaxed mb-6">{desc}</p>
+
+        {/* Feature List */}
+        <ul className="space-y-2.5 mb-8">
+          {features.map((f) => (
+            <li key={f} className="flex items-center gap-2.5 text-xs text-mist font-medium">
+              <CheckCircle className="w-4 h-4 shrink-0" style={{ color: colorVar }} />
+              <span>{f}</span>
+            </li>
+          ))}
+        </ul>
       </div>
-      <ul className="space-y-2 flex-1">
-        {features.map((f) => (
-          <li key={f} className="flex items-center gap-2 text-sm text-mist">
-            <CheckCircle className="w-4 h-4 shrink-0" style={{ color: colorVar }} />{f}
-          </li>
-        ))}
-      </ul>
-      <Link href={link} className="mt-auto inline-flex items-center gap-2 text-sm font-semibold transition-all group-hover:gap-3" style={{ color: colorVar }}>
-        Enter Portal <ArrowRight className="w-4 h-4" />
+
+      {/* Enter Action Button */}
+      <Link
+        href={link}
+        className="mt-auto inline-flex items-center justify-between w-full py-3.5 px-5 rounded-xl border border-hairline group-hover:border-mist text-sm font-bold text-parchment transition-all"
+        style={{
+          background: "rgba(11, 11, 16, 0.6)",
+        }}
+      >
+        <span>Access Dashboard</span>
+        <ArrowUpRight className="w-4 h-4 transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5" style={{ color: colorVar }} />
       </Link>
     </motion.div>
   );
 }
 
 /* ─── TESTIMONIAL CARD ─── */
-function TestimonialCard({ quote, name, role, initial, color, delay }: {
-  quote: string; name: string; role: string; initial: string; color: string; delay: number;
+function TestimonialCard({
+  quote,
+  name,
+  role,
+  initial,
+  color,
+  delay,
+}: {
+  quote: string;
+  name: string;
+  role: string;
+  initial: string;
+  color: string;
+  delay: number;
 }) {
   const ref = useRef<HTMLDivElement>(null);
-  const isInView = useInView(ref, { once: true, margin: "-60px" });
+  const isInView = useInView(ref, { once: true, margin: "-50px" });
+
   return (
     <motion.div
       ref={ref}
       initial={{ opacity: 0, y: 24 }}
       animate={isInView ? { opacity: 1, y: 0 } : {}}
       transition={{ duration: 0.5, delay }}
-      className="group relative surface-card rounded-3xl p-8 flex flex-col justify-between gap-6 border border-hairline hover:border-coral/30 hover:scale-[1.02] transition-all overflow-hidden"
+      className="group relative spotlight-card rounded-3xl p-8 flex flex-col justify-between gap-6 border border-hairline hover:border-coral/30 transition-all overflow-hidden"
     >
-      <div className="flex gap-1">
+      <div className="flex gap-1.5">
         {[...Array(5)].map((_, i) => (
           <Star key={i} className="w-4 h-4 fill-gold text-gold" />
         ))}
       </div>
-      <p className="text-mist leading-relaxed text-sm flex-1 font-body">&quot;{quote}&quot;</p>
-      <div className="flex items-center gap-3 pt-4 border-t border-hairline/60">
+      <p className="text-parchment/85 leading-relaxed text-sm flex-1 font-body">
+        &quot;{quote}&quot;
+      </p>
+      <div className="flex items-center gap-3.5 pt-4 border-t border-hairline/60">
         <div
           className="w-10 h-10 rounded-full flex items-center justify-center font-display font-bold text-ink text-sm shrink-0 shadow-md"
           style={{ background: color }}
@@ -161,357 +356,603 @@ function TestimonialCard({ quote, name, role, initial, color, delay }: {
   );
 }
 
-/* ─── STAT ITEM (hooks called at top level in parent map) ─── */
-function StatItem({ value, suffix, label, icon: Icon, delay }: {
-  value: number; suffix: string; label: string; icon: React.ElementType; delay: number;
-}) {
-  const ref = useRef<HTMLDivElement>(null);
-  const isInView = useInView(ref, { once: true });
-  return (
-    <motion.div ref={ref} initial={{ opacity: 0, y: 20 }} animate={isInView ? { opacity: 1, y: 0 } : {}} transition={{ duration: 0.5, delay }} className="flex flex-col items-center text-center gap-2">
-      <Icon className="w-6 h-6 text-coral mb-1" />
-      <div className="font-display text-4xl md:text-5xl font-bold text-parchment">
-        <AnimatedCounter target={value} suffix={suffix} />
-      </div>
-      <p className="text-mist text-xs uppercase tracking-widest font-mono">{label}</p>
-    </motion.div>
-  );
-}
-
-/* ─── FEATURE ITEM ─── */
-function FeatureItem({ icon: Icon, title, desc, color, delay }: {
-  icon: React.ElementType; title: string; desc: string; color: string; delay: number;
-}) {
-  const ref = useRef<HTMLDivElement>(null);
-  const isInView = useInView(ref, { once: true, margin: "-60px" });
-  return (
-    <motion.div ref={ref} initial={{ opacity: 0, y: 32 }} animate={isInView ? { opacity: 1, y: 0 } : {}} transition={{ duration: 0.5, delay }} className="group relative surface-card rounded-3xl p-8 flex flex-col gap-4 hover:scale-[1.02] hover:border-coral/30 transition-all duration-300 overflow-hidden">
-      <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none"
-        style={{ background: `radial-gradient(ellipse at 0% 0%, ${color}12 0%, transparent 70%)` }} />
-      <div className="w-14 h-14 rounded-2xl flex items-center justify-center border transition-all duration-300 group-hover:scale-110" style={{ background: `${color}20`, borderColor: `${color}40`, color }}>
-        <Icon className="w-7 h-7" />
-      </div>
-      <h3 className="font-display text-2xl font-bold text-parchment group-hover:text-coral transition-colors">{title}</h3>
-      <p className="text-mist leading-relaxed">{desc}</p>
-    </motion.div>
-  );
-}
-
-/* ─── GALLERY ITEM ─── */
-function GalleryItem({ src, alt, delay }: { src: string; alt: string; delay: number }) {
-  const ref = useRef<HTMLDivElement>(null);
-  const isInView = useInView(ref, { once: true });
-  return (
-    <motion.div ref={ref} initial={{ opacity: 0, scale: 0.95 }} animate={isInView ? { opacity: 1, scale: 1 } : {}} transition={{ duration: 0.5, delay }}
-      className="relative w-72 md:w-96 h-56 md:h-72 shrink-0 rounded-2xl overflow-hidden snap-start group border border-hairline hover:border-coral/40 transition-colors"
-    >
-      <Image src={src} alt={alt} fill className="object-cover group-hover:scale-105 transition-transform duration-700" sizes="(max-width: 768px) 288px, 384px" />
-      <div className="absolute inset-0 bg-gradient-to-t from-ink/90 via-ink/20 to-transparent opacity-60 group-hover:opacity-90 transition-opacity duration-500" />
-      <div className="absolute bottom-0 left-0 right-0 p-4 translate-y-2 group-hover:translate-y-0 opacity-0 group-hover:opacity-100 transition-all duration-300 backdrop-blur-sm bg-ink/40 border-t border-hairline">
-        <p className="text-parchment text-xs font-semibold truncate">{alt}</p>
-      </div>
-    </motion.div>
-  );
-}
-
-/* ─── NOTICE ITEM ─── */
-function NoticeItem({ title, content, created_at, delay }: {
-  title: string; content: string; created_at: string; delay: number;
-}) {
-  const ref = useRef<HTMLDivElement>(null);
-  const isInView = useInView(ref, { once: true });
-  return (
-    <motion.div ref={ref} initial={{ opacity: 0, y: 20 }} animate={isInView ? { opacity: 1, y: 0 } : {}} transition={{ duration: 0.4, delay }}
-      className="group w-72 sm:w-80 md:w-96 shrink-0 snap-start surface-card rounded-2xl p-6 border-l-4 border-coral border-y border-r border-hairline hover:border-coral/40 hover:scale-[1.02] transition-all flex flex-col cursor-default"
-    >
-      <div className="flex items-center gap-2 mb-3">
-        <Bell className="w-4 h-4 text-coral shrink-0" />
-        <span className="text-mist text-xs font-mono">{new Date(created_at).toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" })}</span>
-      </div>
-      <h3 className="font-display text-lg font-bold text-parchment mb-2 group-hover:text-coral transition-colors">{title}</h3>
-      <p className="text-mist text-sm leading-relaxed line-clamp-3">{content}</p>
-    </motion.div>
-  );
-}
-
-/* ─── INFINITE MARQUEE STRIP ─── */
-function InfiniteMarquee() {
-  const items = [
-    "BSEB Affiliation",
-    "Smart Geofenced ERP",
-    "100% Board Pass Record",
-    "Science & Robotics Labs",
-    "Residential Hostels",
-  ];
-  return (
-    <div className="w-full bg-ink/60 border-y border-hairline py-4 overflow-hidden relative select-none">
-      <motion.div
-        className="flex items-center gap-12 text-sm font-semibold tracking-wider uppercase text-mist w-max animate-marquee"
-        animate={{ x: ["0%", "-50%"] }}
-        transition={{
-          ease: "linear",
-          duration: 25,
-          repeat: Infinity,
-        }}
-      >
-        {[...items, ...items, ...items, ...items].map((item, idx) => (
-          <div key={idx} className="flex items-center gap-8 shrink-0">
-            <span className="flex items-center gap-2 text-parchment/90 hover:text-coral transition-colors cursor-default">
-              <span className="w-2 h-2 rounded-full bg-coral inline-block" />
-              {item}
-            </span>
-            <span className="text-mist/30 font-mono">✦</span>
-          </div>
-        ))}
-      </motion.div>
-    </div>
-  );
-}
-
 /* ─── MAIN PAGE ─── */
-export default function LandingPage({ notices = [] }: {
+export default function LandingPage({
+  notices = [],
+}: {
   notices?: { title: string; content: string; created_at: string }[];
 }) {
   const containerRef = useRef<HTMLDivElement>(null);
   const { scrollYProgress } = useScroll({ target: containerRef, offset: ["start start", "end end"] });
   const prefersReducedMotion = useReducedMotion();
+  
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [activeTab, setActiveTab] = useState(0);
+  const [selectedNotice, setSelectedNotice] = useState<{ title: string; content: string; created_at: string } | null>(null);
 
   const navBackground = useTransform(scrollYProgress, [0, 0.05], ["rgba(11,11,16,0)", "rgba(11,11,16,0.92)"]);
-  const navBorder = useTransform(scrollYProgress, [0, 0.05], ["rgba(255,255,255,0)", "rgba(255,255,255,0.07)"]);
+  const navBorder = useTransform(scrollYProgress, [0, 0.05], ["rgba(255,255,255,0)", "rgba(255,255,255,0.08)"]);
   const heroOpacity = useTransform(scrollYProgress, [0, 0.18], [1, 0]);
   const heroY = useTransform(scrollYProgress, [0, 0.18], ["0%", "-8%"]);
 
   const academicTabs = [
-    { label: "Primary", grades: "Classes I – V", board: "CBSE Affiliated", subjects: ["English", "Hindi", "Mathematics", "Environmental Science", "Art & Craft", "Physical Education"], highlights: ["Activity-based learning", "Morning assembly & yoga", "Special drawing & music classes"] },
-    { label: "Secondary", grades: "Classes VI – X", board: "BSEB Affiliated", subjects: ["English", "Hindi", "Mathematics", "Science", "Social Science", "Sanskrit / Computer"], highlights: ["Science lab practicals", "Board exam preparation", "Career counselling sessions"] },
-    { label: "Senior Secondary", grades: "Classes XI – XII", board: "BSEB Affiliated", subjects: ["Science (PCM / PCB)", "Commerce", "Humanities", "English Core", "Physical Education"], highlights: ["Dedicated faculty per subject", "Mock board examinations", "JEE / NEET / CA coaching support"] },
+    {
+      label: "Primary Wing",
+      grades: "Classes I – V",
+      board: "Foundational Learning",
+      tagline: "Nurturing curiosity, foundational literacy, and social confidence.",
+      subjects: ["English", "Hindi", "Mathematics", "Environmental Science", "Art & Craft", "Yoga & Sports"],
+      highlights: [
+        "Interactive activity-based learning modules",
+        "Morning meditation, prayer & character building",
+        "Dedicated music, art & creative expression hours",
+        "Safe, monitored residential environment",
+      ],
+    },
+    {
+      label: "Secondary Wing",
+      grades: "Classes VI – X",
+      board: "BSEB Affiliated Curriculum",
+      tagline: "Rigorous academic preparation with science laboratory practicals.",
+      subjects: ["English", "Hindi", "Mathematics", "Science (Phy/Chem/Bio)", "Social Studies", "Sanskrit & Computers"],
+      highlights: [
+        "Hands-on Science & Computer Lab practicals",
+        "Comprehensive BSEB Board examination preparation",
+        "Regular Olympiad & competitive aptitude tests",
+        "Structured daily evening study halls for boarders",
+      ],
+    },
+    {
+      label: "Senior Secondary",
+      grades: "Classes XI – XII",
+      board: "BSEB Advanced Streams",
+      tagline: "Specialized streams in Science, Commerce & Arts with entrance support.",
+      subjects: ["Physics, Chemistry, Math / Bio", "Accountancy & Economics", "Humanities & Social Sciences", "English Core & Informatics"],
+      highlights: [
+        "Subject-matter expert faculty for each discipline",
+        "Rigorous mock board test series & evaluation",
+        "Integrated coaching orientation for JEE / NEET / CA",
+        "Individual career counselling & guidance",
+      ],
+    },
   ];
 
   const stats = [
     { value: 98, suffix: "%", label: "Board Pass Rate", icon: Trophy },
     { value: 15, suffix: "+", label: "Years of Excellence", icon: Award },
-    { value: 1000, suffix: "+", label: "Students Enrolled", icon: Users },
-    { value: 20, suffix: "+", label: "Dedicated Faculty", icon: GraduationCap },
-  ];
-
-  const features = [
-    { icon: Zap, title: "Smart ERP Portals", desc: "Dedicated dashboards for admins, teachers, parents, and students. Manage attendance, fees, results, and notices — all in one place.", color: "#F1917D" },
-    { icon: Microscope, title: "Modern Infrastructure", desc: "State-of-the-art science labs, a well-stocked library, computer lab, and sports facilities designed for 21st-century learning.", color: "#3E5C76" },
-    { icon: Globe, title: "Holistic Development", desc: "Beyond textbooks — we nurture creativity, leadership, and character through sports, arts, cultural programs, and community service.", color: "#D4AF6A" },
+    { value: 1000, suffix: "+", label: "Enrolled Scholars", icon: Users },
+    { value: 20, suffix: "+", label: "Master Faculty", icon: GraduationCap },
   ];
 
   const portals = [
-    { title: "Admin Portal", desc: "Full institutional oversight. Approve registrations, manage staff, publish notices, and track all financial records.", icon: Shield, colorVar: "#F1917D", features: ["Approve admissions", "Manage teachers & parents", "Publish notices", "View all reports"], link: "/login?role=admin" },
-    { title: "Teacher Portal", desc: "Mark attendance with geolocation, upload results, and communicate with students securely.", icon: BookOpen, colorVar: "#3E5C76", features: ["Geofenced attendance", "Upload exam results", "Manage homework", "Chat with students"], link: "/login?role=teacher" },
-    { title: "Parent Portal", desc: "Stay connected with your child's academic journey. Track attendance, fees, results, and school notices in real-time.", icon: Users, colorVar: "#D4AF6A", features: ["Child progress tracking", "Fee ledger & payments", "Attendance history", "School notices"], link: "/login?role=parent" },
-    { title: "Student Portal", desc: "Your personal academic hub. Check results, homework, attendance, apply for leave, and chat with teachers.", icon: GraduationCap, colorVar: "#81B29A", features: ["View exam results", "Check attendance", "Submit homework", "Apply for leave"], link: "/login?role=student" },
+    {
+      title: "Admin Portal",
+      role: "Governance & ERP",
+      desc: "Full institutional oversight: verify registrations, manage staff, configure attendance geofence, and inspect ledgers.",
+      icon: Shield,
+      colorVar: "#F1917D",
+      features: ["Admissions verification", "Faculty assignment", "Location geofence control", "Financial audits"],
+      link: "/login?role=admin",
+    },
+    {
+      title: "Teacher Portal",
+      role: "Faculty & Academics",
+      desc: "Instant geofenced attendance, result publishing, homework management, and direct student guidance.",
+      icon: BookOpen,
+      colorVar: "#3E5C76",
+      features: ["Geofence attendance marking", "Exam result entries", "Homework assignments", "Student communication"],
+      link: "/login?role=teacher",
+    },
+    {
+      title: "Parent Portal",
+      role: "Guardian View",
+      desc: "Live visibility into your child's educational progress, attendance history, fee receipts, and school notices.",
+      icon: Users,
+      colorVar: "#D4AF6A",
+      features: ["Live attendance records", "Fee deposits & receipts", "Report card summaries", "Official school circulars"],
+      link: "/login?role=parent",
+    },
+    {
+      title: "Student Portal",
+      role: "Student Hub",
+      desc: "Your personal academic dashboard: check examination results, homework tasks, attendance status, and submit requests.",
+      icon: GraduationCap,
+      colorVar: "#81B29A",
+      features: ["Exam scorecards", "Homework submission", "Leave applications", "Faculty chat portal"],
+      link: "/login?role=student",
+    },
+  ];
+
+  const facilities = [
+    {
+      title: "Advanced Science & Robotics Labs",
+      desc: "Well-equipped physics, chemistry, biology, and robotics laboratories fostering scientific curiosity.",
+      icon: Microscope,
+      tag: "Practical Learning",
+      image: "https://images.unsplash.com/photo-1509062522246-3755977927d7?q=80&w=800",
+    },
+    {
+      title: "Modern Smart Classrooms",
+      desc: "Spacious, ventilated classrooms equipped with digital learning aids for immersive audio-visual education.",
+      icon: Laptop,
+      tag: "Digital Infrastructure",
+      image: "https://images.unsplash.com/photo-1580582932707-520aed937b7b?q=80&w=800",
+    },
+    {
+      title: "Secure Residential Hostels",
+      desc: "Safe, hygienic hostel facilities with nutritious dining, 24/7 warden supervision, and evening study halls.",
+      icon: HeartHandshake,
+      tag: "Campus Living",
+      image: "https://images.unsplash.com/photo-1546410531-bb4caa6b424d?q=80&w=800",
+    },
+    {
+      title: "Sports Complex & Athletics",
+      desc: "Large athletic fields for cricket, football, volleyball, and indoor sports promoting physical vigor.",
+      icon: Trophy,
+      tag: "Athletic Excellence",
+      image: "https://images.unsplash.com/photo-1523240795612-9a054b0db644?q=80&w=800",
+    },
   ];
 
   const testimonials = [
-    { quote: "The parent portal has completely changed how I stay connected with my son's school life. I can see his attendance and results the same day. Truly a modern school.", name: "Ramesh Kumar Sinha", role: "Parent, Class IX Student", initial: "R", color: "#D4AF6A" },
-    { quote: "RMSPS gave me more than just good marks. The teachers here genuinely care. I cleared JEE Advanced with the support of the dedicated faculty.", name: "Priya Sharma", role: "Alumni, Batch of 2024", initial: "P", color: "#81B29A" },
-    { quote: "The geofenced attendance system is brilliant. As a teacher, I can now mark attendance in 2 minutes and focus entirely on teaching. The ERP portal is exceptional.", name: "Mrs. Kavita Pandey", role: "Senior Teacher, Mathematics", initial: "K", color: "#F1917D" },
+    {
+      quote:
+        "The parent portal has completely transformed how I stay updated with my son's daily attendance and terminal results. As a working parent, this transparency is invaluable.",
+      name: "Ramesh Kumar Sinha",
+      role: "Parent, Class IX Student",
+      initial: "R",
+      color: "#D4AF6A",
+    },
+    {
+      quote:
+        "RMSPS provided me the discipline, faculty guidance, and conceptual clarity that helped me excel in my BSEB board exams and secure engineering admission.",
+      name: "Priya Sharma",
+      role: "Alumni, Batch of 2024",
+      initial: "P",
+      color: "#81B29A",
+    },
+    {
+      quote:
+        "The geofenced smart attendance system and digital gradebook save valuable administrative time, allowing us teachers to dedicate our full focus to each child.",
+      name: "Mrs. Kavita Pandey",
+      role: "Senior Faculty, Mathematics",
+      initial: "K",
+      color: "#F1917D",
+    },
   ];
 
-  const galleryImages = [
-    { src: "https://images.unsplash.com/photo-1580582932707-520aed937b7b?q=80&w=800", alt: "RMSPS school campus exterior" },
-    { src: "https://images.unsplash.com/photo-1503676260728-1c00da094a0b?q=80&w=800", alt: "Students engaged in classroom learning" },
-    { src: "https://images.unsplash.com/photo-1427504494785-3a9ca7044f45?q=80&w=800", alt: "School library reading room" },
-    { src: "https://images.unsplash.com/photo-1509062522246-3755977927d7?q=80&w=800", alt: "Science laboratory experiments" },
-    { src: "https://images.unsplash.com/photo-1523240795612-9a054b0db644?q=80&w=800", alt: "Students in sports field" },
-    { src: "https://images.unsplash.com/photo-1546410531-bb4caa6b424d?q=80&w=800", alt: "School cultural program annual day" },
+  const defaultNotices = [
+    {
+      title: "Admissions Open — Session 2026–27",
+      content:
+        "Online and offline registrations are officially open for Primary, Secondary, and Senior Secondary classes. Limited residential seats available.",
+      created_at: new Date().toISOString(),
+    },
+    {
+      title: "BSEB Board Examination Guidance & Mock Series",
+      content:
+        "Special practical labs and structured mock evaluation tests for BSEB board candidates will commence this month. Consult your teacher portal timetable.",
+      created_at: new Date().toISOString(),
+    },
+    {
+      title: "Annual Science Exhibition & Sports Meet",
+      content:
+        "The annual inter-house science exhibition and athletics tournament schedule is published. Parents are cordially invited to attend.",
+      created_at: new Date().toISOString(),
+    },
   ];
 
+  const displayNotices = notices.length > 0 ? notices : defaultNotices;
 
   return (
-    <div ref={containerRef} className="bg-ink text-parchment overflow-x-hidden selection:bg-coral selection:text-ink">
+    <div
+      ref={containerRef}
+      className="bg-ink text-parchment min-h-screen overflow-x-hidden selection:bg-coral selection:text-ink relative"
+    >
+      {/* ── CINEMATIC BRAND INTRO PRELOADER ── */}
+      <IntroPreloader minDurationMs={1600} />
+
+      {/* ── BACKGROUND AMBIENT RADIAL LIGHTING ── */}
+      <div className="fixed inset-0 pointer-events-none z-0">
+        <div className="absolute -top-40 -left-40 w-[600px] h-[600px] rounded-full bg-coral/5 blur-[160px]" />
+        <div className="absolute top-[30%] -right-40 w-[500px] h-[500px] rounded-full bg-gold/5 blur-[160px]" />
+        <div className="absolute top-[70%] left-[20%] w-[600px] h-[600px] rounded-full bg-veena-blue/8 blur-[180px]" />
+      </div>
 
       {/* ── NAVBAR ── */}
       <motion.nav
-        style={{ backgroundColor: navBackground, borderColor: navBorder, backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)" }}
-        className="fixed top-0 left-0 right-0 z-50 px-6 py-5 border-b transition-colors duration-300"
+        style={{
+          backgroundColor: navBackground,
+          borderColor: navBorder,
+          backdropFilter: "blur(16px)",
+          WebkitBackdropFilter: "blur(16px)",
+        }}
+        className="fixed top-0 left-0 right-0 z-50 px-6 py-4 border-b transition-colors duration-300"
       >
         <div className="max-w-7xl mx-auto flex items-center justify-between">
-          <motion.div initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }} className="font-display font-bold text-2xl tracking-widest flex items-center gap-3">
-            <div className="w-10 h-10 rounded-full overflow-hidden bg-ink shrink-0 border border-hairline">
-              <Image src="/icon-192.png" alt="RMSPS School Logo" width={40} height={40} className="w-full h-full object-cover" />
+          {/* Brand Logo & Name */}
+          <Link href="/" className="flex items-center gap-3 group">
+            <div className="w-10 h-10 rounded-full overflow-hidden bg-ink shrink-0 border border-hairline group-hover:border-coral transition-colors p-0.5">
+              <Image
+                src="/icon-192.png"
+                alt="RMSPS Official Logo"
+                width={40}
+                height={40}
+                className="w-full h-full object-cover rounded-full"
+              />
             </div>
-            <span className="text-coral">RMSPS</span>
-          </motion.div>
-          <div className="flex items-center gap-4 md:gap-8 text-sm font-medium">
-            <div className="hidden md:flex items-center gap-8">
-              {[["Academics", "#academics"], ["Portals", "#portals"], ["Campus", "#gallery"], ["Admissions", "#admissions"]].map(([label, href], i) => (
-                <motion.a key={label} href={href} initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5, delay: i * 0.05 }} className="text-mist hover:text-parchment transition-colors">{label}</motion.a>
-              ))}
+            <div className="flex flex-col">
+              <span className="font-display font-bold text-lg tracking-wider text-parchment group-hover:text-coral transition-colors">
+                RMSPS
+              </span>
+              <span className="text-[10px] font-mono text-mist tracking-widest uppercase">
+                Residential School
+              </span>
             </div>
-            <motion.div initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5, delay: 0.2 }} className="flex items-center gap-3">
-              <Link href="/login" className="btn-primary px-5 py-2.5 rounded-full text-[11px] uppercase font-bold tracking-widest hover:scale-105 transition-transform whitespace-nowrap">Portal Login</Link>
-              <button className="md:hidden p-2 text-mist hover:text-parchment" onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)} aria-label="Toggle navigation menu">
-                {isMobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
-              </button>
-            </motion.div>
+          </Link>
+
+          {/* Desktop Navigation Links */}
+          <div className="hidden lg:flex items-center gap-8 text-sm font-medium">
+            {[
+              ["Academics", "#academics"],
+              ["Portals", "#portals"],
+              ["Facilities", "#facilities"],
+              ["Notice Board", "#notices"],
+              ["Admissions", "#admissions"],
+            ].map(([label, href]) => (
+              <a
+                key={label}
+                href={href}
+                className="text-mist hover:text-parchment transition-colors text-xs font-semibold uppercase tracking-wider"
+              >
+                {label}
+              </a>
+            ))}
+          </div>
+
+          {/* Right Portal Login & Mobile Toggle */}
+          <div className="flex items-center gap-3">
+            <Link
+              href="/login"
+              className="btn-primary px-5 py-2.5 rounded-full text-xs uppercase font-bold tracking-widest hover:scale-105 transition-transform flex items-center gap-2 shadow-lg shadow-coral/10"
+            >
+              <span>Portal Login</span>
+              <ArrowRight className="w-3.5 h-3.5" />
+            </Link>
+
+            <button
+              className="lg:hidden p-2 rounded-xl border border-hairline text-mist hover:text-parchment"
+              onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+              aria-label="Toggle navigation menu"
+            >
+              {isMobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+            </button>
           </div>
         </div>
+
+        {/* Mobile Dropdown Menu */}
         <AnimatePresence>
           {isMobileMenuOpen && (
-            <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: "auto" }} exit={{ opacity: 0, height: 0 }} className="md:hidden overflow-hidden bg-ink/98 border-t border-hairline mt-5 -mx-6 px-6">
-              <div className="flex flex-col gap-6 py-8">
-                {[["Academics", "#academics"], ["Portals", "#portals"], ["Campus", "#gallery"], ["Admissions", "#admissions"]].map(([label, href]) => (
-                  <a key={label} href={href} onClick={() => setIsMobileMenuOpen(false)} className="text-lg font-medium text-mist hover:text-parchment transition-colors">{label}</a>
+            <motion.div
+              initial={{ opacity: 0, height: 0 }}
+              animate={{ opacity: 1, height: "auto" }}
+              exit={{ opacity: 0, height: 0 }}
+              className="lg:hidden overflow-hidden bg-ink/98 border-t border-hairline mt-4 -mx-6 px-6"
+            >
+              <div className="flex flex-col gap-5 py-6">
+                {[
+                  ["Academics", "#academics"],
+                  ["Portals", "#portals"],
+                  ["Facilities", "#facilities"],
+                  ["Notice Board", "#notices"],
+                  ["Admissions", "#admissions"],
+                ].map(([label, href]) => (
+                  <a
+                    key={label}
+                    href={href}
+                    onClick={() => setIsMobileMenuOpen(false)}
+                    className="text-base font-semibold text-mist hover:text-parchment transition-colors"
+                  >
+                    {label}
+                  </a>
                 ))}
-                <Link href="/login" className="btn-primary px-6 py-3 rounded-xl text-center font-bold">Portal Login</Link>
+                <Link
+                  href="/login"
+                  className="btn-primary px-6 py-3 rounded-xl text-center font-bold text-sm"
+                >
+                  Enter Portal Login
+                </Link>
               </div>
             </motion.div>
           )}
         </AnimatePresence>
       </motion.nav>
 
-      {/* ── HERO ── */}
-      <div className="relative min-h-[100svh] w-full flex items-center overflow-hidden">
+      {/* ── HERO SECTION ── */}
+      <div className="relative min-h-[100svh] w-full flex items-center justify-center pt-24 pb-16 overflow-hidden">
+        {/* Background Image with Dark Vignette */}
         <div className="absolute inset-0 z-0">
-          <Image src="https://images.unsplash.com/photo-1580582932707-520aed937b7b?q=80&w=1920" alt="RMSPS School Campus — bright modern learning environment" fill priority className="object-cover object-center" sizes="100vw" />
-          <div className="absolute inset-0 bg-gradient-to-r from-ink via-ink/85 to-ink/40" />
-          <div className="absolute inset-0 bg-gradient-to-t from-ink via-transparent to-transparent" />
+          <Image
+            src="https://images.unsplash.com/photo-1580582932707-520aed937b7b?q=80&w=1920"
+            alt="RMSPS School Campus Exterior"
+            fill
+            priority
+            className="object-cover object-center opacity-30"
+            sizes="100vw"
+          />
+          <div className="absolute inset-0 bg-gradient-to-t from-ink via-ink/90 to-ink/60" />
+          <div className="absolute inset-0 bg-radial-vignette opacity-80" />
         </div>
-        <div className="absolute top-1/3 left-1/4 w-[40vw] h-[40vh] bg-coral/8 blur-[120px] rounded-full pointer-events-none" />
-        <motion.div style={{ opacity: heroOpacity, y: prefersReducedMotion ? "0%" : heroY }} className="relative z-10 w-full max-w-7xl mx-auto px-6 pt-24 pb-16 md:pt-32 md:pb-24">
-          <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5, delay: 0.2 }} className="inline-flex items-center gap-2 px-4 py-2 rounded-full border border-coral/30 bg-coral/10 text-coral text-xs font-mono uppercase tracking-widest mb-8 mt-12 md:mt-0">
-            <span className="w-1.5 h-1.5 rounded-full bg-coral animate-pulse" />
-            Admissions Open — Session 2026–27
-          </motion.div>
-          <h1 className="font-display font-extrabold text-[2.75rem] sm:text-6xl md:text-7xl lg:text-[5.5rem] leading-[1.1] tracking-tight mb-8 max-w-4xl break-words">
-            {["Shaping", "Tomorrow's", "Leaders,", "Today."].map((word, i) => (
-              <motion.span key={i} initial={{ opacity: 0, y: 24, filter: "blur(6px)" }} animate={{ opacity: 1, y: 0, filter: "blur(0px)" }} transition={{ duration: 0.7, delay: 0.3 + i * 0.08, ease: [0.21, 0.47, 0.32, 0.98] }} className={`block ${i === 2 ? "text-coral" : ""}`}>{word}</motion.span>
-            ))}
-          </h1>
-          <motion.p initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.7, delay: 0.7 }} className="text-mist text-lg md:text-xl max-w-xl mb-10 leading-relaxed">
-            R.M.S. Public School — a premier BSEB-affiliated residential school in Bihar, delivering academic excellence and holistic development since 2016.
-          </motion.p>
-          <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6, delay: 0.85 }} className="flex flex-wrap gap-4">
-            <Link href="/student" className="inline-flex items-center gap-2 btn-primary px-8 py-4 rounded-xl font-bold tracking-wide text-base hover:scale-105 transition-transform">
-              <GraduationCap className="w-5 h-5" /> Student Portal
-            </Link>
-            <Link href="/parent" className="inline-flex items-center gap-2 px-8 py-4 rounded-xl font-bold tracking-wide border border-hairline hover:bg-surface hover:border-gold/40 transition-all text-parchment">
-              <Users className="w-5 h-5 text-gold" /> Parent Portal
-            </Link>
-          </motion.div>
-          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 1.2 }} className="absolute bottom-8 left-6 flex items-center gap-3 text-mist text-xs font-mono uppercase tracking-widest">
-            <motion.div animate={prefersReducedMotion ? {} : { y: [0, 6, 0] }} transition={{ duration: 1.5, repeat: Infinity }} className="w-[1px] h-10 bg-gradient-to-b from-coral to-transparent" />
-            Scroll to explore
-          </motion.div>
+
+        <motion.div
+          style={{ opacity: heroOpacity, y: prefersReducedMotion ? "0%" : heroY }}
+          className="relative z-10 w-full max-w-7xl mx-auto px-6 grid grid-cols-1 lg:grid-cols-12 gap-12 items-center"
+        >
+          {/* Left Column: Headline & Action CTAs */}
+          <div className="lg:col-span-7 space-y-6 text-left">
+            {/* Live Admissions Status Badge */}
+            <motion.div
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5, delay: 0.2 }}
+              className="inline-flex items-center gap-2.5 px-4 py-2 rounded-full border border-coral/30 bg-coral/10 text-coral text-xs font-mono uppercase tracking-widest shadow-sm"
+            >
+              <span className="w-2 h-2 rounded-full bg-coral animate-pulse" />
+              <span>Admissions Open • Session 2026–27</span>
+            </motion.div>
+
+            {/* Main Headline */}
+            <h1 className="font-display font-extrabold text-4xl sm:text-5xl md:text-6xl lg:text-[4.2rem] leading-[1.1] tracking-tight text-parchment">
+              Shaping Tomorrow&apos;s{" "}
+              <span className="text-coral underline decoration-coral/30 decoration-wavy underline-offset-8">
+                Leaders
+              </span>
+              , Today.
+            </h1>
+
+            {/* Sub-headline */}
+            <p className="text-mist text-base sm:text-lg max-w-xl leading-relaxed">
+              Residential Maa Saraswati Public School — a premier BSEB-affiliated residential institution in Bihar, fostering academic rigour, discipline, and holistic character since 2016.
+            </p>
+
+            {/* Primary Action Buttons */}
+            <div className="flex flex-wrap gap-4 pt-2">
+              <Link
+                href="/student"
+                className="btn-primary inline-flex items-center gap-2.5 px-8 py-4 rounded-2xl font-bold text-sm tracking-wide hover:scale-105 transition-transform shadow-xl shadow-coral/10"
+              >
+                <GraduationCap className="w-5 h-5" />
+                <span>Student Portal</span>
+              </Link>
+              <Link
+                href="/parent"
+                className="inline-flex items-center gap-2.5 px-8 py-4 rounded-2xl font-bold text-sm tracking-wide border border-hairline hover:border-gold/40 text-parchment hover:bg-surface transition-all bg-ink/60"
+              >
+                <Users className="w-5 h-5 text-gold" />
+                <span>Parent Portal</span>
+              </Link>
+              <Link
+                href="/register"
+                className="inline-flex items-center gap-2 px-6 py-4 rounded-2xl font-semibold text-xs font-mono text-coral hover:text-parchment transition-colors uppercase tracking-wider"
+              >
+                <span>Apply for Admission</span>
+                <ArrowRight className="w-4 h-4" />
+              </Link>
+            </div>
+          </div>
+
+          {/* Right Column: Hero HUD Bento Card */}
+          <div className="lg:col-span-5">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ duration: 0.6, delay: 0.3 }}
+              className="spotlight-card rounded-3xl p-6 sm:p-8 border border-hairline bg-ink/80 backdrop-blur-xl shadow-2xl space-y-6"
+            >
+              {/* Card Top Title */}
+              <div className="flex items-center justify-between border-b border-hairline pb-4">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-xl bg-coral/10 text-coral flex items-center justify-center border border-coral/30">
+                    <Award className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <h3 className="font-display font-bold text-parchment text-base">
+                      Institutional Highlights
+                    </h3>
+                    <p className="text-[11px] font-mono text-mist">BSEB Code: 852109</p>
+                  </div>
+                </div>
+                <span className="flex items-center gap-1.5 text-xs font-mono text-emerald-400 bg-emerald-500/10 px-2.5 py-1 rounded-full border border-emerald-500/20">
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                  Live ERP
+                </span>
+              </div>
+
+              {/* 2x2 Metric Grid */}
+              <div className="grid grid-cols-2 gap-4">
+                <div className="p-4 rounded-2xl bg-surface border border-hairline">
+                  <p className="text-2xl sm:text-3xl font-display font-bold text-coral">98%</p>
+                  <p className="text-xs text-mist font-medium mt-1">Board Pass Rate</p>
+                </div>
+                <div className="p-4 rounded-2xl bg-surface border border-hairline">
+                  <p className="text-2xl sm:text-3xl font-display font-bold text-gold">15+ Yrs</p>
+                  <p className="text-xs text-mist font-medium mt-1">Academic Legacy</p>
+                </div>
+                <div className="p-4 rounded-2xl bg-surface border border-hairline">
+                  <p className="text-2xl sm:text-3xl font-display font-bold text-[#81B29A]">1000+</p>
+                  <p className="text-xs text-mist font-medium mt-1">Active Scholars</p>
+                </div>
+                <div className="p-4 rounded-2xl bg-surface border border-hairline">
+                  <p className="text-2xl sm:text-3xl font-display font-bold text-veena-blue">20+</p>
+                  <p className="text-xs text-mist font-medium mt-1">Master Faculty</p>
+                </div>
+              </div>
+
+              {/* Key Trust Check */}
+              <div className="p-4 rounded-2xl bg-coral/5 border border-coral/20 flex items-center gap-3 text-xs text-mist">
+                <Shield className="w-5 h-5 text-coral shrink-0" />
+                <span>Geofenced automated attendance & instant SMS circulars for parents.</span>
+              </div>
+            </motion.div>
+          </div>
         </motion.div>
+
+        {/* Scroll Beacon Indicator */}
+        <div className="absolute bottom-6 left-6 hidden sm:flex items-center gap-3 text-mist text-xs font-mono uppercase tracking-widest">
+          <motion.div
+            animate={prefersReducedMotion ? {} : { y: [0, 6, 0] }}
+            transition={{ duration: 1.5, repeat: Infinity }}
+            className="w-[1px] h-8 bg-gradient-to-b from-coral to-transparent"
+          />
+          <span>Scroll to explore</span>
+        </div>
       </div>
 
-      {/* ── INFINITE MARQUEE ── */}
+      {/* ── INFINITE MARQUEE TICKER ── */}
       <InfiniteMarquee />
 
       {/* ── STATS BAR ── */}
-      <div className="w-full border-y border-hairline bg-surface/50">
+      <div className="w-full border-y border-hairline bg-surface/40 backdrop-blur-md">
         <div className="max-w-7xl mx-auto px-6 py-10 grid grid-cols-2 md:grid-cols-4 gap-8">
-          {stats.map(({ value, suffix, label, icon }, i) => (
-            <StatItem key={label} value={value} suffix={suffix} label={label} icon={icon} delay={i * 0.08} />
+          {stats.map(({ value, suffix, label, icon: Icon }, i) => (
+            <div key={label} className="flex flex-col items-center text-center gap-2">
+              <Icon className="w-6 h-6 text-coral mb-1" />
+              <div className="font-display text-4xl md:text-5xl font-bold text-parchment">
+                <AnimatedCounter target={value} suffix={suffix} />
+              </div>
+              <p className="text-mist text-xs uppercase tracking-widest font-mono">{label}</p>
+            </div>
           ))}
         </div>
       </div>
-      {/* ── NOTICE BOARD ── */}
-      <div id="notices" className="border-t border-hairline">
-        <div className="pt-20 pb-12">
-          <div className="max-w-7xl mx-auto px-6 pb-4">
-            <SectionHeader label="Latest Announcements" title="Notice Board" subtitle="Stay informed with official school announcements and updates." />
-          </div>
-          <div className="max-w-7xl mx-auto px-6">
-            {(() => {
-              const defaultNotices = [
-                {
-                  title: "Admissions Open — Session 2026–27",
-                  content: "Applications are now open for Primary, Secondary, and Senior Secondary classes. Apply online or visit the school admissions office.",
-                  created_at: new Date().toISOString(),
-                },
-                {
-                  title: "BSEB Class X & XII Board Examination Guidance",
-                  content: "Special practical classes and mock examinations for BSEB board candidates will commence this month. Timetable available in student portal.",
-                  created_at: new Date().toISOString(),
-                },
-                {
-                  title: "Annual Sports & Cultural Exhibition",
-                  content: "RMSPS annual sports meet and science exhibition dates announced. Parents and guardians are invited to attend.",
-                  created_at: new Date().toISOString(),
-                },
-              ];
-              const displayNotices = notices.length > 0 ? notices : defaultNotices;
 
-              return (
-                <div className="flex gap-4 overflow-x-auto snap-x snap-mandatory pb-8 no-scrollbar">
-                  {displayNotices.map((notice, i) => (
-                    <NoticeItem key={i} {...notice} delay={i * 0.05} />
-                  ))}
-                </div>
-              );
-            })()}
+      {/* ── NOTICE BOARD CAROUSEL ── */}
+      <div id="notices" className="border-t border-hairline py-20">
+        <div className="max-w-7xl mx-auto px-6">
+          <SectionHeader
+            label="Latest Announcements"
+            title="Official Notice Board"
+            subtitle="Real-time circulars, academic schedules, and institutional events."
+            badgeIcon={Bell}
+          />
+
+          <div className="flex gap-6 overflow-x-auto snap-x snap-mandatory pb-6 no-scrollbar">
+            {displayNotices.map((notice, idx) => (
+              <NoticeCard
+                key={idx}
+                {...notice}
+                delay={idx * 0.08}
+                onOpen={() => setSelectedNotice(notice)}
+              />
+            ))}
           </div>
         </div>
       </div>
 
-      {/* ── FEATURES ── */}
-      <div className="max-w-7xl mx-auto px-6 py-24">
-        <SectionHeader label="Why RMSPS" title="Built for Excellence" subtitle="Everything your child needs to learn, grow, and succeed — under one roof." />
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-          {features.map((f, i) => <FeatureItem key={f.title} {...f} delay={i * 0.1} />)}
+      {/* ── DIGITAL PORTAL SHOWCASE (BENTO GRID) ── */}
+      <div id="portals" className="border-t border-hairline py-24 bg-surface/20">
+        <div className="max-w-7xl mx-auto px-6">
+          <SectionHeader
+            label="Dedicated Portals"
+            title="Engineered for Every Stakeholder"
+            subtitle="Tailored digital workflows for administrators, educators, parents, and scholars."
+            badgeIcon={Compass}
+          />
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+            {portals.map((portal, idx) => (
+              <PortalCard key={portal.title} {...portal} delay={idx * 0.08} />
+            ))}
+          </div>
         </div>
       </div>
 
-      {/* ── PARALLAX SCROLL FEATURE SHOWCASE ── */}
-      <ParallaxScrollFeatureSection />
+      {/* ── ACADEMIC STRUCTURE (TABS) ── */}
+      <div id="academics" className="border-t border-hairline py-24">
+        <div className="max-w-7xl mx-auto px-6">
+          <SectionHeader
+            label="Academic Curriculum"
+            title="Pillars of Education"
+            subtitle="A complete BSEB-affiliated journey from Primary foundational classes to Senior Secondary specialization."
+            badgeIcon={GraduationCap}
+          />
 
-      {/* ── ACADEMIC PILLARS ── */}
-      <div id="academics" className="border-t border-hairline">
-        <div className="max-w-7xl mx-auto px-6 py-24">
-          <SectionHeader label="Academic Structure" title="Three Pillars of Learning" subtitle="A complete BSEB-affiliated journey from Primary to Senior Secondary." />
-          <div className="flex bg-ink/50 p-1.5 rounded-2xl border border-hairline w-fit max-w-full mx-auto overflow-x-auto snap-x mb-10 no-scrollbar">
+          {/* Tab Selector */}
+          <div className="flex bg-ink/70 p-1.5 rounded-2xl border border-hairline w-fit max-w-full mx-auto overflow-x-auto mb-10 no-scrollbar shadow-inner">
             {academicTabs.map((tab, i) => (
               <button
                 key={tab.label}
                 onClick={() => setActiveTab(i)}
-                className={`relative shrink-0 snap-center whitespace-nowrap px-6 py-3 rounded-xl text-sm font-semibold transition-colors z-10 ${
+                className={`relative shrink-0 whitespace-nowrap px-6 py-3 rounded-xl text-sm font-semibold transition-colors z-10 ${
                   activeTab === i ? "text-ink font-bold" : "text-mist hover:text-parchment"
                 }`}
               >
                 {tab.label}
                 {activeTab === i && (
                   <motion.div
-                    layoutId="academic-tab-pill"
-                    className="absolute inset-0 bg-coral rounded-xl -z-10 shadow-lg"
+                    layoutId="academic-tab-indicator"
+                    className="absolute inset-0 bg-coral rounded-xl -z-10 shadow-lg shadow-coral/20"
                     transition={{ type: "spring", stiffness: 400, damping: 30 }}
                   />
                 )}
               </button>
             ))}
           </div>
+
+          {/* Active Tab Content Card */}
           <AnimatePresence mode="wait">
-            <motion.div key={activeTab} initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -12 }} transition={{ duration: 0.3 }} className="grid grid-cols-1 md:grid-cols-3 gap-8">
-              <div className="md:col-span-1 surface-card rounded-3xl p-8 border border-hairline hover:border-coral/30 transition-colors">
-                <p className="text-mist text-xs font-mono uppercase tracking-widest mb-2">{academicTabs[activeTab].grades}</p>
-                <h3 className="font-display text-3xl font-bold text-parchment mb-3">{academicTabs[activeTab].label}</h3>
-                <span className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full border border-coral/30 bg-coral/10 text-coral text-xs font-semibold">
-                  <Award className="w-3.5 h-3.5" />{academicTabs[activeTab].board}
+            <motion.div
+              key={activeTab}
+              initial={{ opacity: 0, y: 16 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -16 }}
+              transition={{ duration: 0.3 }}
+              className="grid grid-cols-1 lg:grid-cols-12 gap-8"
+            >
+              {/* Left Column: Grade Summary */}
+              <div className="lg:col-span-5 spotlight-card rounded-3xl p-8 border border-hairline space-y-6">
+                <span className="text-xs font-mono font-bold uppercase tracking-widest text-coral bg-coral/10 px-3 py-1 rounded-full border border-coral/20">
+                  {academicTabs[activeTab].grades}
                 </span>
-                <div className="mt-8 space-y-3">
-                  {academicTabs[activeTab].highlights.map((h) => (
-                    <div key={h} className="flex items-start gap-3 text-sm text-mist"><CheckCircle className="w-4 h-4 text-coral mt-0.5 shrink-0" />{h}</div>
+                <h3 className="font-display text-3xl font-bold text-parchment">
+                  {academicTabs[activeTab].label}
+                </h3>
+                <p className="text-mist text-sm leading-relaxed">
+                  {academicTabs[activeTab].tagline}
+                </p>
+                <div className="pt-4 border-t border-hairline space-y-3">
+                  <p className="text-xs font-mono uppercase tracking-wider text-parchment font-bold">
+                    Key Highlights:
+                  </p>
+                  {academicTabs[activeTab].highlights.map((item) => (
+                    <div key={item} className="flex items-start gap-2.5 text-xs text-mist">
+                      <CheckCircle className="w-4 h-4 text-coral shrink-0 mt-0.5" />
+                      <span>{item}</span>
+                    </div>
                   ))}
                 </div>
               </div>
-              <div className="md:col-span-2 surface-card rounded-3xl p-8 border border-hairline">
-                <p className="text-mist text-xs font-mono uppercase tracking-widest mb-6">Core Subjects</p>
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-                  {academicTabs[activeTab].subjects.map((subject) => (
-                    <div key={subject} className="flex items-center gap-2.5 px-4 py-3 rounded-xl border border-hairline text-sm text-parchment font-medium hover:border-coral/40 hover:bg-surface-hover hover:scale-[1.02] transition-all cursor-default">
+
+              {/* Right Column: Core Subjects Grid */}
+              <div className="lg:col-span-7 spotlight-card rounded-3xl p-8 border border-hairline space-y-6">
+                <p className="text-xs font-mono uppercase tracking-wider text-parchment font-bold">
+                  Curriculum & Core Subjects:
+                </p>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+                  {academicTabs[activeTab].subjects.map((subj) => (
+                    <div
+                      key={subj}
+                      className="p-4 rounded-xl bg-surface border border-hairline flex items-center gap-3 hover:border-coral/40 transition-colors"
+                    >
                       <BookOpen className="w-4 h-4 text-coral shrink-0" />
-                      <span className="truncate">{subject}</span>
+                      <span className="text-sm font-medium text-parchment">{subj}</span>
                     </div>
                   ))}
+                </div>
+
+                <div className="p-4 rounded-2xl bg-surface-hover border border-hairline flex items-center justify-between text-xs text-mist">
+                  <span>Standard BSEB Board Curriculum with Continuous Assessment</span>
+                  <Award className="w-4 h-4 text-gold" />
                 </div>
               </div>
             </motion.div>
@@ -519,68 +960,122 @@ export default function LandingPage({ notices = [] }: {
         </div>
       </div>
 
-      {/* ── PORTAL SHOWCASE ── */}
-      <div id="portals" className="border-t border-hairline">
-        <div className="max-w-7xl mx-auto px-6 py-24">
-          <SectionHeader label="Digital Portals" title="Engineered for Every Role" subtitle="Secure, role-specific dashboards for the entire school community." />
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-            {portals.map((portal, i) => <PortalCard key={portal.title} {...portal} delay={i * 0.08} />)}
-          </div>
-        </div>
-      </div>
+      {/* ── CAMPUS FACILITIES (BENTO SHOWCASE) ── */}
+      <div id="facilities" className="border-t border-hairline py-24 bg-surface/10">
+        <div className="max-w-7xl mx-auto px-6">
+          <SectionHeader
+            label="Campus Infrastructure"
+            title="World-Class Learning Environment"
+            subtitle="Equipped with specialized labs, smart classrooms, safe hostels, and athletic grounds."
+            badgeIcon={Sparkles}
+          />
 
-      {/* ── TESTIMONIALS ── */}
-      <div className="border-t border-hairline">
-        <div className="max-w-7xl mx-auto px-6 py-24">
-          <SectionHeader label="What People Say" title="Trusted by Families" subtitle="Real voices from our school community." />
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            {testimonials.map((t, i) => (
-              <TestimonialCard key={t.name} {...t} delay={i * 0.1} />
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+            {facilities.map((fac, idx) => (
+              <div
+                key={fac.title}
+                className="group spotlight-card rounded-3xl overflow-hidden border border-hairline relative flex flex-col justify-end min-h-[320px] p-8"
+              >
+                {/* Background Image with Zoom */}
+                <Image
+                  src={fac.image}
+                  alt={fac.title}
+                  fill
+                  className="object-cover group-hover:scale-105 transition-transform duration-700 opacity-30"
+                  sizes="(max-width: 768px) 100vw, 50vw"
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-ink via-ink/80 to-transparent" />
+
+                {/* Content Overlay */}
+                <div className="relative z-10 space-y-3">
+                  <span className="text-[11px] font-mono uppercase tracking-widest text-coral px-3 py-1 rounded-full bg-coral/10 border border-coral/20 inline-block">
+                    {fac.tag}
+                  </span>
+                  <h3 className="font-display text-2xl font-bold text-parchment group-hover:text-coral transition-colors">
+                    {fac.title}
+                  </h3>
+                  <p className="text-mist text-sm leading-relaxed max-w-md">
+                    {fac.desc}
+                  </p>
+                </div>
+              </div>
             ))}
           </div>
         </div>
       </div>
 
-      {/* ── GALLERY STRIP ── */}
-      <div id="gallery" className="border-t border-hairline">
-        <div className="max-w-7xl mx-auto px-6 pt-24 pb-6">
-          <SectionHeader label="Campus Life" title="Our Campus" />
-        </div>
-        <div className="flex gap-4 px-6 pb-12 overflow-x-auto snap-x snap-mandatory" style={{ scrollbarWidth: "none", msOverflowStyle: "none" } as React.CSSProperties}>
-          {galleryImages.map((img, i) => <GalleryItem key={i} {...img} delay={i * 0.06} />)}
+      {/* ── VOICES OF TRUST (TESTIMONIALS) ── */}
+      <div className="border-t border-hairline py-24">
+        <div className="max-w-7xl mx-auto px-6">
+          <SectionHeader
+            label="Community Voices"
+            title="Trusted by Families & Scholars"
+            subtitle="Hear from the parents, alumni, and educators that define RMSPS."
+            badgeIcon={Star}
+          />
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            {testimonials.map((t, idx) => (
+              <TestimonialCard key={t.name} {...t} delay={idx * 0.1} />
+            ))}
+          </div>
         </div>
       </div>
 
-
-
-      {/* ── ADMISSIONS CTA ── */}
-      <div id="admissions" className="border-t border-hairline">
-        <div className="max-w-7xl mx-auto px-6 py-24">
-          <motion.div initial={{ opacity: 0, y: 24 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ duration: 0.6 }}
-            className="relative overflow-hidden rounded-[2.5rem] bg-gradient-to-br from-coral/15 via-surface to-ink border border-coral/25 p-12 md:p-16 text-center"
+      {/* ── ADMISSIONS CONVERSION CTA BANNER ── */}
+      <div id="admissions" className="border-t border-hairline py-24">
+        <div className="max-w-7xl mx-auto px-6">
+          <motion.div
+            initial={{ opacity: 0, y: 24 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.6 }}
+            className="relative overflow-hidden rounded-[2.5rem] bg-gradient-to-br from-coral/15 via-surface to-ink border border-coral/30 p-10 sm:p-14 md:p-16 text-center shadow-2xl"
           >
-            <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_50%_0%,rgba(241,145,125,0.12),transparent_60%)] pointer-events-none" />
-            <div className="relative z-10">
-              <span className="inline-flex items-center gap-2 px-4 py-2 rounded-full border border-coral/40 bg-coral/15 text-coral text-xs font-mono uppercase tracking-widest mb-6">
-                <span className="w-1.5 h-1.5 rounded-full bg-coral animate-pulse" /> Applications Closing Soon
+            <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_50%_0%,rgba(241,145,125,0.15),transparent_65%)] pointer-events-none" />
+
+            <div className="relative z-10 max-w-3xl mx-auto space-y-6">
+              <span className="inline-flex items-center gap-2 px-4 py-2 rounded-full border border-coral/40 bg-coral/15 text-coral text-xs font-mono uppercase tracking-widest">
+                <span className="w-2 h-2 rounded-full bg-coral animate-pulse" />
+                Session 2026–27 Open
               </span>
-              <h2 className="font-display text-4xl md:text-6xl font-bold text-parchment mb-4">Join RMSPS.</h2>
-              <p className="text-mist text-lg mb-10 max-w-xl mx-auto leading-relaxed">
-                Secure your child&apos;s future with a BSEB-affiliated education that combines academic rigour with holistic development.{" "}
-                <strong className="text-parchment">Session 2026–27 admissions are now open.</strong>
+
+              <h2 className="font-display text-3xl sm:text-5xl md:text-6xl font-bold text-parchment tracking-tight">
+                Begin Your Journey with RMSPS.
+              </h2>
+
+              <p className="text-mist text-base sm:text-lg leading-relaxed">
+                Give your child the gift of disciplined residential education, modern laboratory practicals, and dedicated faculty mentorship. Applications for the 2026–27 session are now being processed.
               </p>
-              <div className="flex flex-wrap gap-4 justify-center mb-10">
-                <Link href="/register" className="btn-primary inline-flex items-center gap-3 px-10 py-5 rounded-2xl font-bold text-base hover:scale-105 transition-transform">
-                  Apply Now <ArrowRight className="w-5 h-5" />
+
+              <div className="flex flex-wrap gap-4 justify-center pt-4">
+                <Link
+                  href="/register"
+                  className="btn-primary inline-flex items-center gap-3 px-10 py-5 rounded-2xl font-bold text-base hover:scale-105 transition-transform shadow-xl shadow-coral/20"
+                >
+                  <span>Apply for Admission</span>
+                  <ArrowRight className="w-5 h-5" />
                 </Link>
-                <a href="tel:+919546536279" className="inline-flex items-center gap-3 px-10 py-5 rounded-2xl font-bold text-base border border-hairline hover:border-coral/40 text-parchment hover:bg-surface transition-all">
-                  <Phone className="w-5 h-5 text-coral" /> Call Admissions
+
+                <a
+                  href="tel:+919546536279"
+                  className="inline-flex items-center gap-3 px-10 py-5 rounded-2xl font-bold text-base border border-hairline hover:border-coral/40 text-parchment hover:bg-surface transition-all bg-ink/80"
+                >
+                  <Phone className="w-5 h-5 text-coral" />
+                  <span>Call Admissions: +91 95465 36279</span>
                 </a>
               </div>
-              <div className="flex flex-wrap justify-center items-center gap-6 text-mist text-xs font-mono uppercase tracking-wider">
-                <span className="flex items-center gap-2"><CheckCircle className="w-4 h-4 text-coral" /> Instant Online Registration</span>
-                <span className="flex items-center gap-2"><CheckCircle className="w-4 h-4 text-gold" /> Direct Office Support</span>
-                <span className="flex items-center gap-2"><CheckCircle className="w-4 h-4 text-role-student" /> Session 2026–27 Open</span>
+
+              <div className="flex flex-wrap justify-center items-center gap-6 pt-6 text-mist text-xs font-mono uppercase tracking-wider border-t border-hairline/60">
+                <span className="flex items-center gap-2">
+                  <CheckCircle className="w-4 h-4 text-coral" /> Instant Online Registration
+                </span>
+                <span className="flex items-center gap-2">
+                  <CheckCircle className="w-4 h-4 text-gold" /> Direct Office Guidance
+                </span>
+                <span className="flex items-center gap-2">
+                  <CheckCircle className="w-4 h-4 text-emerald-400" /> Limited Residential Seats
+                </span>
               </div>
             </div>
           </motion.div>
@@ -588,51 +1083,163 @@ export default function LandingPage({ notices = [] }: {
       </div>
 
       {/* ── FOOTER ── */}
-      <footer className="border-t border-hairline bg-surface/30">
+      <footer className="border-t border-hairline bg-ink/90 backdrop-blur-md">
         <div className="max-w-7xl mx-auto px-6 py-16">
           <div className="grid grid-cols-1 md:grid-cols-4 gap-12 mb-12">
-            <div className="md:col-span-2">
-              <div className="flex items-center gap-3 mb-4">
-                <div className="w-10 h-10 rounded-full overflow-hidden border border-hairline shrink-0">
-                  <Image src="/icon-192.png" alt="RMSPS School Logo" width={40} height={40} className="w-full h-full object-cover" />
+            {/* Column 1: School Identity */}
+            <div className="md:col-span-2 space-y-4">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-full overflow-hidden border border-hairline shrink-0 p-0.5">
+                  <Image
+                    src="/icon-192.png"
+                    alt="RMSPS Logo"
+                    width={40}
+                    height={40}
+                    className="w-full h-full object-cover rounded-full"
+                  />
                 </div>
-                <span className="font-display font-bold text-xl text-coral">RMSPS</span>
+                <span className="font-display font-bold text-xl text-coral tracking-wider">
+                  RMSPS
+                </span>
               </div>
-              <p className="text-mist text-sm leading-relaxed max-w-xs mb-6">R.M.S. Public School — A premier BSEB-affiliated residential institution in Bihar committed to shaping future leaders.</p>
-              <div className="space-y-3 text-sm text-mist">
-                <div className="flex items-start gap-3"><MapPin className="w-4 h-4 text-coral mt-0.5 shrink-0" /><span>RMSPS Kating Chowk, Maheshpur road, Pipra, Bihar 852109</span></div>
-                <div className="flex items-center gap-3"><Phone className="w-4 h-4 text-coral shrink-0" /><a href="tel:+919546536279" className="hover:text-parchment transition-colors">+91 95465 36279</a></div>
-                <div className="flex items-center gap-3"><Mail className="w-4 h-4 text-coral shrink-0" /><a href="mailto:srzsurazzrajput@gmail.com" className="hover:text-parchment transition-colors">srzsurazzrajput@gmail.com</a></div>
+              <p className="text-mist text-sm leading-relaxed max-w-sm">
+                Residential Maa Saraswati Public School — A premier BSEB-affiliated residential institution committed to cultivating intellectual excellence and leadership.
+              </p>
+              <div className="space-y-2.5 text-xs text-mist pt-2">
+                <div className="flex items-start gap-2.5">
+                  <MapPin className="w-4 h-4 text-coral shrink-0 mt-0.5" />
+                  <span>Kating Chowk, Maheshpur road, Pipra, Bihar 852109</span>
+                </div>
+                <div className="flex items-center gap-2.5">
+                  <Phone className="w-4 h-4 text-coral shrink-0" />
+                  <a href="tel:+919546536279" className="hover:text-parchment transition-colors">
+                    +91 95465 36279
+                  </a>
+                </div>
+                <div className="flex items-center gap-2.5">
+                  <Mail className="w-4 h-4 text-coral shrink-0" />
+                  <a
+                    href="mailto:srzsurazzrajput@gmail.com"
+                    className="hover:text-parchment transition-colors"
+                  >
+                    srzsurazzrajput@gmail.com
+                  </a>
+                </div>
               </div>
             </div>
+
+            {/* Column 2: Digital Portals */}
             <div>
-              <h3 className="font-display font-bold text-parchment mb-6 text-sm uppercase tracking-widest">Portals</h3>
-              <ul className="space-y-3">
+              <h4 className="font-display font-bold text-parchment mb-5 text-xs uppercase tracking-widest">
+                Digital Portals
+              </h4>
+              <ul className="space-y-3 text-xs">
                 {[
                   ["Admin Portal", "/login?role=admin"],
                   ["Teacher Portal", "/login?role=teacher"],
                   ["Parent Portal", "/login?role=parent"],
-                  ["Student Portal", "/login?role=student"]
+                  ["Student Portal", "/login?role=student"],
                 ].map(([label, href]) => (
-                  <li key={label}><Link href={href} className="text-mist text-sm hover:text-parchment flex items-center gap-2 transition-colors group"><ChevronRight className="w-3 h-3 group-hover:translate-x-1 transition-transform text-coral" />{label}</Link></li>
+                  <li key={label}>
+                    <Link
+                      href={href}
+                      className="text-mist hover:text-parchment flex items-center gap-2 transition-colors group"
+                    >
+                      <ChevronRight className="w-3 h-3 text-coral group-hover:translate-x-1 transition-transform" />
+                      <span>{label}</span>
+                    </Link>
+                  </li>
                 ))}
               </ul>
             </div>
+
+            {/* Column 3: Quick Navigation */}
             <div>
-              <h3 className="font-display font-bold text-parchment mb-6 text-sm uppercase tracking-widest">School</h3>
-              <ul className="space-y-3">
-                {[["Admissions", "/register"], ["Academic Info", "#academics"], ["Notice Board", "#notices"], ["Contact Us", "#admissions"]].map(([label, href]) => (
-                  <li key={label}><a href={href} className="text-mist text-sm hover:text-parchment flex items-center gap-2 transition-colors group"><ChevronRight className="w-3 h-3 group-hover:translate-x-1 transition-transform" />{label}</a></li>
+              <h4 className="font-display font-bold text-parchment mb-5 text-xs uppercase tracking-widest">
+                Quick Navigation
+              </h4>
+              <ul className="space-y-3 text-xs">
+                {[
+                  ["Online Admissions", "/register"],
+                  ["Academic Curriculum", "#academics"],
+                  ["Campus Facilities", "#facilities"],
+                  ["Notice Board", "#notices"],
+                  ["Portal Sign In", "/login"],
+                ].map(([label, href]) => (
+                  <li key={label}>
+                    <a
+                      href={href}
+                      className="text-mist hover:text-parchment flex items-center gap-2 transition-colors group"
+                    >
+                      <ChevronRight className="w-3 h-3 text-gold group-hover:translate-x-1 transition-transform" />
+                      <span>{label}</span>
+                    </a>
+                  </li>
                 ))}
               </ul>
             </div>
           </div>
-          <div className="border-t border-hairline pt-8 flex flex-col sm:flex-row justify-between items-center gap-4">
-            <p className="text-mist text-xs font-mono">© 2026 R.M.S. Public School. All Rights Reserved.</p>
-            <p className="text-mist text-xs font-mono">SYSTEM V3.0 — BSEB AFFILIATED</p>
+
+          {/* Bottom Bar */}
+          <div className="border-t border-hairline pt-8 flex flex-col sm:flex-row justify-between items-center gap-4 text-xs font-mono text-mist">
+            <p>© 2026 Residential Maa Saraswati Public School. All rights reserved.</p>
+            <p className="text-coral">FLAGSHIP SYSTEM V3.0 • BSEB AFFILIATED</p>
           </div>
         </div>
       </footer>
+
+      {/* ── NOTICE DETAIL MODAL ── */}
+      <AnimatePresence>
+        {selectedNotice && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-ink/85 backdrop-blur-md">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.95 }}
+              className="spotlight-card rounded-3xl border border-hairline w-full max-w-lg p-6 sm:p-8 bg-ink text-parchment shadow-2xl space-y-6"
+            >
+              <div className="flex items-center justify-between border-b border-hairline pb-4">
+                <div className="flex items-center gap-2 text-xs font-mono text-coral">
+                  <Bell className="w-4 h-4" />
+                  <span>Official Notice</span>
+                </div>
+                <button
+                  onClick={() => setSelectedNotice(null)}
+                  className="p-1.5 rounded-lg border border-hairline hover:border-mist text-mist hover:text-parchment transition-colors"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+
+              <div className="space-y-3">
+                <p className="text-xs font-mono text-mist">
+                  Published:{" "}
+                  {new Date(selectedNotice.created_at).toLocaleDateString("en-IN", {
+                    day: "2-digit",
+                    month: "long",
+                    year: "numeric",
+                  })}
+                </p>
+                <h3 className="font-display text-xl font-bold text-parchment">
+                  {selectedNotice.title}
+                </h3>
+                <p className="text-mist text-sm leading-relaxed whitespace-pre-wrap">
+                  {selectedNotice.content}
+                </p>
+              </div>
+
+              <div className="pt-4 border-t border-hairline flex justify-end">
+                <button
+                  onClick={() => setSelectedNotice(null)}
+                  className="btn-primary px-6 py-2.5 rounded-xl text-xs font-bold"
+                >
+                  Close Notice
+                </button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }

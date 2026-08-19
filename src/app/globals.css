@@ -249,4 +249,39 @@ h1, h2, h3, h4, h5, h6, .font-display {
 ::-webkit-scrollbar-thumb { background: var(--mist); border-radius: 3px; }
 ::-webkit-scrollbar-thumb:hover { background: var(--coral); }
 
+/* ── Modern Flagship Visual Tokens ── */
+.glass-modern {
+  background: rgba(11, 11, 16, 0.75);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid var(--border-hairline);
+}
 
+.glass-modern:hover {
+  border-color: var(--border-hairline-hover);
+}
+
+.spotlight-card {
+  position: relative;
+  background: var(--bg-surface);
+  border: 1px solid var(--border-hairline);
+  overflow: hidden;
+  transition: border-color 0.3s ease, transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.spotlight-card:hover {
+  border-color: rgba(241, 145, 125, 0.35);
+  box-shadow: 0 12px 32px -8px rgba(0, 0, 0, 0.5), 0 0 24px -4px rgba(241, 145, 125, 0.12);
+}
+
+.radial-glow-coral {
+  background: radial-gradient(ellipse at 50% 0%, rgba(241, 145, 125, 0.15) 0%, transparent 70%);
+}
+
+.radial-glow-gold {
+  background: radial-gradient(ellipse at 50% 0%, rgba(212, 175, 106, 0.15) 0%, transparent 70%);
+}
+
+.radial-glow-blue {
+  background: radial-gradient(ellipse at 50% 0%, rgba(62, 92, 118, 0.18) 0%, transparent 70%);
+}
