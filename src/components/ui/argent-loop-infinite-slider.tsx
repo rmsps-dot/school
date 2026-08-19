@@ -70,10 +70,10 @@ const DEFAULT_PROJECTS: SliderItemData[] = [
 ];
 
 const CONFIG = {
-  SCROLL_SPEED: 0.85,
+  SCROLL_SPEED: 0.75,
   LERP_FACTOR: 0.08,
-  MAX_VELOCITY: 160,
-  SNAP_DURATION: 400,
+  MAX_VELOCITY: 140,
+  SNAP_DURATION: 380,
 };
 
 const lerp = (start: number, end: number, factor: number) =>
@@ -89,6 +89,7 @@ export function BoundedParallaxSlider({
 }) {
   const containerRef = React.useRef<HTMLDivElement>(null);
   const [activeIndex, setActiveIndex] = React.useState(0);
+  const activeIndexRef = React.useRef(0);
 
   const state = React.useRef({
     currentY: 0,
@@ -97,7 +98,7 @@ export function BoundedParallaxSlider({
     isSnapping: false,
     snapStart: { time: 0, y: 0, target: 0 },
     lastScrollTime: Date.now(),
-    dragStart: { y: 0, scrollY: 0 },
+    dragStart: { x: 0, y: 0, time: 0 },
     projectHeight: 520,
   });
 
@@ -118,7 +119,7 @@ export function BoundedParallaxSlider({
     }
 
     let current = parseFloat(img.dataset.parallaxCurrent);
-    const target = (-scroll - index * height) * 0.25;
+    const target = (-scroll - index * height) * 0.22;
     current = lerp(current, target, 0.1);
 
     if (Math.abs(current - target) > 0.01) {
@@ -133,6 +134,7 @@ export function BoundedParallaxSlider({
       (Date.now() - s.snapStart.time) / CONFIG.SNAP_DURATION,
       1
     );
+    // Smooth cubic ease-out
     const eased = 1 - Math.pow(1 - progress, 3);
     s.targetY =
       s.snapStart.y + (s.snapStart.target - s.snapStart.y) * eased;
@@ -167,6 +169,7 @@ export function BoundedParallaxSlider({
       target: target,
     };
     setActiveIndex(safeIdx);
+    activeIndexRef.current = safeIdx;
   };
 
   const updatePositions = () => {
@@ -185,7 +188,8 @@ export function BoundedParallaxSlider({
 
     // Sync active index for UI dots
     const curIdx = Math.max(0, Math.min(totalItems - 1, Math.round(-s.currentY / h)));
-    if (curIdx !== activeIndex) {
+    if (curIdx !== activeIndexRef.current) {
+      activeIndexRef.current = curIdx;
       setActiveIndex(curIdx);
     }
   };
@@ -199,7 +203,7 @@ export function BoundedParallaxSlider({
     // Clamp target within bounds
     s.targetY = Math.max(maxBound, Math.min(0, s.targetY));
 
-    if (!s.isSnapping && !s.isDragging && now - s.lastScrollTime > 120) {
+    if (!s.isSnapping && !s.isDragging && now - s.lastScrollTime > 140) {
       const snapPoint =
         -Math.max(0, Math.min(totalItems - 1, Math.round(-s.targetY / h))) * h;
       if (Math.abs(s.targetY - snapPoint) > 1) snapToProject();
@@ -224,6 +228,7 @@ export function BoundedParallaxSlider({
 
     state.current.projectHeight = el.offsetHeight || 520;
 
+    // ── PC / Mouse Wheel Interaction ──
     const onWheel = (e: WheelEvent) => {
       const s = state.current;
       const h = s.projectHeight || 1;
@@ -253,29 +258,52 @@ export function BoundedParallaxSlider({
       s.targetY = Math.max(minLimit, Math.min(0, s.targetY - delta));
     };
 
+    // ── Mobile Touch Gesture Interaction (Clean 1-Slide Flicks, No Jumping) ──
     const onTouchStart = (e: TouchEvent) => {
+      const touch = e.touches[0];
       const s = state.current;
       s.isDragging = true;
       s.isSnapping = false;
-      s.dragStart = { y: e.touches[0].clientY, scrollY: s.targetY };
+      s.dragStart = {
+        x: touch.clientX,
+        y: touch.clientY,
+        time: Date.now(),
+      };
       s.lastScrollTime = Date.now();
     };
 
     const onTouchMove = (e: TouchEvent) => {
-      const s = state.current;
-      if (!s.isDragging) return;
-      const h = s.projectHeight || 1;
-      const minLimit = -(totalItems - 1) * h;
-
-      const newTarget =
-        s.dragStart.scrollY + (e.touches[0].clientY - s.dragStart.y) * 1.5;
-
-      s.targetY = Math.max(minLimit, Math.min(0, newTarget));
-      s.lastScrollTime = Date.now();
+      // Allow browser to calculate default scroll direction
     };
 
-    const onTouchEnd = () => {
-      state.current.isDragging = false;
+    const onTouchEnd = (e: TouchEvent) => {
+      const s = state.current;
+      if (!s.isDragging) return;
+      s.isDragging = false;
+
+      const touch = e.changedTouches[0];
+      if (!touch) return;
+
+      const deltaX = touch.clientX - s.dragStart.x;
+      const deltaY = touch.clientY - s.dragStart.y;
+      const deltaTime = Math.max(1, Date.now() - s.dragStart.time);
+      const currentIdx = activeIndexRef.current;
+
+      const isHorizontalSwipe = Math.abs(deltaX) > Math.abs(deltaY) && Math.abs(deltaX) > 40;
+      const isVerticalSwipe = Math.abs(deltaY) > 40 && deltaTime < 400;
+
+      // Handle Left / Up flick -> Next Slide
+      if ((isHorizontalSwipe && deltaX < -40) || (isVerticalSwipe && deltaY < -40)) {
+        if (currentIdx < totalItems - 1) {
+          jumpToSlide(currentIdx + 1);
+        }
+      }
+      // Handle Right / Down flick -> Previous Slide
+      else if ((isHorizontalSwipe && deltaX > 40) || (isVerticalSwipe && deltaY > 40)) {
+        if (currentIdx > 0) {
+          jumpToSlide(currentIdx - 1);
+        }
+      }
     };
 
     const onResize = () => {
@@ -288,7 +316,7 @@ export function BoundedParallaxSlider({
     el.addEventListener("touchstart", onTouchStart, { passive: true });
     el.addEventListener("touchmove", onTouchMove, { passive: true });
     el.addEventListener("touchend", onTouchEnd, { passive: true });
-    window.addEventListener("resize", onResize, { passive: true });
+    window.addEventListener("resize", onResize);
 
     onResize();
     requestRef.current = requestAnimationFrame(animationLoop);
@@ -306,7 +334,7 @@ export function BoundedParallaxSlider({
   return (
     <div
       ref={containerRef}
-      className={`relative h-[480px] sm:h-[560px] w-full overflow-hidden rounded-[2.5rem] border border-black/10 dark:border-white/15 bg-black select-none shadow-2xl ${className}`}
+      className={`relative h-[480px] sm:h-[560px] w-full overflow-hidden rounded-[2.5rem] border border-black/10 dark:border-white/15 bg-black select-none shadow-2xl touch-pan-y ${className}`}
     >
       {/* ── Main Stage Slides (Bounded 0 to N-1) ── */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
