@@ -94,11 +94,9 @@ export function BoundedParallaxSlider({
   const state = React.useRef({
     currentY: 0,
     targetY: 0,
-    isDragging: false,
     isSnapping: false,
     snapStart: { time: 0, y: 0, target: 0 },
     lastScrollTime: Date.now(),
-    dragStart: { x: 0, y: 0, time: 0 },
     projectHeight: 520,
   });
 
@@ -203,16 +201,14 @@ export function BoundedParallaxSlider({
     // Clamp target within bounds
     s.targetY = Math.max(maxBound, Math.min(0, s.targetY));
 
-    if (!s.isSnapping && !s.isDragging && now - s.lastScrollTime > 140) {
+    if (!s.isSnapping && now - s.lastScrollTime > 140) {
       const snapPoint =
         -Math.max(0, Math.min(totalItems - 1, Math.round(-s.targetY / h))) * h;
       if (Math.abs(s.targetY - snapPoint) > 1) snapToProject();
     }
 
     if (s.isSnapping) updateSnap();
-    if (!s.isDragging) {
-      s.currentY += (s.targetY - s.currentY) * CONFIG.LERP_FACTOR;
-    }
+    s.currentY += (s.targetY - s.currentY) * CONFIG.LERP_FACTOR;
 
     updatePositions();
   };
@@ -258,54 +254,6 @@ export function BoundedParallaxSlider({
       s.targetY = Math.max(minLimit, Math.min(0, s.targetY - delta));
     };
 
-    // ── Mobile Touch Gesture Interaction (Clean 1-Slide Flicks, No Jumping) ──
-    const onTouchStart = (e: TouchEvent) => {
-      const touch = e.touches[0];
-      const s = state.current;
-      s.isDragging = true;
-      s.isSnapping = false;
-      s.dragStart = {
-        x: touch.clientX,
-        y: touch.clientY,
-        time: Date.now(),
-      };
-      s.lastScrollTime = Date.now();
-    };
-
-    const onTouchMove = (e: TouchEvent) => {
-      // Allow browser to calculate default scroll direction
-    };
-
-    const onTouchEnd = (e: TouchEvent) => {
-      const s = state.current;
-      if (!s.isDragging) return;
-      s.isDragging = false;
-
-      const touch = e.changedTouches[0];
-      if (!touch) return;
-
-      const deltaX = touch.clientX - s.dragStart.x;
-      const deltaY = touch.clientY - s.dragStart.y;
-      const deltaTime = Math.max(1, Date.now() - s.dragStart.time);
-      const currentIdx = activeIndexRef.current;
-
-      const isHorizontalSwipe = Math.abs(deltaX) > Math.abs(deltaY) && Math.abs(deltaX) > 40;
-      const isVerticalSwipe = Math.abs(deltaY) > 40 && deltaTime < 400;
-
-      // Handle Left / Up flick -> Next Slide
-      if ((isHorizontalSwipe && deltaX < -40) || (isVerticalSwipe && deltaY < -40)) {
-        if (currentIdx < totalItems - 1) {
-          jumpToSlide(currentIdx + 1);
-        }
-      }
-      // Handle Right / Down flick -> Previous Slide
-      else if ((isHorizontalSwipe && deltaX > 40) || (isVerticalSwipe && deltaY > 40)) {
-        if (currentIdx > 0) {
-          jumpToSlide(currentIdx - 1);
-        }
-      }
-    };
-
     const onResize = () => {
       if (el) {
         state.current.projectHeight = el.offsetHeight || 520;
@@ -313,9 +261,6 @@ export function BoundedParallaxSlider({
     };
 
     el.addEventListener("wheel", onWheel, { passive: false });
-    el.addEventListener("touchstart", onTouchStart, { passive: true });
-    el.addEventListener("touchmove", onTouchMove, { passive: true });
-    el.addEventListener("touchend", onTouchEnd, { passive: true });
     window.addEventListener("resize", onResize);
 
     onResize();
@@ -323,9 +268,6 @@ export function BoundedParallaxSlider({
 
     return () => {
       el.removeEventListener("wheel", onWheel);
-      el.removeEventListener("touchstart", onTouchStart);
-      el.removeEventListener("touchmove", onTouchMove);
-      el.removeEventListener("touchend", onTouchEnd);
       window.removeEventListener("resize", onResize);
       if (requestRef.current) cancelAnimationFrame(requestRef.current);
     };
@@ -334,7 +276,7 @@ export function BoundedParallaxSlider({
   return (
     <div
       ref={containerRef}
-      className={`relative h-[480px] sm:h-[560px] w-full overflow-hidden rounded-[2.5rem] border border-black/10 dark:border-white/15 bg-black select-none shadow-2xl touch-pan-y ${className}`}
+      className={`relative h-[480px] sm:h-[560px] w-full overflow-hidden rounded-[2.5rem] border border-black/10 dark:border-white/15 bg-black select-none shadow-2xl ${className}`}
     >
       {/* ── Main Stage Slides (Bounded 0 to N-1) ── */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
