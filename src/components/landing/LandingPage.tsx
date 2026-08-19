@@ -12,11 +12,11 @@ import {
 import Image from "next/image";
 import Link from "next/link";
 import {
-  ArrowRight, Globe, Shield, Microscope, Trophy, Users, Menu, X,
+  ArrowRight, Shield, Microscope, Trophy, Users, Menu, X,
   Star, CheckCircle, Mail, ChevronRight,
-  Bell, GraduationCap, Zap, Award, BookOpen, Phone, MapPin,
-  Sparkles, Calendar, ArrowUpRight, Compass, Laptop, HeartHandshake,
-  CheckCircle2, Clock, MapPinCheck, School,
+  Bell, GraduationCap, Award, BookOpen, Phone, MapPin,
+  Sparkles, ArrowUpRight, Compass, Laptop, HeartHandshake,
+  CheckCircle2, Building2, Layers, Check,
 } from "lucide-react";
 
 import IntroPreloader from "@/components/landing/IntroPreloader";
@@ -34,7 +34,7 @@ function DigitColumn({ digit, delay, isInView }: { digit: number; delay: number;
         transition={{
           duration: 2.2,
           delay,
-          ease: [0.16, 1, 0.3, 1], // Luxury ease-out
+          ease: [0.16, 1, 0.3, 1],
         }}
         className="flex flex-col text-center"
       >
@@ -101,7 +101,7 @@ function SectionHeader({
       transition={{ duration: 0.6 }}
       className="text-center mb-16 space-y-3"
     >
-      <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full border border-coral/30 bg-coral/10 text-coral text-xs font-mono uppercase tracking-[0.2em]">
+      <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full border border-coral/30 bg-coral/10 text-coral text-xs font-mono uppercase tracking-[0.2em]">
         {BadgeIcon && <BadgeIcon className="w-3.5 h-3.5" />}
         <span>{label}</span>
       </div>
@@ -130,7 +130,7 @@ function InfiniteMarquee() {
   ];
 
   return (
-    <div className="w-full bg-ink/75 border-y border-hairline py-4 overflow-hidden relative select-none backdrop-blur-md">
+    <div className="w-full bg-ink/80 border-y border-hairline py-4 overflow-hidden relative select-none backdrop-blur-md">
       <div className="flex items-center gap-12 text-xs sm:text-sm font-semibold tracking-wider uppercase text-mist w-max animate-marquee">
         {[...items, ...items, ...items, ...items].map((item, idx) => (
           <div key={idx} className="flex items-center gap-8 shrink-0">
