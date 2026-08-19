@@ -21,14 +21,14 @@ export default function IntroPreloader({
   const animFrameRef = useRef<number | null>(null);
 
   useEffect(() => {
-    // 1. Snappy logo shift + text reveal after 200ms
+    // 1. Reveal RMSPS brand text after 200ms
     const expandTimer = setTimeout(() => {
       setIsExpanded(true);
-    }, 250);
+    }, 200);
 
-    // 2. Smooth 1 to 100% counter (~1.1s duration, hardware-accelerated)
-    const counterDelay = 350;
-    const counterDuration = 1100;
+    // 2. Exact 1-to-1 Synced Frame Counter (Zero CSS Transition Lag)
+    const counterDelay = 300;
+    const counterDuration = 1250; // Smooth ~1.25s progression
     let startTime: number | null = null;
 
     const counterTimer = setTimeout(() => {
@@ -45,7 +45,7 @@ export default function IntroPreloader({
         if (linear < 1) {
           animFrameRef.current = requestAnimationFrame(step);
         } else {
-          // Reached 100% -> Smooth curtain slide up
+          // Reached 100% synchronously -> Hold briefly then curtain slide up
           setTimeout(() => {
             setIsExiting(true);
             if (onComplete) {
@@ -54,7 +54,7 @@ export default function IntroPreloader({
             setTimeout(() => {
               setIsDone(true);
             }, 650);
-          }, 150);
+          }, 180);
         }
       };
 
@@ -162,12 +162,11 @@ export default function IntroPreloader({
     >
       {/* ── Center Brand Lockup ── */}
       <div className="flex flex-col items-center text-center px-6 max-w-lg w-full">
-        
         {/* Brand Row */}
         <div className="flex items-center justify-center gap-3 sm:gap-4 mb-6">
           {/* Logo Crest */}
           <div
-            className="relative w-13 h-13 sm:w-15 sm:h-15 w-[54px] h-[54px] sm:w-[60px] sm:h-[60px] rounded-full overflow-hidden border-2 bg-[#0B0B10] p-1 shrink-0 transition-transform duration-500"
+            className="relative w-[54px] h-[54px] sm:w-[60px] sm:h-[60px] rounded-full overflow-hidden border-2 bg-[#0B0B10] p-1 shrink-0 shadow-lg"
             style={{
               borderColor: currentRole.color,
               boxShadow: `0 0 20px ${currentRole.glow}`,
@@ -183,7 +182,7 @@ export default function IntroPreloader({
             />
           </div>
 
-          {/* Text Container with Smooth CSS Reveal (0 Layout Reflows) */}
+          {/* Text Container with Smooth CSS Reveal */}
           <div
             className={`flex flex-col text-left overflow-hidden transition-all duration-500 ease-out ${
               isExpanded
@@ -216,19 +215,15 @@ export default function IntroPreloader({
         </div>
 
         {/* Progress Bar & Counter Container */}
-        <div
-          className={`w-64 sm:w-72 space-y-2 transition-all duration-500 ${
-            isExpanded ? "opacity-100 translate-y-0" : "opacity-0 translate-y-2"
-          }`}
-        >
-          {/* Hardware-Accelerated Progress Track */}
+        <div className="w-64 sm:w-72 space-y-2.5">
+          {/* 1:1 Instant Synchronized Progress Track (Zero CSS transition delay) */}
           <div className="h-1.5 w-full bg-white/10 rounded-full overflow-hidden border border-white/10 relative">
             <div
-              className="h-full rounded-full transition-transform duration-75 origin-left"
+              className="h-full rounded-full"
               style={{
-                transform: `scaleX(${progress / 100})`,
+                width: `${progress}%`,
                 backgroundColor: currentRole.color,
-                boxShadow: `0 0 8px ${currentRole.glow}`,
+                boxShadow: `0 0 10px ${currentRole.glow}`,
               }}
             />
           </div>
