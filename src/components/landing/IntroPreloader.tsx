@@ -23,12 +23,13 @@ export default function IntroPreloader({
   const progressBarRef = useRef<HTMLDivElement>(null);
   const progressTextRef = useRef<HTMLSpanElement>(null);
   const statusTextRef = useRef<HTMLSpanElement>(null);
+  const lastStatusRef = useRef<string>("");
   const animFrameRef = useRef<number | null>(null);
 
   const roleConfig: Record<
     PreloaderRole,
     {
-      badge: string;
+      badge?: string;
       color: string;
       glow: string;
       getStatus: (pct: number) => string;
@@ -87,12 +88,11 @@ export default function IntroPreloader({
           : "Access Granted • Welcome Scholar",
     },
     public: {
-      badge: "BSEB PATNA",
       color: "#FB7339",
       glow: "rgba(251,115,57,0.35)",
       getStatus: (pct) =>
         pct < 35
-          ? "Connecting High-Performance ERP..."
+          ? "Connecting ERP Network..."
           : pct < 75
           ? "Preparing Campus Portals..."
           : pct < 100
@@ -112,13 +112,13 @@ export default function IntroPreloader({
     };
     window.addEventListener("pageshow", handlePageShow);
 
-    // 1. Reveal Brand Text with GPU transform
+    // 1. Reveal Brand Text with instant GPU transform
     const expandTimer = setTimeout(() => {
       setIsExpanded(true);
-    }, 120);
+    }, 80);
 
     // 2. 120 FPS GPU-Accelerated Step Loop
-    const counterDuration = 900;
+    const counterDuration = 800;
     let startTime: number | null = null;
 
     const counterTimer = setTimeout(() => {
@@ -138,8 +138,12 @@ export default function IntroPreloader({
         if (progressTextRef.current) {
           progressTextRef.current.textContent = `${current}%`;
         }
-        if (statusTextRef.current) {
-          statusTextRef.current.textContent = currentRole.getStatus(current);
+
+        // Only update textContent when status actually changes (prevents DOM layout thrashing)
+        const nextStatus = currentRole.getStatus(current);
+        if (statusTextRef.current && lastStatusRef.current !== nextStatus) {
+          lastStatusRef.current = nextStatus;
+          statusTextRef.current.textContent = nextStatus;
         }
 
         if (linear < 1) {
@@ -152,7 +156,7 @@ export default function IntroPreloader({
               if (onComplete) onComplete();
               setTimeout(() => {
                 setIsDone(true);
-              }, 500);
+              }, 450);
             } else {
               // Role Login Transition:
               // Keep overlay firmly covering the screen so login page never flashes!
@@ -160,12 +164,12 @@ export default function IntroPreloader({
                 onComplete();
               }
             }
-          }, 120);
+          }, 100);
         }
       };
 
       animFrameRef.current = requestAnimationFrame(step);
-    }, 150);
+    }, 100);
 
     return () => {
       window.removeEventListener("pageshow", handlePageShow);
@@ -186,13 +190,13 @@ export default function IntroPreloader({
         isExiting ? "pointer-events-none transition-transform duration-500 ease-out" : ""
       }`}
       style={{
-        transform: isExiting ? "translateY(-100%)" : "translateY(0%)",
+        transform: isExiting ? "translate3d(0, -100%, 0)" : "translate3d(0, 0, 0)",
         willChange: "transform",
       }}
     >
-      {/* Dynamic Ambient Background Glow */}
+      {/* Lightweight Ambient Background Glow */}
       <div
-        className="absolute w-[500px] h-[500px] rounded-full blur-[140px] opacity-25 pointer-events-none transition-opacity duration-700"
+        className="absolute w-80 h-80 rounded-full opacity-20 pointer-events-none transition-opacity duration-500"
         style={{
           background: `radial-gradient(circle, ${currentRole.color} 0%, transparent 70%)`,
         }}
@@ -202,7 +206,7 @@ export default function IntroPreloader({
         {/* Animated Brand Identity Emblem */}
         <div className="flex items-center gap-4 mb-6">
           <div
-            className="w-14 h-14 sm:w-16 sm:h-16 rounded-full overflow-hidden border-2 bg-black shrink-0 relative p-0.5 shadow-2xl transition-transform duration-500 hover:scale-105"
+            className="w-14 h-14 sm:w-16 sm:h-16 rounded-full overflow-hidden border-2 bg-black shrink-0 relative p-0.5 shadow-2xl transition-transform duration-300"
             style={{ borderColor: currentRole.color }}
           >
             <Image
@@ -215,32 +219,33 @@ export default function IntroPreloader({
             />
           </div>
 
-          <div className="overflow-hidden flex flex-col justify-center">
+          <div className="flex flex-col justify-center">
             <div
-              className="flex items-center gap-2.5 overflow-hidden transition-all duration-500 ease-out"
+              className="flex items-center gap-2.5 transition-all duration-300 ease-out"
               style={{
-                maxWidth: isExpanded ? "400px" : "0px",
                 opacity: isExpanded ? 1 : 0,
-                transform: isExpanded ? "translateX(0px)" : "translateX(-15px)",
-                willChange: "transform, opacity, max-width",
+                transform: isExpanded ? "translate3d(0, 0, 0)" : "translate3d(-10px, 0, 0)",
+                willChange: "transform, opacity",
               }}
             >
               <span className="font-display font-black text-2xl sm:text-3xl tracking-widest text-[#F3EFE6] whitespace-nowrap">
                 RMSPS
               </span>
-              <span
-                className="text-[11px] sm:text-xs font-mono font-bold px-2.5 py-0.5 rounded-full uppercase tracking-wider whitespace-nowrap shadow-sm shrink-0"
-                style={{
-                  backgroundColor: `${currentRole.color}20`,
-                  color: currentRole.color,
-                  border: `1px solid ${currentRole.color}40`,
-                }}
-              >
-                {currentRole.badge}
-              </span>
+              {currentRole.badge && (
+                <span
+                  className="text-[11px] sm:text-xs font-mono font-bold px-2.5 py-0.5 rounded-full uppercase tracking-wider whitespace-nowrap shadow-sm shrink-0"
+                  style={{
+                    backgroundColor: `${currentRole.color}20`,
+                    color: currentRole.color,
+                    border: `1px solid ${currentRole.color}40`,
+                  }}
+                >
+                  {currentRole.badge}
+                </span>
+              )}
             </div>
             <p
-              className="text-[10px] sm:text-[11px] font-mono tracking-widest uppercase text-[#8A8F98] whitespace-nowrap transition-opacity duration-500 delay-150"
+              className="text-[10px] sm:text-[11px] font-mono tracking-widest uppercase text-[#8A8F98] whitespace-nowrap transition-opacity duration-300 delay-100"
               style={{ opacity: isExpanded ? 1 : 0 }}
             >
               Excellence Since 2016
