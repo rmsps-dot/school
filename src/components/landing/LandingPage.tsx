@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import {
   motion,
   useScroll,
@@ -16,7 +16,8 @@ import {
   Star, CheckCircle, Mail, ChevronRight,
   Bell, GraduationCap, Award, BookOpen, Phone, MapPin,
   Sparkles, ArrowUpRight, Compass, Laptop, HeartHandshake,
-  CheckCircle2, Building2, Layers, Check,
+  CheckCircle2, Building2, Layers, Check, Radio, Activity,
+  Cpu, Flame, Compass as CompassIcon, FileText, CheckCheck,
 } from "lucide-react";
 
 import IntroPreloader from "@/components/landing/IntroPreloader";
@@ -101,7 +102,7 @@ function SectionHeader({
       transition={{ duration: 0.6 }}
       className="text-center mb-16 space-y-3"
     >
-      <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full border border-coral/30 bg-coral/10 text-coral text-xs font-mono uppercase tracking-[0.2em]">
+      <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full border border-coral/30 bg-coral/10 text-coral text-xs font-mono uppercase tracking-[0.2em] shadow-sm">
         {BadgeIcon && <BadgeIcon className="w-3.5 h-3.5" />}
         <span>{label}</span>
       </div>
@@ -209,6 +210,7 @@ function PortalCard({
   icon: Icon,
   colorVar,
   features,
+  previewText,
   link,
   delay,
 }: {
@@ -218,6 +220,7 @@ function PortalCard({
   icon: React.ElementType;
   colorVar: string;
   features: string[];
+  previewText: string;
   link: string;
   delay: number;
 }) {
@@ -272,6 +275,18 @@ function PortalCard({
           {title}
         </h3>
         <p className="text-mist text-sm leading-relaxed mb-6">{desc}</p>
+
+        {/* Live Interface Preview Pill */}
+        <div
+          className="p-3.5 rounded-xl border mb-6 text-xs font-mono flex items-center gap-2.5 transition-colors"
+          style={{
+            background: "rgba(11, 11, 16, 0.6)",
+            borderColor: `${colorVar}30`,
+          }}
+        >
+          <div className="w-2 h-2 rounded-full animate-ping shrink-0" style={{ background: colorVar }} />
+          <span className="text-mist truncate">{previewText}</span>
+        </div>
 
         {/* Feature List */}
         <ul className="space-y-2.5 mb-8">
@@ -375,7 +390,14 @@ export default function LandingPage({
       grades: "Classes I – V",
       board: "Foundational & Activity-Based",
       tagline: "Nurturing curiosity, foundational literacy, character building, and social confidence.",
-      subjects: ["English Language & Phonics", "Hindi & Sanskrit Basics", "Mathematics & Logic", "Environmental Studies (EVS)", "Art, Craft & Creative Expression", "Daily Yoga & Morning Assembly"],
+      subjects: [
+        { name: "English Language & Phonics", tag: "Daily Drill" },
+        { name: "Hindi & Sanskrit Basics", tag: "Cultural Roots" },
+        { name: "Mathematics & Logic", tag: "Mental Math" },
+        { name: "Environmental Studies (EVS)", tag: "Nature Lab" },
+        { name: "Art, Craft & Creative Expression", tag: "Studio Hours" },
+        { name: "Daily Yoga & Morning Assembly", tag: "Physical Vitality" },
+      ],
       highlights: [
         "Interactive activity-based learning modules",
         "Morning meditation, prayer & moral value education",
@@ -388,7 +410,14 @@ export default function LandingPage({
       grades: "Classes VI – X",
       board: "BSEB Affiliated Curriculum",
       tagline: "Rigorous academic preparation with modern science & computer laboratory practicals.",
-      subjects: ["English Language & Literature", "Hindi & Sanskrit", "Mathematics & Geometry", "Science (Physics, Chemistry, Biology)", "Social Sciences (History, Civics, Geo)", "Computer Science & Digital Literacy"],
+      subjects: [
+        { name: "English Language & Literature", tag: "Advanced Grammar" },
+        { name: "Hindi & Sanskrit", tag: "Board Syllabus" },
+        { name: "Mathematics & Geometry", tag: "Board Problem Sets" },
+        { name: "Science (Physics, Chemistry, Biology)", tag: "Practical Labs" },
+        { name: "Social Sciences (History, Civics, Geo)", tag: "Case Studies" },
+        { name: "Computer Science & Digital Literacy", tag: "Hands-on Coding" },
+      ],
       highlights: [
         "Hands-on Science & Computer Lab practical sessions",
         "Comprehensive BSEB Board examination preparation",
@@ -401,7 +430,12 @@ export default function LandingPage({
       grades: "Classes XI – XII",
       board: "BSEB Specialized Streams",
       tagline: "Focused streams in Science, Commerce & Arts with entrance exam orientation.",
-      subjects: ["Physics, Chemistry, Mathematics / Biology", "Accountancy, Business Studies & Economics", "History, Political Science & Sociology", "English Core & Informatics Practices"],
+      subjects: [
+        { name: "Physics, Chemistry, Math / Biology", tag: "JEE & NEET Track" },
+        { name: "Accountancy, Business Studies & Economics", tag: "CA Foundation Track" },
+        { name: "History, Political Science & Sociology", tag: "UPSC / Law Track" },
+        { name: "English Core & Informatics Practices", tag: "Digital Proficiency" },
+      ],
       highlights: [
         "Subject-matter expert faculty for each academic discipline",
         "Rigorous mock board test series & individual evaluation",
@@ -425,6 +459,7 @@ export default function LandingPage({
       desc: "Full institutional governance: approve registrations, manage faculty assignments, configure attendance geofence, and inspect financial ledgers.",
       icon: Shield,
       colorVar: "#F1917D",
+      previewText: "ERP Audit: 100% Verified • 0 Pending Approvals",
       features: ["Admissions verification & approvals", "Faculty & classroom assignments", "Location geofence control", "Financial ledgers & fee audits"],
       link: "/login?role=admin",
     },
@@ -434,6 +469,7 @@ export default function LandingPage({
       desc: "Instant geofenced attendance marking, examination result entries, homework distribution, and direct student communication.",
       icon: BookOpen,
       colorVar: "#3E5C76",
+      previewText: "Geofence: Inside Campus • 35 Marked Present",
       features: ["Geofenced instant attendance", "Terminal exam marks publishing", "Homework assignments & tracking", "Direct scholar mentorship chat"],
       link: "/login?role=teacher",
     },
@@ -443,6 +479,7 @@ export default function LandingPage({
       desc: "Real-time visibility into your ward's daily attendance records, examination report cards, fee deposit ledgers, and official circulars.",
       icon: Users,
       colorVar: "#D4AF6A",
+      previewText: "Today's Status: Present at 07:45 AM • Fee Paid",
       features: ["Live attendance notification", "Fee deposits & digital receipts", "Terminal report card summaries", "Official school circulars"],
       link: "/login?role=parent",
     },
@@ -452,6 +489,7 @@ export default function LandingPage({
       desc: "Personal academic dashboard: check subject marks, download homework assignments, monitor attendance percentage, and apply for leave.",
       icon: GraduationCap,
       colorVar: "#81B29A",
+      previewText: "Term Exam Score: 94.8% (A+) • 2 Tasks Due",
       features: ["Exam scorecards & analytics", "Homework tasks & submissions", "Leave applications & tracking", "Direct teacher query portal"],
       link: "/login?role=student",
     },
@@ -662,7 +700,7 @@ export default function LandingPage({
         </AnimatePresence>
       </motion.nav>
 
-      {/* ── HERO SECTION: PRESTIGIOUS SCHOOL IDENTITY ── */}
+      {/* ── HERO SECTION: PRESTIGIOUS SCHOOL IDENTITY & SMART COCKPIT ── */}
       <div className="relative min-h-[100svh] w-full flex items-center justify-center pt-28 pb-16 overflow-hidden">
         {/* Background Image with Dark Vignette */}
         <div className="absolute inset-0 z-0">
@@ -737,7 +775,7 @@ export default function LandingPage({
             </div>
           </div>
 
-          {/* Right Column: Hero HUD Bento Card */}
+          {/* Right Column: Hero HUD Bento Card (Smart Campus Cockpit) */}
           <div className="lg:col-span-5">
             <motion.div
               initial={{ opacity: 0, scale: 0.95 }}
@@ -937,11 +975,16 @@ export default function LandingPage({
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
                   {academicTabs[activeTab].subjects.map((subj) => (
                     <div
-                      key={subj}
-                      className="p-4 rounded-xl bg-surface border border-hairline flex items-center gap-3 hover:border-coral/40 transition-colors"
+                      key={subj.name}
+                      className="p-4 rounded-xl bg-surface border border-hairline flex items-center justify-between gap-3 hover:border-coral/40 transition-colors"
                     >
-                      <BookOpen className="w-4 h-4 text-coral shrink-0" />
-                      <span className="text-sm font-medium text-parchment">{subj}</span>
+                      <div className="flex items-center gap-3">
+                        <BookOpen className="w-4 h-4 text-coral shrink-0" />
+                        <span className="text-sm font-medium text-parchment">{subj.name}</span>
+                      </div>
+                      <span className="text-[10px] font-mono text-gold bg-gold/10 px-2 py-0.5 rounded border border-gold/20 shrink-0">
+                        {subj.tag}
+                      </span>
                     </div>
                   ))}
                 </div>
