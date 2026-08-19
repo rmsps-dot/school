@@ -117,7 +117,7 @@ function SectionHeader({
   );
 }
 
-/* ─── INFINITE MARQUEE STRIP ─── */
+/* ─── INFINITE MARQUEE STRIP (100% GPU Hardware Accelerated) ─── */
 function InfiniteMarquee() {
   const items = [
     "Residential Maa Saraswati Public School",
@@ -131,15 +131,7 @@ function InfiniteMarquee() {
 
   return (
     <div className="w-full bg-ink/75 border-y border-hairline py-4 overflow-hidden relative select-none backdrop-blur-md">
-      <motion.div
-        className="flex items-center gap-12 text-xs sm:text-sm font-semibold tracking-wider uppercase text-mist w-max animate-marquee"
-        animate={{ x: ["0%", "-50%"] }}
-        transition={{
-          ease: "linear",
-          duration: 30,
-          repeat: Infinity,
-        }}
-      >
+      <div className="flex items-center gap-12 text-xs sm:text-sm font-semibold tracking-wider uppercase text-mist w-max animate-marquee">
         {[...items, ...items, ...items, ...items].map((item, idx) => (
           <div key={idx} className="flex items-center gap-8 shrink-0">
             <span className="flex items-center gap-2.5 text-parchment/90 hover:text-coral transition-colors cursor-default">
@@ -149,7 +141,7 @@ function InfiniteMarquee() {
             <span className="text-mist/30 font-mono text-xs">✦</span>
           </div>
         ))}
-      </motion.div>
+      </div>
     </div>
   );
 }
