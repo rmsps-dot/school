@@ -14,7 +14,7 @@ export default function IntroPreloader({
   role = "public",
   onComplete,
 }: IntroPreloaderProps) {
-  const [shouldRender, setShouldRender] = useState(false);
+  const [shouldRender, setShouldRender] = useState(true);
   const [isExpanded, setIsExpanded] = useState(false);
   const [isExiting, setIsExiting] = useState(false);
   const [isDone, setIsDone] = useState(false);
@@ -87,14 +87,14 @@ export default function IntroPreloader({
           : "Access Granted • Welcome Scholar",
     },
     public: {
-      badge: "BSEB",
-      color: "#F1917D",
-      glow: "rgba(241,145,125,0.35)",
+      badge: "BSEB PATNA",
+      color: "#FB7339",
+      glow: "rgba(251,115,57,0.35)",
       getStatus: (pct) =>
-        pct < 40
-          ? "Initializing ERP Network..."
-          : pct < 85
-          ? "Loading Campus Portals..."
+        pct < 35
+          ? "Connecting High-Performance ERP..."
+          : pct < 75
+          ? "Preparing Campus Portals..."
           : pct < 100
           ? "Finalizing Experience..."
           : "Welcome to RMSPS",
@@ -104,18 +104,13 @@ export default function IntroPreloader({
   const currentRole = roleConfig[role] || roleConfig.public;
 
   useEffect(() => {
-    // For public landing intro: only play once per session / browser tab.
-    // When navigating back from login or other pages, DO NOT replay or jump to top!
-    if (role === "public") {
-      const hasSeen = sessionStorage.getItem("has_seen_rmsps_intro");
-      if (hasSeen) {
+    // If loaded from back-forward cache (user clicking browser Back button), don't trap
+    const handlePageShow = (e: PageTransitionEvent) => {
+      if (e.persisted && role === "public") {
         setIsDone(true);
-        return;
       }
-      sessionStorage.setItem("has_seen_rmsps_intro", "true");
-    }
-
-    setShouldRender(true);
+    };
+    window.addEventListener("pageshow", handlePageShow);
 
     // 1. Reveal Brand Text with GPU transform
     const expandTimer = setTimeout(() => {
@@ -123,7 +118,7 @@ export default function IntroPreloader({
     }, 120);
 
     // 2. 120 FPS GPU-Accelerated Step Loop
-    const counterDuration = 1000;
+    const counterDuration = 900;
     let startTime: number | null = null;
 
     const counterTimer = setTimeout(() => {
@@ -152,24 +147,28 @@ export default function IntroPreloader({
         } else {
           // Reached 100%
           setTimeout(() => {
-            setIsExiting(true);
-            if (onComplete) {
-              onComplete();
-            }
-            // For role transitions, keep overlay covering screen until redirect completes
             if (role === "public") {
+              setIsExiting(true);
+              if (onComplete) onComplete();
               setTimeout(() => {
                 setIsDone(true);
               }, 500);
+            } else {
+              // Role Login Transition:
+              // Keep overlay firmly covering the screen so login page never flashes!
+              if (onComplete) {
+                onComplete();
+              }
             }
           }, 120);
         }
       };
 
       animFrameRef.current = requestAnimationFrame(step);
-    }, 180);
+    }, 150);
 
     return () => {
+      window.removeEventListener("pageshow", handlePageShow);
       clearTimeout(expandTimer);
       clearTimeout(counterTimer);
       if (animFrameRef.current) {
@@ -199,9 +198,9 @@ export default function IntroPreloader({
         }}
       />
 
-      <div className="relative z-10 flex flex-col items-center max-w-sm w-full px-6">
+      <div className="relative z-10 flex flex-col items-center max-w-md w-full px-6">
         {/* Animated Brand Identity Emblem */}
-        <div className="flex items-center gap-3.5 mb-6">
+        <div className="flex items-center gap-4 mb-6">
           <div
             className="w-14 h-14 sm:w-16 sm:h-16 rounded-full overflow-hidden border-2 bg-black shrink-0 relative p-0.5 shadow-2xl transition-transform duration-500 hover:scale-105"
             style={{ borderColor: currentRole.color }}
@@ -218,9 +217,9 @@ export default function IntroPreloader({
 
           <div className="overflow-hidden flex flex-col justify-center">
             <div
-              className="flex items-center gap-2 overflow-hidden transition-all duration-500 ease-out"
+              className="flex items-center gap-2.5 overflow-hidden transition-all duration-500 ease-out"
               style={{
-                maxWidth: isExpanded ? "260px" : "0px",
+                maxWidth: isExpanded ? "400px" : "0px",
                 opacity: isExpanded ? 1 : 0,
                 transform: isExpanded ? "translateX(0px)" : "translateX(-15px)",
                 willChange: "transform, opacity, max-width",
@@ -230,7 +229,7 @@ export default function IntroPreloader({
                 RMSPS
               </span>
               <span
-                className="text-[10px] font-mono font-bold px-2 py-0.5 rounded-full uppercase tracking-wider whitespace-nowrap shadow-sm"
+                className="text-[11px] sm:text-xs font-mono font-bold px-2.5 py-0.5 rounded-full uppercase tracking-wider whitespace-nowrap shadow-sm shrink-0"
                 style={{
                   backgroundColor: `${currentRole.color}20`,
                   color: currentRole.color,
@@ -241,7 +240,7 @@ export default function IntroPreloader({
               </span>
             </div>
             <p
-              className="text-[10px] font-mono tracking-widest uppercase text-[#8A8F98] whitespace-nowrap transition-opacity duration-500 delay-150"
+              className="text-[10px] sm:text-[11px] font-mono tracking-widest uppercase text-[#8A8F98] whitespace-nowrap transition-opacity duration-500 delay-150"
               style={{ opacity: isExpanded ? 1 : 0 }}
             >
               Excellence Since 2016
@@ -265,10 +264,10 @@ export default function IntroPreloader({
           </div>
 
           {/* Real-time Status Text and Percentage */}
-          <div className="flex items-center justify-between text-[11px] font-mono">
+          <div className="flex items-center justify-between text-[11px] sm:text-xs font-mono">
             <span
               ref={statusTextRef}
-              className="text-[#8A8F98] tracking-wider truncate max-w-[200px]"
+              className="text-[#8A8F98] tracking-wider whitespace-nowrap"
             >
               Initializing...
             </span>

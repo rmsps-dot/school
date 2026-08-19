@@ -16,7 +16,7 @@ import {
   Clock, Trophy, Laptop, HeartHandshake, Compass,
   X, Menu, MessageSquare, Play, Sun, Moon,
   Building2, Atom, Layers, ChevronDown, CheckCircle2,
-  Star, Quote, CheckCheck,
+  Star, Quote, CheckCheck, LogIn,
 } from "lucide-react";
 
 import IntroPreloader from "@/components/landing/IntroPreloader";
@@ -600,21 +600,12 @@ function Hero({ theme }: { theme: "light" | "dark" }) {
           </p>
           <div className="lg:col-span-5 flex flex-wrap gap-3 sm:gap-4 items-center lg:justify-end">
             <Link
-              href="/login?role=student"
-              className="btn-primary px-6 sm:px-8 py-3.5 sm:py-4 rounded-2xl font-bold text-xs uppercase tracking-widest hover:scale-105 transition-transform flex items-center gap-2.5 shadow-xl shadow-[#FB7339]/25"
+              href="/login"
+              className="btn-primary px-8 sm:px-10 py-4 rounded-2xl font-bold text-xs sm:text-sm uppercase tracking-widest hover:scale-105 transition-all flex items-center gap-3 shadow-xl shadow-[#FB7339]/25 cursor-pointer"
             >
-              <GraduationCap className="w-4 h-4" />
-              <span>Student Hub</span>
-            </Link>
-            <Link
-              href="/login?role=parent"
-              className={`px-6 sm:px-8 py-3.5 sm:py-4 rounded-2xl font-bold text-xs uppercase tracking-widest border transition-all ${
-                isLight
-                  ? "border-black/20 text-[#0B0B10] hover:bg-black/5 bg-white shadow-sm"
-                  : "border-white/20 text-white hover:bg-white/5 bg-black/60"
-              }`}
-            >
-              <span>Parent Portal</span>
+              <LogIn className="w-4 h-4 sm:w-5 sm:h-5" />
+              <span>Portal Login</span>
+              <ArrowRight className="w-4 h-4" />
             </Link>
           </div>
         </div>
