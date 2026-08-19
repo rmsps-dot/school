@@ -550,7 +550,7 @@ export default function LandingPage({
       className="bg-ink text-parchment min-h-screen overflow-x-hidden selection:bg-coral selection:text-ink relative"
     >
       {/* ── CINEMATIC BRAND INTRO PRELOADER ── */}
-      <IntroPreloader minDurationMs={1600} />
+      <IntroPreloader />
 
       {/* ── BACKGROUND AMBIENT RADIAL LIGHTING ── */}
       <div className="fixed inset-0 pointer-events-none z-0">
