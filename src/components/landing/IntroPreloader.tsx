@@ -92,7 +92,7 @@ export default function IntroPreloader({
       glow: "rgba(251,115,57,0.35)",
       getStatus: (pct) =>
         pct < 35
-          ? "Connecting ERP Network..."
+          ? "Connecting High-Performance ERP..."
           : pct < 75
           ? "Preparing Campus Portals..."
           : pct < 100
@@ -112,13 +112,13 @@ export default function IntroPreloader({
     };
     window.addEventListener("pageshow", handlePageShow);
 
-    // 1. Reveal Brand Text with instant GPU transform
+    // 1. Reveal Brand Text with buttery smooth GPU transition
     const expandTimer = setTimeout(() => {
       setIsExpanded(true);
-    }, 80);
+    }, 60);
 
-    // 2. 120 FPS GPU-Accelerated Step Loop
-    const counterDuration = 800;
+    // 2. 120 FPS High-Precision GPU Counter Loop (Apple-style quintic ease)
+    const counterDuration = 1100;
     let startTime: number | null = null;
 
     const counterTimer = setTimeout(() => {
@@ -127,8 +127,8 @@ export default function IntroPreloader({
         const elapsed = timestamp - startTime;
         const linear = Math.min(1, elapsed / counterDuration);
 
-        // Smooth cubic ease-out curve
-        const eased = 1 - Math.pow(1 - linear, 3);
+        // Quintic smooth deceleration curve (1 - (1-t)^4)
+        const eased = 1 - Math.pow(1 - linear, 4);
         const current = Math.max(1, Math.min(100, Math.round(eased * 100)));
 
         // Direct GPU Transform update via scaleX
@@ -139,7 +139,7 @@ export default function IntroPreloader({
           progressTextRef.current.textContent = `${current}%`;
         }
 
-        // Only update textContent when status actually changes (prevents DOM layout thrashing)
+        // Throttled status updates (changes only 3-4 times, zero layout thrashing)
         const nextStatus = currentRole.getStatus(current);
         if (statusTextRef.current && lastStatusRef.current !== nextStatus) {
           lastStatusRef.current = nextStatus;
@@ -156,7 +156,7 @@ export default function IntroPreloader({
               if (onComplete) onComplete();
               setTimeout(() => {
                 setIsDone(true);
-              }, 450);
+              }, 600);
             } else {
               // Role Login Transition:
               // Keep overlay firmly covering the screen so login page never flashes!
@@ -164,12 +164,12 @@ export default function IntroPreloader({
                 onComplete();
               }
             }
-          }, 100);
+          }, 120);
         }
       };
 
       animFrameRef.current = requestAnimationFrame(step);
-    }, 100);
+    }, 120);
 
     return () => {
       window.removeEventListener("pageshow", handlePageShow);
@@ -187,16 +187,18 @@ export default function IntroPreloader({
     <div
       aria-hidden="true"
       className={`fixed inset-0 z-[99999] flex items-center justify-center bg-[#0B0B10] text-[#F3EFE6] select-none ${
-        isExiting ? "pointer-events-none transition-transform duration-500 ease-out" : ""
+        isExiting ? "pointer-events-none" : ""
       }`}
       style={{
         transform: isExiting ? "translate3d(0, -100%, 0)" : "translate3d(0, 0, 0)",
+        transition: isExiting ? "transform 600ms cubic-bezier(0.76, 0, 0.24, 1)" : "none",
         willChange: "transform",
+        contain: "paint layout",
       }}
     >
       {/* Lightweight Ambient Background Glow */}
       <div
-        className="absolute w-80 h-80 rounded-full opacity-20 pointer-events-none transition-opacity duration-500"
+        className="absolute w-96 h-96 rounded-full opacity-25 pointer-events-none transition-opacity duration-700"
         style={{
           background: `radial-gradient(circle, ${currentRole.color} 0%, transparent 70%)`,
         }}
@@ -206,7 +208,7 @@ export default function IntroPreloader({
         {/* Animated Brand Identity Emblem */}
         <div className="flex items-center gap-4 mb-6">
           <div
-            className="w-14 h-14 sm:w-16 sm:h-16 rounded-full overflow-hidden border-2 bg-black shrink-0 relative p-0.5 shadow-2xl transition-transform duration-300"
+            className="w-14 h-14 sm:w-16 sm:h-16 rounded-full overflow-hidden border-2 bg-black shrink-0 relative p-0.5 shadow-2xl transition-transform duration-500 hover:scale-105"
             style={{ borderColor: currentRole.color }}
           >
             <Image
@@ -221,10 +223,10 @@ export default function IntroPreloader({
 
           <div className="flex flex-col justify-center">
             <div
-              className="flex items-center gap-2.5 transition-all duration-300 ease-out"
+              className="flex items-center gap-2.5 transition-all duration-500 ease-[cubic-bezier(0.16,1,0.3,1)]"
               style={{
                 opacity: isExpanded ? 1 : 0,
-                transform: isExpanded ? "translate3d(0, 0, 0)" : "translate3d(-10px, 0, 0)",
+                transform: isExpanded ? "translate3d(0, 0, 0)" : "translate3d(-12px, 0, 0)",
                 willChange: "transform, opacity",
               }}
             >
@@ -245,7 +247,7 @@ export default function IntroPreloader({
               )}
             </div>
             <p
-              className="text-[10px] sm:text-[11px] font-mono tracking-widest uppercase text-[#8A8F98] whitespace-nowrap transition-opacity duration-300 delay-100"
+              className="text-[10px] sm:text-[11px] font-mono tracking-widest uppercase text-[#8A8F98] whitespace-nowrap transition-opacity duration-500 delay-100"
               style={{ opacity: isExpanded ? 1 : 0 }}
             >
               Excellence Since 2016
