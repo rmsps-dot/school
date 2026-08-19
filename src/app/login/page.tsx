@@ -23,6 +23,7 @@ import {
   GraduationCap
 } from "lucide-react";
 import { supabase } from "@/utils/supabase/client";
+import IntroPreloader from "@/components/landing/IntroPreloader";
 
 /* ─── Types ─── */
 type Role = "admin" | "teacher" | "parent" | "student";
@@ -195,6 +196,7 @@ export default function LoginPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [showForgotPwd, setShowForgotPwd] = useState(false);
+  const [loginSuccessRole, setLoginSuccessRole] = useState<Role | null>(null);
 
   // Auto-redirect if already logged in
   useEffect(() => {
@@ -259,7 +261,8 @@ export default function LoginPage() {
         return;
       }
 
-      router.push(ROLE_ROUTES[selectedRole]);
+      // Trigger role-specific cinematic preloader before navigation
+      setLoginSuccessRole(selectedRole);
       
     } catch (err: unknown) {
       if (err instanceof Error) {
@@ -284,7 +287,14 @@ export default function LoginPage() {
   const activeColor = roleColors[selectedRole];
 
   return (
-    <div className="min-h-screen bg-ink flex flex-col lg:flex-row overflow-y-auto lg:overflow-hidden">
+    <div className="min-h-screen bg-ink flex flex-col lg:flex-row overflow-y-auto lg:overflow-hidden relative">
+      {/* ─── Role Login Success Cinematic Transition ─── */}
+      {loginSuccessRole && (
+        <IntroPreloader
+          role={loginSuccessRole}
+          onComplete={() => router.push(ROLE_ROUTES[loginSuccessRole])}
+        />
+      )}
       
       {/* ─── LEFT: Editorial Hero (Ink + Glow) ─── */}
       <div className="flex flex-col justify-center lg:justify-between p-8 lg:p-12 relative overflow-hidden lg:flex-1 min-h-[40vh] lg:min-h-screen border-b border-hairline lg:border-b-0 lg:border-r">
