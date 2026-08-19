@@ -14,6 +14,7 @@ export default function IntroPreloader({
   role = "public",
   onComplete,
 }: IntroPreloaderProps) {
+  const [shouldRender, setShouldRender] = useState(false);
   const [isExpanded, setIsExpanded] = useState(false);
   const [isExiting, setIsExiting] = useState(false);
   const [isDone, setIsDone] = useState(false);
@@ -103,14 +104,26 @@ export default function IntroPreloader({
   const currentRole = roleConfig[role] || roleConfig.public;
 
   useEffect(() => {
+    // For public landing intro: only play once per session / browser tab.
+    // When navigating back from login or other pages, DO NOT replay or jump to top!
+    if (role === "public") {
+      const hasSeen = sessionStorage.getItem("has_seen_rmsps_intro");
+      if (hasSeen) {
+        setIsDone(true);
+        return;
+      }
+      sessionStorage.setItem("has_seen_rmsps_intro", "true");
+    }
+
+    setShouldRender(true);
+
     // 1. Reveal Brand Text with GPU transform
     const expandTimer = setTimeout(() => {
       setIsExpanded(true);
-    }, 150);
+    }, 120);
 
-    // 2. 120 FPS GPU-Accelerated Step Loop (Zero CPU layout thrashing)
-    const counterDelay = 220;
-    const counterDuration = 1100; // Fast and snappy progression
+    // 2. 120 FPS GPU-Accelerated Step Loop
+    const counterDuration = 1000;
     let startTime: number | null = null;
 
     const counterTimer = setTimeout(() => {
@@ -123,7 +136,7 @@ export default function IntroPreloader({
         const eased = 1 - Math.pow(1 - linear, 3);
         const current = Math.max(1, Math.min(100, Math.round(eased * 100)));
 
-        // Direct GPU Transform update via scaleX (0 layout recalculations)
+        // Direct GPU Transform update via scaleX
         if (progressBarRef.current) {
           progressBarRef.current.style.transform = `scaleX(${eased})`;
         }
@@ -137,21 +150,24 @@ export default function IntroPreloader({
         if (linear < 1) {
           animFrameRef.current = requestAnimationFrame(step);
         } else {
-          // Reached 100% -> Smooth curtain slide up
+          // Reached 100%
           setTimeout(() => {
             setIsExiting(true);
             if (onComplete) {
               onComplete();
             }
-            setTimeout(() => {
-              setIsDone(true);
-            }, 600);
-          }, 150);
+            // For role transitions, keep overlay covering screen until redirect completes
+            if (role === "public") {
+              setTimeout(() => {
+                setIsDone(true);
+              }, 500);
+            }
+          }, 120);
         }
       };
 
       animFrameRef.current = requestAnimationFrame(step);
-    }, counterDelay);
+    }, 180);
 
     return () => {
       clearTimeout(expandTimer);
@@ -160,116 +176,111 @@ export default function IntroPreloader({
         cancelAnimationFrame(animFrameRef.current);
       }
     };
-  }, [currentRole, onComplete]);
+  }, [role, onComplete, currentRole]);
 
-  if (isDone) return null;
+  if (isDone || !shouldRender) return null;
 
   return (
     <div
-      className={`fixed inset-0 z-[9999] flex flex-col items-center justify-center bg-[#0B0B10] text-[#F3EFE6] select-none transition-all duration-600 ease-[cubic-bezier(0.76,0,0.24,1)] ${
-        isExiting
-          ? "-translate-y-full opacity-90 pointer-events-none"
-          : "translate-y-0 opacity-100"
+      aria-hidden="true"
+      className={`fixed inset-0 z-[99999] flex items-center justify-center bg-[#0B0B10] text-[#F3EFE6] select-none ${
+        isExiting ? "pointer-events-none transition-transform duration-500 ease-out" : ""
       }`}
       style={{
-        willChange: "transform, opacity",
-        transform: isExiting ? "translate3d(0, -100%, 0)" : "translate3d(0, 0, 0)",
-        backfaceVisibility: "hidden",
-        backgroundImage: `radial-gradient(circle at 50% 45%, ${currentRole.color}18 0%, rgba(11,11,16,0.99) 70%)`,
+        transform: isExiting ? "translateY(-100%)" : "translateY(0%)",
+        willChange: "transform",
       }}
     >
-      {/* ── Center Brand Lockup ── */}
-      <div className="flex flex-col items-center text-center px-4 max-w-sm sm:max-w-md w-full">
-        {/* Brand Row */}
-        <div className="flex items-center justify-center gap-3 sm:gap-4 mb-6">
-          {/* Logo Crest */}
+      {/* Dynamic Ambient Background Glow */}
+      <div
+        className="absolute w-[500px] h-[500px] rounded-full blur-[140px] opacity-25 pointer-events-none transition-opacity duration-700"
+        style={{
+          background: `radial-gradient(circle, ${currentRole.color} 0%, transparent 70%)`,
+        }}
+      />
+
+      <div className="relative z-10 flex flex-col items-center max-w-sm w-full px-6">
+        {/* Animated Brand Identity Emblem */}
+        <div className="flex items-center gap-3.5 mb-6">
           <div
-            className="relative w-[50px] h-[50px] sm:w-[58px] sm:h-[58px] rounded-full overflow-hidden border-2 bg-[#0B0B10] p-1 shrink-0 shadow-lg"
-            style={{
-              borderColor: currentRole.color,
-              boxShadow: `0 0 16px ${currentRole.glow}`,
-              transform: "translateZ(0)",
-            }}
+            className="w-14 h-14 sm:w-16 sm:h-16 rounded-full overflow-hidden border-2 bg-black shrink-0 relative p-0.5 shadow-2xl transition-transform duration-500 hover:scale-105"
+            style={{ borderColor: currentRole.color }}
           >
             <Image
               src="/icon-192.png"
               alt="RMSPS Logo"
-              width={58}
-              height={58}
+              width={64}
+              height={64}
               priority
               className="w-full h-full object-cover rounded-full"
             />
           </div>
 
-          {/* Text Container with GPU opacity + translate3d reveal (Zero layout reflow) */}
-          <div
-            className={`flex flex-col text-left transition-all duration-400 ease-out ${
-              isExpanded
-                ? "opacity-100 translate-x-0"
-                : "opacity-0 -translate-x-2 pointer-events-none"
-            }`}
-            style={{ willChange: "transform, opacity" }}
-          >
-            <div className="flex items-baseline gap-2 whitespace-nowrap">
-              <span
-                className="font-display font-black text-2xl sm:text-3xl tracking-[0.12em]"
-                style={{ color: currentRole.color }}
-              >
+          <div className="overflow-hidden flex flex-col justify-center">
+            <div
+              className="flex items-center gap-2 overflow-hidden transition-all duration-500 ease-out"
+              style={{
+                maxWidth: isExpanded ? "260px" : "0px",
+                opacity: isExpanded ? 1 : 0,
+                transform: isExpanded ? "translateX(0px)" : "translateX(-15px)",
+                willChange: "transform, opacity, max-width",
+              }}
+            >
+              <span className="font-display font-black text-2xl sm:text-3xl tracking-widest text-[#F3EFE6] whitespace-nowrap">
                 RMSPS
               </span>
               <span
-                className="text-[10px] font-mono font-bold uppercase tracking-widest px-2 py-0.5 rounded border shrink-0"
+                className="text-[10px] font-mono font-bold px-2 py-0.5 rounded-full uppercase tracking-wider whitespace-nowrap shadow-sm"
                 style={{
-                  background: `${currentRole.color}15`,
-                  borderColor: `${currentRole.color}40`,
+                  backgroundColor: `${currentRole.color}20`,
                   color: currentRole.color,
+                  border: `1px solid ${currentRole.color}40`,
                 }}
               >
                 {currentRole.badge}
               </span>
             </div>
-            <span className="font-display text-[10px] sm:text-xs font-semibold tracking-wider text-[#F3EFE6]/90 whitespace-nowrap">
-              Residential Maa Saraswati Public School
-            </span>
+            <p
+              className="text-[10px] font-mono tracking-widest uppercase text-[#8A8F98] whitespace-nowrap transition-opacity duration-500 delay-150"
+              style={{ opacity: isExpanded ? 1 : 0 }}
+            >
+              Excellence Since 2016
+            </p>
           </div>
         </div>
 
-        {/* Progress Bar & Counter Container */}
-        <div className="w-56 sm:w-68 space-y-2.5">
-          {/* 100% GPU-accelerated track with scaleX (Zero CPU Paint overhead) */}
-          <div className="h-1.5 w-full bg-white/10 rounded-full overflow-hidden border border-white/10 relative">
+        {/* 120 FPS GPU-Optimized ScaleX Progress Bar */}
+        <div className="w-full space-y-2.5">
+          <div className="w-full h-1.5 bg-white/10 rounded-full overflow-hidden relative">
             <div
               ref={progressBarRef}
               className="h-full w-full rounded-full origin-left"
               style={{
-                transform: "scaleX(0.01)",
                 backgroundColor: currentRole.color,
-                boxShadow: `0 0 10px ${currentRole.glow}`,
+                boxShadow: `0 0 16px ${currentRole.glow}`,
+                transform: "scaleX(0.01)",
                 willChange: "transform",
-                transformOrigin: "left center",
               }}
             />
           </div>
 
-          {/* Status Text & Tabular Percentage */}
-          <div className="flex justify-between items-center text-[10px] sm:text-[11px] font-mono text-[#8A8F98]">
-            <span ref={statusTextRef} className="tracking-wider uppercase truncate text-left">
-              {currentRole.getStatus(1)}
+          {/* Real-time Status Text and Percentage */}
+          <div className="flex items-center justify-between text-[11px] font-mono">
+            <span
+              ref={statusTextRef}
+              className="text-[#8A8F98] tracking-wider truncate max-w-[200px]"
+            >
+              Initializing...
             </span>
             <span
               ref={progressTextRef}
-              className="text-[#F3EFE6] font-bold text-xs tabular-nums ml-2 shrink-0"
+              className="font-bold tracking-widest font-mono"
+              style={{ color: currentRole.color }}
             >
               1%
             </span>
           </div>
         </div>
-      </div>
-
-      {/* Bottom Institutional Stamp */}
-      <div className="absolute bottom-5 flex items-center gap-2 text-[10px] font-mono text-[#8A8F98]/70 uppercase tracking-widest">
-        <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
-        <span>Secure Campus System • Kating Chowk, Pipra</span>
       </div>
     </div>
   );

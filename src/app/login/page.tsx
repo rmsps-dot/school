@@ -1,11 +1,10 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, Suspense } from "react";
 import Image from "next/image";
 import { motion, AnimatePresence } from "framer-motion";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
-import { useEffect } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import {
   Mail,
   Lock,
@@ -20,7 +19,7 @@ import {
   Shield,
   Microscope,
   Globe,
-  GraduationCap
+  GraduationCap,
 } from "lucide-react";
 import { supabase } from "@/utils/supabase/client";
 import IntroPreloader from "@/components/landing/IntroPreloader";
@@ -30,9 +29,9 @@ type Role = "admin" | "teacher" | "parent" | "student";
 
 /* ─── Role → Dashboard route map ─── */
 const ROLE_ROUTES: Record<Role, string> = {
-  admin:   "/admin",
+  admin: "/admin",
   teacher: "/teacher",
-  parent:  "/parent",
+  parent: "/parent",
   student: "/student",
 };
 
@@ -76,10 +75,13 @@ function InputField({
           disabled={disabled}
           autoComplete={autoComplete}
           className={`w-full pl-10 pr-10 py-3 rounded-xl bg-ink/50 border border-hairline text-parchment text-sm disabled:opacity-50 transition-all focus:outline-none ${
-            roleTint === 'admin' ? 'focus:border-coral focus:ring-1 focus:ring-coral/50' :
-            roleTint === 'teacher' ? 'focus:border-veena-blue focus:ring-1 focus:ring-veena-blue/50' :
-            roleTint === 'parent' ? 'focus:border-gold focus:ring-1 focus:ring-gold/50' :
-            'focus:border-role-student focus:ring-1 focus:ring-role-student/50'
+            roleTint === "admin"
+              ? "focus:border-coral focus:ring-1 focus:ring-coral/50"
+              : roleTint === "teacher"
+              ? "focus:border-veena-blue focus:ring-1 focus:ring-veena-blue/50"
+              : roleTint === "parent"
+              ? "focus:border-gold focus:ring-1 focus:ring-gold/50"
+              : "focus:border-role-student focus:ring-1 focus:ring-role-student/50"
           }`}
         />
         {rightSlot && (
@@ -91,33 +93,51 @@ function InputField({
 }
 
 /* ─── FORGOT PASSWORD MODAL ─── */
-function ForgotPasswordModal({ onClose, roleTint }: { onClose: () => void, roleTint: string }) {
+function ForgotPasswordModal({
+  onClose,
+  roleTint,
+}: {
+  onClose: () => void;
+  roleTint: string;
+}) {
   const [email, setEmail] = useState("");
   const [loading, setLoading] = useState(false);
   const [sent, setSent] = useState(false);
   const [error, setError] = useState("");
 
-  const tintColor = 
-    roleTint === 'admin' ? 'text-coral bg-coral/10 border-coral/30' :
-    roleTint === 'teacher' ? 'text-veena-blue bg-veena-blue/10 border-veena-blue/30' :
-    roleTint === 'parent' ? 'text-gold bg-gold/10 border-gold/30' :
-    'text-role-student bg-role-student/10 border-role-student/30';
+  const tintColor =
+    roleTint === "admin"
+      ? "text-coral bg-coral/10 border-coral/30"
+      : roleTint === "teacher"
+      ? "text-veena-blue bg-veena-blue/10 border-veena-blue/30"
+      : roleTint === "parent"
+      ? "text-gold bg-gold/10 border-gold/30"
+      : "text-role-student bg-role-student/10 border-role-student/30";
 
-  const btnBg = 
-    roleTint === 'admin' ? 'bg-coral' :
-    roleTint === 'teacher' ? 'bg-veena-blue' :
-    roleTint === 'parent' ? 'bg-gold' :
-    'bg-role-student';
+  const btnBg =
+    roleTint === "admin"
+      ? "bg-coral"
+      : roleTint === "teacher"
+      ? "bg-veena-blue"
+      : roleTint === "parent"
+      ? "bg-gold"
+      : "bg-role-student";
 
   async function handleSend() {
-    if (!email.trim()) { setError("Please enter your email."); return; }
+    if (!email.trim()) {
+      setError("Please enter your email.");
+      return;
+    }
     setLoading(true);
     setError("");
     const { error: err } = await supabase.auth.resetPasswordForEmail(email.trim(), {
       redirectTo: `${window.location.origin}/reset-password`,
     });
     setLoading(false);
-    if (err) { setError(err.message); return; }
+    if (err) {
+      setError(err.message);
+      return;
+    }
     setSent(true);
   }
 
@@ -125,20 +145,26 @@ function ForgotPasswordModal({ onClose, roleTint }: { onClose: () => void, roleT
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-ink/80 backdrop-blur-sm">
       <div className="absolute inset-0 cursor-pointer" onClick={onClose} />
       <div className="relative w-full max-w-sm glass-panel rounded-3xl p-6 shadow-2xl">
-        <button onClick={onClose} className="absolute right-4 top-4 text-mist hover:text-parchment transition-colors">
+        <button
+          onClick={onClose}
+          className="absolute right-4 top-4 text-mist hover:text-parchment transition-colors"
+        >
           <X className="w-5 h-5" />
         </button>
         <div className={`w-12 h-12 rounded-2xl flex items-center justify-center mb-4 ${tintColor}`}>
           <KeyRound className="w-6 h-6" />
         </div>
         <h3 className="text-xl font-display font-bold text-parchment mb-2">Reset Password</h3>
-        
+
         {sent ? (
           <div className="space-y-4">
             <p className="text-sm text-mist leading-relaxed">
               We have sent a password reset link to <strong className="text-parchment">{email}</strong>. Check your inbox.
             </p>
-            <button onClick={onClose} className={`w-full py-2.5 rounded-xl font-semibold text-ink transition-all ${btnBg} hover:opacity-90`}>
+            <button
+              onClick={onClose}
+              className={`w-full py-2.5 rounded-xl font-semibold text-ink transition-all ${btnBg} hover:opacity-90`}
+            >
               Got it
             </button>
           </div>
@@ -163,7 +189,7 @@ function ForgotPasswordModal({ onClose, roleTint }: { onClose: () => void, roleT
               disabled={loading}
               roleTint={roleTint}
             />
-            <button 
+            <button
               onClick={handleSend}
               disabled={loading}
               className={`w-full py-2.5 rounded-xl font-semibold text-ink transition-all flex items-center justify-center gap-2 disabled:opacity-50 ${btnBg} hover:opacity-90`}
@@ -178,17 +204,15 @@ function ForgotPasswordModal({ onClose, roleTint }: { onClose: () => void, roleT
   );
 }
 
-export default function LoginPage() {
+function LoginForm() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const roleParam = searchParams.get("role") as Role | null;
 
-  const initialRole = (() => {
-    if (typeof window === 'undefined') return 'parent' as Role
-    const params = new URLSearchParams(window.location.search)
-    const roleParam = params.get('role') as Role | null
-    return roleParam && ['admin', 'teacher', 'parent', 'student'].includes(roleParam) ? roleParam : 'parent'
-  })()
+  const validRoles: Role[] = ["admin", "teacher", "parent", "student"];
+  const defaultRole: Role = roleParam && validRoles.includes(roleParam) ? roleParam : "parent";
 
-  const [selectedRole, setSelectedRole] = useState<Role>(initialRole)
+  const [selectedRole, setSelectedRole] = useState<Role>(defaultRole);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
@@ -197,6 +221,14 @@ export default function LoginPage() {
   const [error, setError] = useState<string | null>(null);
   const [showForgotPwd, setShowForgotPwd] = useState(false);
   const [loginSuccessRole, setLoginSuccessRole] = useState<Role | null>(null);
+
+  // Sync role whenever URL search parameter changes
+  useEffect(() => {
+    if (roleParam && validRoles.includes(roleParam)) {
+      setSelectedRole(roleParam);
+      setError(null);
+    }
+  }, [roleParam]);
 
   // Auto-redirect if already logged in
   useEffect(() => {
@@ -233,7 +265,10 @@ export default function LoginPage() {
     setLoading(true);
 
     try {
-      const { data: authData, error: authError } = await supabase.auth.signInWithPassword({ email, password });
+      const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
       if (authError) throw authError;
 
       const user = authData.user;
@@ -263,7 +298,6 @@ export default function LoginPage() {
 
       // Trigger role-specific cinematic preloader before navigation
       setLoginSuccessRole(selectedRole);
-      
     } catch (err: unknown) {
       if (err instanceof Error) {
         setError(err.message || "Invalid login credentials.");
@@ -274,14 +308,14 @@ export default function LoginPage() {
     }
   };
 
-  const currentRoleObj = roles.find(r => r.id === selectedRole)!;
+  const currentRoleObj = roles.find((r) => r.id === selectedRole) || roles[0];
   const RoleIcon = currentRoleObj.icon;
 
   const roleColors = {
-    admin: 'var(--coral)',
-    teacher: 'var(--veena-blue)',
-    parent: 'var(--gold)',
-    student: 'var(--role-student)',
+    admin: "var(--coral)",
+    teacher: "var(--veena-blue)",
+    parent: "var(--gold)",
+    student: "var(--role-student)",
   };
 
   const activeColor = roleColors[selectedRole];
@@ -292,34 +326,36 @@ export default function LoginPage() {
       {loginSuccessRole && (
         <IntroPreloader
           role={loginSuccessRole}
-          onComplete={() => router.push(ROLE_ROUTES[loginSuccessRole])}
+          onComplete={() => {
+            window.location.assign(ROLE_ROUTES[loginSuccessRole]);
+          }}
         />
       )}
-      
+
       {/* ─── LEFT: Editorial Hero (Ink + Glow) ─── */}
       <div className="flex flex-col justify-center lg:justify-between p-8 lg:p-12 relative overflow-hidden lg:flex-1 min-h-[40vh] lg:min-h-screen border-b border-hairline lg:border-b-0 lg:border-r">
         {/* Masterplan Ambient Glow */}
-        <div 
+        <div
           className="absolute w-[150vw] h-[150vw] sm:w-[800px] sm:h-[800px] rounded-full blur-[80px] sm:blur-[100px] opacity-20 pointer-events-none transition-colors duration-1000"
-          style={{ 
+          style={{
             background: `radial-gradient(circle, ${activeColor} 0%, transparent 70%)`,
-            top: '-20%',
-            left: '-20%'
+            top: "-20%",
+            left: "-20%",
           }}
         />
-        
+
         <div className="relative z-10 flex flex-col items-start gap-6 lg:gap-0 lg:block">
-          <Link 
-            href="/" 
+          <Link
+            href="/"
             className="inline-flex w-max items-center gap-2 px-4 py-2 mb-0 lg:mb-8 rounded-full bg-ink/50 backdrop-blur-md border border-hairline text-mist text-sm font-medium hover:text-parchment hover:border-mist/30 transition-all z-50 group"
           >
-            <ArrowLeft className="w-4 h-4 group-hover:-translate-x-1 transition-transform" /> 
+            <ArrowLeft className="w-4 h-4 group-hover:-translate-x-1 transition-transform" />
             Back to Homepage
           </Link>
 
           <Link href="/" className="flex items-center gap-3 sm:gap-4 hover:opacity-80 transition-opacity">
             <div className="w-12 h-12 sm:w-16 sm:h-16 rounded-full overflow-hidden bg-ink shrink-0 border border-hairline flex items-center justify-center shadow-lg">
-            <Image src="/icon-192.png" alt="RMSPS Logo" width={64} height={64} className="object-cover" />
+              <Image src="/icon-192.png" alt="RMSPS Logo" width={64} height={64} className="object-cover" />
             </div>
             <span className="font-display font-bold text-3xl sm:text-4xl tracking-widest text-parchment">
               RMSPS
@@ -345,16 +381,15 @@ export default function LoginPage() {
       <div className="flex-1 flex flex-col justify-start lg:justify-center items-center p-6 sm:p-12 relative z-10">
         <div className="w-full max-w-[420px] relative z-10">
           {/* Mobile-only background elements */}
-          <div 
+          <div
             className="lg:hidden absolute w-[120vw] h-[120vw] max-w-[400px] max-h-[400px] rounded-full blur-[80px] opacity-20 pointer-events-none transition-colors duration-1000 top-[-10%] right-[-10%]"
             style={{ background: `radial-gradient(circle, ${activeColor} 0%, transparent 70%)` }}
           />
 
           <div className="glass-panel p-8 sm:p-10 rounded-[2rem] w-full shadow-2xl relative">
-            
             {/* Header */}
             <div className="flex items-center gap-4 mb-8">
-              <div 
+              <div
                 className="w-12 h-12 rounded-2xl flex items-center justify-center transition-colors duration-500"
                 style={{ backgroundColor: `${activeColor}15`, color: activeColor }}
               >
@@ -423,7 +458,7 @@ export default function LoginPage() {
                 autoComplete="email"
                 roleTint={selectedRole}
               />
-              
+
               <InputField
                 id="password"
                 type={showPassword ? "text" : "password"}
@@ -476,7 +511,11 @@ export default function LoginPage() {
             <div className="mt-8 text-center">
               <p className="text-sm text-mist">
                 Don&apos;t have an account?{" "}
-                <Link href="/register" className="font-bold text-parchment hover:underline decoration-1 underline-offset-4" style={{ textDecorationColor: activeColor }}>
+                <Link
+                  href="/register"
+                  className="font-bold text-parchment hover:underline decoration-1 underline-offset-4"
+                  style={{ textDecorationColor: activeColor }}
+                >
                   Apply for Admission
                 </Link>
               </p>
@@ -487,5 +526,19 @@ export default function LoginPage() {
 
       {showForgotPwd && <ForgotPasswordModal onClose={() => setShowForgotPwd(false)} roleTint={selectedRole} />}
     </div>
+  );
+}
+
+export default function LoginPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="min-h-screen bg-ink flex items-center justify-center text-parchment font-mono text-sm">
+          Loading RMSPS Portal...
+        </div>
+      }
+    >
+      <LoginForm />
+    </Suspense>
   );
 }
