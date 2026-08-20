@@ -686,26 +686,28 @@ function InfiniteMarquee({ theme }: { theme: "light" | "dark" }) {
       }`}
       style={{ transform: "translateZ(0)" }}
     >
-      <div className="flex items-center shrink-0 animate-marquee gap-8 pr-8">
+      <div className="flex items-center shrink-0 animate-marquee gap-12 sm:gap-16 pr-12 sm:pr-16">
         {items.map((item, idx) => (
-          <div key={`m1-${idx}`} className="flex items-center gap-8 shrink-0">
-            <span className="flex items-center gap-2.5 hover:text-[#FB7339] transition-colors cursor-default font-mono text-xs sm:text-sm font-semibold tracking-wider uppercase whitespace-nowrap">
-              <span className="w-2 h-2 rounded-full bg-[#FB7339] inline-block shrink-0" />
-              {item}
-            </span>
-            <span className="opacity-30 font-mono text-xs">✦</span>
-          </div>
+          <span
+            key={`m1-${idx}`}
+            className="text-xs sm:text-sm font-display font-bold tracking-wider uppercase opacity-90 shrink-0 whitespace-nowrap flex items-center gap-3 hover:text-[#FB7339] transition-colors cursor-default"
+          >
+            <span className="w-2 h-2 rounded-full bg-[#FB7339] inline-block shrink-0" />
+            {item}
+            <span className="opacity-30 ml-3">✦</span>
+          </span>
         ))}
       </div>
-      <div className="flex items-center shrink-0 animate-marquee gap-8 pr-8" aria-hidden="true">
+      <div className="flex items-center shrink-0 animate-marquee gap-12 sm:gap-16 pr-12 sm:pr-16" aria-hidden="true">
         {items.map((item, idx) => (
-          <div key={`m2-${idx}`} className="flex items-center gap-8 shrink-0">
-            <span className="flex items-center gap-2.5 hover:text-[#FB7339] transition-colors cursor-default font-mono text-xs sm:text-sm font-semibold tracking-wider uppercase whitespace-nowrap">
-              <span className="w-2 h-2 rounded-full bg-[#FB7339] inline-block shrink-0" />
-              {item}
-            </span>
-            <span className="opacity-30 font-mono text-xs">✦</span>
-          </div>
+          <span
+            key={`m2-${idx}`}
+            className="text-xs sm:text-sm font-display font-bold tracking-wider uppercase opacity-90 shrink-0 whitespace-nowrap flex items-center gap-3 hover:text-[#FB7339] transition-colors cursor-default"
+          >
+            <span className="w-2 h-2 rounded-full bg-[#FB7339] inline-block shrink-0" />
+            {item}
+            <span className="opacity-30 ml-3">✦</span>
+          </span>
         ))}
       </div>
     </div>
