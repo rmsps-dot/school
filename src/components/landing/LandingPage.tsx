@@ -684,29 +684,33 @@ function InfiniteMarquee({ theme }: { theme: "light" | "dark" }) {
           ? "bg-[#EFEAE1] border-black/10 text-[#2B2925]"
           : "bg-[#0B0B10] border-white/10 text-mist"
       }`}
-      style={{ transform: "translateZ(0)" }}
+      style={{
+        transform: "translate3d(0, 0, 0)",
+        isolation: "isolate",
+        contain: "paint layout",
+      }}
     >
-      <div className="flex items-center shrink-0 animate-marquee gap-12 sm:gap-16 pr-12 sm:pr-16">
+      <div className="flex items-center shrink-0 animate-marquee gap-8 pr-8">
         {items.map((item, idx) => (
           <span
             key={`m1-${idx}`}
-            className="text-xs sm:text-sm font-display font-bold tracking-wider uppercase opacity-90 shrink-0 whitespace-nowrap flex items-center gap-3 hover:text-[#FB7339] transition-colors cursor-default"
+            className="flex items-center gap-2.5 hover:text-[#FB7339] transition-colors cursor-default font-mono text-xs sm:text-sm font-semibold tracking-wider uppercase whitespace-nowrap shrink-0"
           >
             <span className="w-2 h-2 rounded-full bg-[#FB7339] inline-block shrink-0" />
             {item}
-            <span className="opacity-30 ml-3">✦</span>
+            <span className="opacity-30 font-mono text-xs ml-4">✦</span>
           </span>
         ))}
       </div>
-      <div className="flex items-center shrink-0 animate-marquee gap-12 sm:gap-16 pr-12 sm:pr-16" aria-hidden="true">
+      <div className="flex items-center shrink-0 animate-marquee gap-8 pr-8" aria-hidden="true">
         {items.map((item, idx) => (
           <span
             key={`m2-${idx}`}
-            className="text-xs sm:text-sm font-display font-bold tracking-wider uppercase opacity-90 shrink-0 whitespace-nowrap flex items-center gap-3 hover:text-[#FB7339] transition-colors cursor-default"
+            className="flex items-center gap-2.5 hover:text-[#FB7339] transition-colors cursor-default font-mono text-xs sm:text-sm font-semibold tracking-wider uppercase whitespace-nowrap shrink-0"
           >
             <span className="w-2 h-2 rounded-full bg-[#FB7339] inline-block shrink-0" />
             {item}
-            <span className="opacity-30 ml-3">✦</span>
+            <span className="opacity-30 font-mono text-xs ml-4">✦</span>
           </span>
         ))}
       </div>
