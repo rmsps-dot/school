@@ -416,7 +416,7 @@ h1, h2, h3, h4, h5, h6, .font-display {
 .animate-marquee {
   display: flex;
   width: max-content;
-  animation: marqueeTrack 35s linear infinite;
+  animation: marqueeTrack 30s linear infinite;
   will-change: transform;
   transform: translate3d(0, 0, 0);
   backface-visibility: hidden;
@@ -432,7 +432,7 @@ h1, h2, h3, h4, h5, h6, .font-display {
     transform: translate3d(0, 0, 0);
   }
   100% {
-    transform: translate3d(-50%, 0, 0);
+    transform: translate3d(-100%, 0, 0);
   }
 }
 
