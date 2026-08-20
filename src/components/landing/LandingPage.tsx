@@ -38,7 +38,7 @@ export const LANDING_CONFIG = {
   hero: {
     videoUrl: "https://assets.pebblelife.com/2_I3_A0499_2_7_b9915cc716.webm",
     posterImage: "https://images.unsplash.com/photo-1580582932707-520aed937b7b?q=80&w=1920",
-    badge: "BSEB Affiliated Code: 852109",
+    badge: "Reg No. PSS217/19 • UDISE CODE: 10060603629",
     schoolName: "Residential Maa Saraswati Public School",
     taglineHeading: "SHAPING FUTURES.",
     subheading:
@@ -185,7 +185,8 @@ export const LANDING_CONFIG = {
     address: "Kating Chowk, Maheshpur road, Pipra, Bihar 852109",
     phone: "+91 95465 36279",
     email: "srzsurazzrajput@gmail.com",
-    bsebCode: "852109",
+    regNo: "PSS217/19",
+    udiseCode: "10060603629",
   },
 };
 
@@ -525,7 +526,7 @@ function Navbar({
                 isLight ? "border-black/10 text-black/50" : "border-white/10 text-white/50"
               }`}
             >
-              BSEB Code: 852109 • Pipra, Bihar
+              Reg No. PSS217/19 • UDISE CODE: 10060603629 • Pipra, Bihar
             </div>
           </motion.div>
         )}
@@ -668,7 +669,7 @@ function InfiniteMarquee({ theme }: { theme: "light" | "dark" }) {
   const isLight = theme === "light";
   const items = [
     "Residential Maa Saraswati Public School",
-    "BSEB Affiliation Code: 852109",
+    "Reg No. PSS217/19 • UDISE CODE: 10060603629",
     "Smart Geofenced Campus ERP",
     "100% Board Examination Pass Record",
     "Robotics, Physics & Chemistry Labs",
@@ -793,7 +794,7 @@ function GridReveal({ theme }: { theme: "light" | "dark" }) {
 function PressHeader({ theme }: { theme: "light" | "dark" }) {
   const isLight = theme === "light";
   const BADGES = [
-    "BSEB PATNA CODE #852109",
+    "REG NO. PSS217/19 • UDISE CODE: 10060603629",
     "100% BOARD PASS RECORD",
     "ADVANCED ROBOTICS & STEM",
     "SUPERVISED HOSTELS",
@@ -1099,7 +1100,7 @@ function PreFooter() {
         </div>
 
         <p className="font-mono text-[11px] font-bold uppercase tracking-widest text-white/60 pt-2">
-          BSEB Affiliated Code: {LANDING_CONFIG.contact.bsebCode} • Pipra, Bihar
+          Reg No. {LANDING_CONFIG.contact.regNo} • UDISE CODE: {LANDING_CONFIG.contact.udiseCode} • Pipra, Bihar
         </p>
       </motion.div>
     </section>
@@ -1174,9 +1175,10 @@ function Footer() {
               {LANDING_CONFIG.contact.email}
             </a>
           </p>
-          <p className="pt-2 text-[#FB7339] font-bold">
-            BSEB Affiliation Code: {LANDING_CONFIG.contact.bsebCode}
-          </p>
+          <div className="pt-2 text-[#FB7339] font-mono font-bold text-xs space-y-0.5">
+            <p>Reg No. {LANDING_CONFIG.contact.regNo}</p>
+            <p>UDISE CODE: {LANDING_CONFIG.contact.udiseCode}</p>
+          </div>
         </div>
       </div>
 
