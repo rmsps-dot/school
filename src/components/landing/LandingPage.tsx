@@ -684,6 +684,7 @@ function InfiniteMarquee({ theme }: { theme: "light" | "dark" }) {
           ? "bg-[#EFEAE1] border-black/10 text-[#2B2925]"
           : "bg-[#0B0B10] border-white/10 text-mist"
       }`}
+      style={{ transform: "translateZ(0)" }}
     >
       <div className="flex items-center shrink-0 animate-marquee gap-8 pr-8">
         {items.map((item, idx) => (
@@ -826,7 +827,7 @@ function PressHeader({ theme }: { theme: "light" | "dark" }) {
           Institutional Credentials & Affiliation
         </p>
       </div>
-      <div className="flex overflow-hidden select-none">
+      <div className="flex overflow-hidden select-none" style={{ transform: "translateZ(0)" }}>
         <div className="flex items-center shrink-0 animate-marquee gap-12 sm:gap-16 pr-12 sm:pr-16">
           {BADGES.map((badge, i) => (
             <span
