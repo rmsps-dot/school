@@ -679,16 +679,27 @@ function InfiniteMarquee({ theme }: { theme: "light" | "dark" }) {
 
   return (
     <div
-      className={`w-full border-y py-3.5 overflow-hidden relative select-none transition-colors ${
+      className={`w-full border-y py-3.5 overflow-hidden relative select-none flex ${
         isLight
           ? "bg-[#EFEAE1] border-black/10 text-[#2B2925]"
           : "bg-[#0B0B10] border-white/10 text-mist"
       }`}
     >
-      <div className="flex items-center gap-10 text-xs sm:text-sm font-semibold tracking-wider uppercase w-max animate-marquee">
-        {[...items, ...items, ...items, ...items].map((item, idx) => (
-          <div key={idx} className="flex items-center gap-8 shrink-0">
-            <span className="flex items-center gap-2.5 hover:text-[#FB7339] transition-colors cursor-default font-mono">
+      <div className="flex items-center shrink-0 animate-marquee gap-8 pr-8">
+        {items.map((item, idx) => (
+          <div key={`m1-${idx}`} className="flex items-center gap-8 shrink-0">
+            <span className="flex items-center gap-2.5 hover:text-[#FB7339] transition-colors cursor-default font-mono text-xs sm:text-sm font-semibold tracking-wider uppercase whitespace-nowrap">
+              <span className="w-2 h-2 rounded-full bg-[#FB7339] inline-block shadow-[0_0_8px_rgba(251,115,57,0.8)] animate-pulse" />
+              {item}
+            </span>
+            <span className="opacity-30 font-mono text-xs">✦</span>
+          </div>
+        ))}
+      </div>
+      <div className="flex items-center shrink-0 animate-marquee gap-8 pr-8" aria-hidden="true">
+        {items.map((item, idx) => (
+          <div key={`m2-${idx}`} className="flex items-center gap-8 shrink-0">
+            <span className="flex items-center gap-2.5 hover:text-[#FB7339] transition-colors cursor-default font-mono text-xs sm:text-sm font-semibold tracking-wider uppercase whitespace-nowrap">
               <span className="w-2 h-2 rounded-full bg-[#FB7339] inline-block shadow-[0_0_8px_rgba(251,115,57,0.8)] animate-pulse" />
               {item}
             </span>
@@ -816,11 +827,21 @@ function PressHeader({ theme }: { theme: "light" | "dark" }) {
         </p>
       </div>
       <div className="flex overflow-hidden select-none">
-        <div className="flex gap-12 sm:gap-16 items-center whitespace-nowrap px-8 animate-marquee">
-          {[...BADGES, ...BADGES, ...BADGES, ...BADGES].map((badge, i) => (
+        <div className="flex items-center shrink-0 animate-marquee gap-12 sm:gap-16 pr-12 sm:pr-16">
+          {BADGES.map((badge, i) => (
             <span
-              key={i}
-              className="text-base sm:text-xl font-display font-black italic tracking-tighter uppercase opacity-80"
+              key={`b1-${i}`}
+              className="text-base sm:text-xl font-display font-black italic tracking-tighter uppercase opacity-80 shrink-0 whitespace-nowrap"
+            >
+              ✦ {badge}
+            </span>
+          ))}
+        </div>
+        <div className="flex items-center shrink-0 animate-marquee gap-12 sm:gap-16 pr-12 sm:pr-16" aria-hidden="true">
+          {BADGES.map((badge, i) => (
+            <span
+              key={`b2-${i}`}
+              className="text-base sm:text-xl font-display font-black italic tracking-tighter uppercase opacity-80 shrink-0 whitespace-nowrap"
             >
               ✦ {badge}
             </span>
