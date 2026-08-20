@@ -690,7 +690,7 @@ function InfiniteMarquee({ theme }: { theme: "light" | "dark" }) {
         {items.map((item, idx) => (
           <div key={`m1-${idx}`} className="flex items-center gap-8 shrink-0">
             <span className="flex items-center gap-2.5 hover:text-[#FB7339] transition-colors cursor-default font-mono text-xs sm:text-sm font-semibold tracking-wider uppercase whitespace-nowrap">
-              <span className="w-2 h-2 rounded-full bg-[#FB7339] inline-block shadow-[0_0_8px_rgba(251,115,57,0.8)] animate-pulse" />
+              <span className="w-2 h-2 rounded-full bg-[#FB7339] inline-block shrink-0" />
               {item}
             </span>
             <span className="opacity-30 font-mono text-xs">✦</span>
@@ -701,7 +701,7 @@ function InfiniteMarquee({ theme }: { theme: "light" | "dark" }) {
         {items.map((item, idx) => (
           <div key={`m2-${idx}`} className="flex items-center gap-8 shrink-0">
             <span className="flex items-center gap-2.5 hover:text-[#FB7339] transition-colors cursor-default font-mono text-xs sm:text-sm font-semibold tracking-wider uppercase whitespace-nowrap">
-              <span className="w-2 h-2 rounded-full bg-[#FB7339] inline-block shadow-[0_0_8px_rgba(251,115,57,0.8)] animate-pulse" />
+              <span className="w-2 h-2 rounded-full bg-[#FB7339] inline-block shrink-0" />
               {item}
             </span>
             <span className="opacity-30 font-mono text-xs">✦</span>
