@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { Search, MessageSquare, Loader2, Users } from 'lucide-react'
+import { Search, Loader2, Users } from 'lucide-react'
 import ChatWindow from '@/components/chat/ChatWindow'
 import { getStaffContacts } from '@/actions/chat-actions'
 import { useUnreadCounts } from '@/hooks/useUnreadCounts'
@@ -11,11 +11,13 @@ interface Props {
   currentUserId: string
 }
 
+type RoleFilter = 'all' | 'teacher' | 'admin'
+
 export default function ParentChatClient({ currentUserId }: Props) {
   const [contacts, setContacts] = useState<ChatContact[]>([])
   const [isLoading, setIsLoading] = useState(false)
   const [searchQuery, setSearchQuery] = useState('')
-  
+  const [roleFilter, setRoleFilter] = useState<RoleFilter>('all')
   const [selectedContact, setSelectedContact] = useState<ChatContact | null>(null)
   const { unreadCounts, clearUnreadCount } = useUnreadCounts(currentUserId)
 
@@ -23,7 +25,7 @@ export default function ParentChatClient({ currentUserId }: Props) {
     let isMounted = true
     // eslint-disable-next-line react-hooks/set-state-in-effect
     setIsLoading(true)
-    
+
     getStaffContacts().then(({ data, error }) => {
       if (!isMounted) return
       if (error) console.error(error)
@@ -37,7 +39,11 @@ export default function ParentChatClient({ currentUserId }: Props) {
   }, [])
 
   const filteredContacts = contacts
-    .filter(c => c.full_name.toLowerCase().includes(searchQuery.toLowerCase()))
+    .filter((c) => {
+      const matchesRole = roleFilter === 'all' || c.role === roleFilter
+      const matchesSearch = c.full_name.toLowerCase().includes(searchQuery.toLowerCase())
+      return matchesRole && matchesSearch
+    })
     .sort((a, b) => {
       const countA = unreadCounts[a.id] || 0
       const countB = unreadCounts[b.id] || 0
@@ -46,42 +52,67 @@ export default function ParentChatClient({ currentUserId }: Props) {
       return 0
     })
 
+  const filterTabs: { key: RoleFilter; label: string }[] = [
+    { key: 'all', label: 'All' },
+    { key: 'teacher', label: 'Teachers' },
+    { key: 'admin', label: 'Admin' },
+  ]
+
   return (
     <div className="flex flex-col lg:flex-row gap-6 h-[80vh] min-h-[600px]">
-      
+
       {/* ── Left Sidebar (Contacts) ── */}
       <div className="w-full lg:w-80 flex flex-col gap-4">
-        <div className="glass rounded-2xl flex-1 flex flex-col overflow-hidden">
-          <div className="p-4 border-b border-hairline bg-ink/50">
-            <h2 className="text-sm font-bold text-white uppercase tracking-wider mb-3 ml-1">Staff Directory</h2>
+        <div className="surface-card border-hairline rounded-[2rem] flex-1 flex flex-col overflow-hidden shadow-2xl">
+          <div className="p-6 border-b border-hairline bg-surface space-y-4">
+            <h2 className="text-[10px] font-mono text-mist uppercase tracking-widest ml-1">Staff Directory</h2>
+
+            {/* Role Filter Pills */}
+            <div className="flex gap-2">
+              {filterTabs.map(({ key, label }) => (
+                <button
+                  key={key}
+                  onClick={() => setRoleFilter(key)}
+                  className={`flex-1 py-1.5 rounded-lg text-[10px] font-bold uppercase tracking-widest transition-all ${
+                    roleFilter === key
+                      ? 'bg-gold text-ink shadow'
+                      : 'text-mist border border-hairline hover:border-gold/40 hover:text-parchment'
+                  }`}
+                >
+                  {label}
+                </button>
+              ))}
+            </div>
+
+            {/* Search */}
             <div className="relative">
-              <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-mist" />
+              <Search className="w-4 h-4 absolute left-4 top-1/2 -translate-y-1/2 text-mist" />
               <input
                 type="text"
-                placeholder="Search teachers & admins..."
+                placeholder="Search staff..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full input-glass rounded-xl pl-9 pr-4 py-2.5 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-coral transition-colors"
+                className="w-full input-glass rounded-xl pl-10 pr-4 py-3 text-sm text-parchment placeholder-mist focus:outline-none focus:border-gold transition-colors shadow-inner"
               />
             </div>
           </div>
 
-          <div className="flex-1 overflow-y-auto p-2 scrollbar-thin scrollbar-thumb-white/10 scrollbar-track-transparent">
+          <div className="flex-1 overflow-y-auto p-4 styled-scroll">
             {isLoading ? (
               <div className="flex items-center justify-center h-32">
-                <Loader2 className="w-6 h-6 animate-spin text-coral" />
+                <Loader2 className="w-6 h-6 animate-spin text-gold" />
               </div>
             ) : filteredContacts.length === 0 ? (
               <div className="flex flex-col items-center justify-center h-32 text-mist">
                 <Users className="w-8 h-8 mb-2 opacity-50" />
-                <p className="text-xs font-medium uppercase tracking-wider">No staff found</p>
+                <p className="text-[10px] font-mono uppercase tracking-widest">No staff found</p>
               </div>
             ) : (
-              <div className="space-y-1">
-                {filteredContacts.map(contact => {
+              <div className="space-y-2">
+                {filteredContacts.map((contact) => {
                   const isSelected = selectedContact?.id === contact.id
                   const unreadCount = unreadCounts[contact.id] || 0
-                  
+
                   return (
                     <button
                       key={contact.id}
@@ -89,27 +120,27 @@ export default function ParentChatClient({ currentUserId }: Props) {
                         setSelectedContact(contact)
                         if (unreadCount > 0) clearUnreadCount(contact.id)
                       }}
-                      className={`w-full flex items-center gap-3 p-3 rounded-xl transition-all ${
-                        isSelected 
-                          ? 'bg-coral shadow-lg shadow-indigo-500/20' 
-                          : 'hover:bg-white/5'
+                      className={`w-full flex items-center gap-4 p-4 rounded-xl transition-all ${
+                        isSelected
+                          ? 'bg-gold/10 border border-gold/20 shadow-inner'
+                          : 'hover:bg-surface/50 border border-transparent'
                       }`}
                     >
-                      <div className={`w-10 h-10 rounded-full flex items-center justify-center font-bold shrink-0 relative ${
-                        isSelected ? 'bg-white/20 text-white' : 'surface-card text-parchment'
+                      <div className={`w-10 h-10 rounded-full flex items-center justify-center font-bold shrink-0 relative shadow-inner ${
+                        isSelected ? 'bg-gold text-ink' : 'bg-ink border border-hairline text-mist'
                       }`}>
                         {contact.full_name.charAt(0).toUpperCase()}
                         {unreadCount > 0 && !isSelected && (
-                          <span className="absolute -top-1 -right-1 bg-red-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full border-2 border-hairline">
+                          <span className="absolute -top-1 -right-1 bg-coral text-ink text-[10px] font-bold px-1.5 py-0.5 rounded-full border-2 border-surface">
                             {unreadCount > 9 ? '9+' : unreadCount}
                           </span>
                         )}
                       </div>
                       <div className="text-left min-w-0 flex-1">
-                        <p className={`text-sm font-bold truncate ${isSelected ? 'text-white' : 'text-parchment'}`}>
+                        <p className={`text-sm font-bold truncate ${isSelected ? 'text-parchment' : 'text-parchment/80'}`}>
                           {contact.full_name}
                         </p>
-                        <p className={`text-xs truncate uppercase tracking-wider font-semibold mt-0.5 ${isSelected ? 'text-gold' : 'text-mist'}`}>
+                        <p className={`text-[10px] font-mono truncate uppercase tracking-widest mt-1 ${isSelected ? 'text-gold' : 'text-mist'}`}>
                           {contact.role}
                         </p>
                       </div>
@@ -129,4 +160,9 @@ export default function ParentChatClient({ currentUserId }: Props) {
 
     </div>
   )
+}
+
+
+interface Props {
+  currentUserId: string
 }

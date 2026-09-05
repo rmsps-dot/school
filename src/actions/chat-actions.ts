@@ -25,8 +25,9 @@ export type ChatMessage = Database['public']['Tables']['messages']['Row']
 const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
 
 /**
- * Hard Delete Conversation
- * Permanently deletes all messages between the authenticated user and the selected user.
+ * Delete Conversation:
+ * - Admin: Hard deletes permanently from database for everyone.
+ * - Normal User (Teacher/Student/Parent): "Delete for Me" only (marks deleted_by_* = true).
  */
 export async function deleteConversation(otherUserId: string): Promise<{ success: boolean; error?: string }> {
   try {
@@ -37,18 +38,103 @@ export async function deleteConversation(otherUserId: string): Promise<{ success
     const auth = await requireAuth()
     if (!auth.ok) return { success: false, error: auth.error }
     const myId = auth.profile.id
+    const isAdmin = auth.profile.role === 'admin'
 
-    // Delete messages where (sender=me AND receiver=other) OR (sender=other AND receiver=me)
-    const { error } = await supabaseAdmin
-      .from('messages')
-      .delete()
-      .or(`and(sender_id.eq.${myId},receiver_id.eq.${otherUserId}),and(sender_id.eq.${otherUserId},receiver_id.eq.${myId})`)
+    if (isAdmin) {
+      // Admin: Permanent HARD DELETE for everyone from database
+      const { error } = await supabaseAdmin
+        .from('messages')
+        .delete()
+        .or(`and(sender_id.eq.${myId},receiver_id.eq.${otherUserId}),and(sender_id.eq.${otherUserId},receiver_id.eq.${myId})`)
 
-    if (error) throw error
-    return { success: true }
+      if (error) throw error
+      return { success: true }
+    } else {
+      // Normal User: "Delete for Me" only
+      // 1. Where current user was the sender
+      const { error: err1 } = await supabaseAdmin
+        .from('messages')
+        .update({ deleted_by_sender: true })
+        .eq('sender_id', myId)
+        .eq('receiver_id', otherUserId)
+
+      if (err1) throw err1
+
+      // 2. Where current user was the receiver
+      const { error: err2 } = await supabaseAdmin
+        .from('messages')
+        .update({ deleted_by_receiver: true })
+        .eq('sender_id', otherUserId)
+        .eq('receiver_id', myId)
+
+      if (err2) throw err2
+
+      return { success: true }
+    }
   } catch (err: unknown) {
     console.error('deleteConversation error:', err)
     return { success: false, error: err instanceof Error ? err.message : 'Failed to delete conversation' }
+  }
+}
+
+/**
+ * Delete a Single Message:
+ * - Admin: Permanently hard deletes the message from the database for everyone.
+ * - Normal User: "Delete for Me" only (marks deleted_by_sender or deleted_by_receiver = true).
+ */
+export async function deleteMessage(messageId: string): Promise<{ success: boolean; error?: string }> {
+  try {
+    if (!UUID_REGEX.test(messageId)) {
+      return { success: false, error: 'Invalid message ID format.' }
+    }
+
+    const auth = await requireAuth()
+    if (!auth.ok) return { success: false, error: auth.error }
+    const myId = auth.profile.id
+    const isAdmin = auth.profile.role === 'admin'
+
+    if (isAdmin) {
+      // Admin: Permanent hard delete
+      const { error } = await supabaseAdmin
+        .from('messages')
+        .delete()
+        .eq('id', messageId)
+
+      if (error) throw error
+      return { success: true }
+    } else {
+      // Normal User: check if sender or receiver, then soft-delete for themselves
+      const { data: msg, error: fetchErr } = await supabaseAdmin
+        .from('messages')
+        .select('sender_id, receiver_id')
+        .eq('id', messageId)
+        .single()
+
+      if (fetchErr || !msg) {
+        return { success: false, error: 'Message not found.' }
+      }
+
+      if (msg.sender_id === myId) {
+        const { error } = await supabaseAdmin
+          .from('messages')
+          .update({ deleted_by_sender: true })
+          .eq('id', messageId)
+        if (error) throw error
+      } else if (msg.receiver_id === myId) {
+        const { error } = await supabaseAdmin
+          .from('messages')
+          .update({ deleted_by_receiver: true })
+          .eq('id', messageId)
+        if (error) throw error
+      } else {
+        return { success: false, error: 'Unauthorized to delete this message.' }
+      }
+
+      return { success: true }
+    }
+  } catch (err: unknown) {
+    console.error('deleteMessage error:', err)
+    return { success: false, error: err instanceof Error ? err.message : 'Failed to delete message' }
   }
 }
 
@@ -206,13 +292,16 @@ export async function getStaffContacts(): Promise<{ data: ChatContact[]; error?:
     // Find admins with chat history with this user
     const { data: msgs, error: mErr } = await client
       .from('messages')
-      .select('sender_id, receiver_id')
+      .select('sender_id, receiver_id, deleted_by_sender, deleted_by_receiver')
       .or(`sender_id.eq.${userId},receiver_id.eq.${userId}`)
 
     if (mErr) throw mErr
 
     const interactors = new Set<string>()
     msgs?.forEach(m => {
+      // Ignore if cleared by current user
+      if (m.sender_id === userId && m.deleted_by_sender) return
+      if (m.receiver_id === userId && m.deleted_by_receiver) return
       if (m.sender_id !== userId) interactors.add(m.sender_id)
       if (m.receiver_id !== userId) interactors.add(m.receiver_id)
     })
@@ -251,7 +340,7 @@ export async function getUnreadCounts(): Promise<{
 
     const { data, error } = await client
       .from('messages')
-      .select('sender_id, profiles!messages_sender_id_fkey(role)')
+      .select('sender_id, deleted_by_receiver, profiles!messages_sender_id_fkey(role)')
       .eq('receiver_id', userId)
       .eq('is_read', false)
 
@@ -262,6 +351,9 @@ export async function getUnreadCounts(): Promise<{
     let total = 0
 
     data?.forEach((msg) => {
+      // Exclude messages deleted by receiver
+      if (msg.deleted_by_receiver) return
+
       bySender[msg.sender_id] = (bySender[msg.sender_id] || 0) + 1
       const prof = Array.isArray(msg.profiles) ? msg.profiles[0] : msg.profiles
       const role = prof?.role || 'unknown'
@@ -321,8 +413,15 @@ export async function getMessageHistory(receiverId: string): Promise<{ data: Cha
 
     if (error) throw error
 
+    // Filter out messages that current user marked as deleted for themselves
+    const visibleData = (data || []).filter((m) => {
+      if (m.sender_id === userId && m.deleted_by_sender) return false
+      if (m.receiver_id === userId && m.deleted_by_receiver) return false
+      return true
+    })
+
     // Mark as read if user is receiver
-    const unreadIds = data
+    const unreadIds = visibleData
       .filter(m => m.receiver_id === userId && !m.is_read)
       .map(m => m.id)
 
@@ -331,7 +430,7 @@ export async function getMessageHistory(receiverId: string): Promise<{ data: Cha
       client.from('messages').update({ is_read: true }).in('id', unreadIds).then()
     }
 
-    return { data: data as ChatMessage[] }
+    return { data: visibleData as ChatMessage[] }
   } catch (err) {
     return { data: [], error: err instanceof Error ? err.message : 'Unknown error' }
   }
@@ -340,7 +439,7 @@ export async function getMessageHistory(receiverId: string): Promise<{ data: Cha
 /**
  * Action 3: Send a new message
  */
-export async function sendMessageAction(receiverId: string, content: string): Promise<{ success: boolean; error?: string }> {
+export async function sendMessageAction(receiverId: string, content: string): Promise<{ success: boolean; data?: ChatMessage; error?: string }> {
   try {
     if (!UUID_REGEX.test(receiverId)) {
       return { success: false, error: 'Invalid receiver ID format.' }
@@ -354,17 +453,19 @@ export async function sendMessageAction(receiverId: string, content: string): Pr
     if (senderId === receiverId) throw new Error('Cannot send message to yourself.')
 
     const client = await createClient()
-    const { error } = await client
+    const { data, error } = await client
       .from('messages')
       .insert({
         sender_id: senderId,
         receiver_id: receiverId,
         content: content.trim()
       })
+      .select()
+      .single()
 
     if (error) throw error
     
-    return { success: true }
+    return { success: true, data: data as ChatMessage }
   } catch (err) {
     return { success: false, error: err instanceof Error ? err.message : 'Unknown error' }
   }

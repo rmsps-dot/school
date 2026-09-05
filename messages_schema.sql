@@ -7,9 +7,11 @@ CREATE TABLE IF NOT EXISTS public.messages (
   id          uuid        PRIMARY KEY DEFAULT gen_random_uuid(),
   sender_id   uuid        NOT NULL REFERENCES public.profiles(id) ON DELETE CASCADE,
   receiver_id uuid        NOT NULL REFERENCES public.profiles(id) ON DELETE CASCADE,
-  content     text        NOT NULL CHECK (char_length(trim(content)) > 0),
-  is_read     boolean     NOT NULL DEFAULT false,
-  created_at  timestamptz NOT NULL DEFAULT now()
+  content              text        NOT NULL CHECK (char_length(trim(content)) > 0),
+  is_read              boolean     NOT NULL DEFAULT false,
+  deleted_by_sender    boolean     NOT NULL DEFAULT false,
+  deleted_by_receiver  boolean     NOT NULL DEFAULT false,
+  created_at           timestamptz NOT NULL DEFAULT now()
 );
 
 -- 2. Enable Row Level Security

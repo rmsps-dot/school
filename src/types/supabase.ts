@@ -173,6 +173,8 @@ export type Database = {
           is_read: boolean
           receiver_id: string
           sender_id: string
+          deleted_by_sender?: boolean
+          deleted_by_receiver?: boolean
         }
         Insert: {
           content: string
@@ -181,6 +183,8 @@ export type Database = {
           is_read?: boolean
           receiver_id: string
           sender_id: string
+          deleted_by_sender?: boolean
+          deleted_by_receiver?: boolean
         }
         Update: {
           content?: string
@@ -189,6 +193,8 @@ export type Database = {
           is_read?: boolean
           receiver_id?: string
           sender_id?: string
+          deleted_by_sender?: boolean
+          deleted_by_receiver?: boolean
         }
         Relationships: [
           {

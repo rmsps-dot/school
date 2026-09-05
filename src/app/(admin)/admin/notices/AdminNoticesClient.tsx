@@ -4,6 +4,7 @@ import { useState, useTransition } from 'react'
 import { Plus, Edit2, Trash2, Megaphone, Loader2 } from 'lucide-react'
 import type { Notice, TargetRole } from '@/actions/notice-actions'
 import { createNotice, updateNotice, deleteNotice } from '@/actions/notice-actions'
+import { useNoticesRealtime } from '@/hooks/useNoticesRealtime'
 
 interface Props {
   initialNotices: Notice[]
@@ -12,7 +13,8 @@ interface Props {
 const INPUT_CLASS = "w-full input-glass rounded-xl px-4 py-3 text-sm text-parchment placeholder-mist/40 focus:outline-none focus:border-coral/60 focus:ring-1 focus:ring-coral/20 transition-all"
 
 export default function AdminNoticesClient({ initialNotices }: Props) {
-  const [notices, setNotices] = useState(initialNotices)
+  // Live-updating notices — realtime handles INSERT/UPDATE/DELETE from any client
+  const notices = useNoticesRealtime(initialNotices)
   const [isPending, startTransition] = useTransition()
   const [error, setError] = useState('')
 
@@ -48,7 +50,8 @@ export default function AdminNoticesClient({ initialNotices }: Props) {
       if (!res.success) {
         setError(res.error || 'Failed to save notice.')
       } else {
-        window.location.reload()
+        // Reset form — realtime subscription will update the list automatically
+        resetForm()
       }
     })
   }
@@ -58,7 +61,7 @@ export default function AdminNoticesClient({ initialNotices }: Props) {
     startTransition(async () => {
       const res = await deleteNotice(id)
       if (!res.success) alert(res.error || 'Failed to delete notice.')
-      else window.location.reload()
+      // No reload needed — realtime DELETE event will remove it from the list
     })
   }
 
@@ -188,7 +191,8 @@ export default function AdminNoticesClient({ initialNotices }: Props) {
                   </button>
                   <button
                     onClick={() => handleDelete(n.id)}
-                    className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium text-red-400 border border-red-500/20 hover:bg-red-500/10 transition-colors w-full md:w-auto justify-center"
+                    disabled={isPending}
+                    className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium text-red-400 border border-red-500/20 hover:bg-red-500/10 transition-colors w-full md:w-auto justify-center disabled:opacity-50"
                   >
                     <Trash2 className="w-4 h-4" /> Delete
                   </button>
@@ -201,3 +205,4 @@ export default function AdminNoticesClient({ initialNotices }: Props) {
     </div>
   )
 }
+

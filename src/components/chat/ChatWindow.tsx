@@ -9,19 +9,26 @@ import type { ChatMessage, ChatContact } from '@/actions/chat-actions'
 interface Props {
   currentUserId: string
   recipient: ChatContact | null
+  isAdmin?: boolean
   onClearRecipient?: () => void
 }
 
-export default function ChatWindow({ currentUserId, recipient, onClearRecipient }: Props) {
+export default function ChatWindow({ currentUserId, recipient, isAdmin = false, onClearRecipient }: Props) {
   const [messages, setMessages] = useState<ChatMessage[]>([])
   const [isLoading, setIsLoading] = useState(false)
   const [inputValue, setInputValue] = useState('')
   const [isSending, startTransition] = useTransition()
-  
+
   const messagesEndRef = useRef<HTMLDivElement>(null)
+  const inputRef = useRef<HTMLInputElement>(null)
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
+  }
+
+  const focusInput = () => {
+    // Small delay to ensure DOM is stable before focusing
+    setTimeout(() => inputRef.current?.focus(), 50)
   }
 
   // Load History
@@ -41,10 +48,11 @@ export default function ChatWindow({ currentUserId, recipient, onClearRecipient 
         console.error('Failed to load history:', error)
       } else {
         setMessages(data)
-        // Scroll to bottom after state update
         setTimeout(scrollToBottom, 100)
       }
       setIsLoading(false)
+      // Auto-focus input when conversation loads
+      focusInput()
     })
 
     return () => {
@@ -52,43 +60,67 @@ export default function ChatWindow({ currentUserId, recipient, onClearRecipient 
     }
   }, [recipient])
 
-  // Real-Time Subscription
+  // Real-Time Subscription — INSERT, UPDATE, DELETE
   useEffect(() => {
     if (!recipient) return
 
-    // Create a unique channel for this recipient to avoid overlapping listeners
-    const channelName = `chat_${currentUserId}_${recipient.id}`
-    
-    const channel = supabase.channel(channelName)
-      .on(
-        'postgres_changes',
-        {
-          event: 'INSERT',
-          schema: 'public',
-          table: 'messages',
-        },
-        (payload) => {
-          const newMsg = payload.new as ChatMessage
-          
-          // CRUCIAL: Only append if the message belongs to this specific 1-on-1 conversation
-          const isRelevant = 
-            (newMsg.sender_id === currentUserId && newMsg.receiver_id === recipient.id) ||
-            (newMsg.sender_id === recipient.id && newMsg.receiver_id === currentUserId)
+    const channelName = `chat_${[currentUserId, recipient.id].sort().join('_')}`
 
-          if (isRelevant) {
-            setMessages((prev) => {
-              // Prevent duplicates (Supabase sometimes fires multiple events locally)
-              if (prev.some(m => m.id === newMsg.id)) return prev
-              return [...prev, newMsg]
-            })
-            setTimeout(scrollToBottom, 100)
-          }
+    const channel = supabase
+      .channel(channelName)
+      // New message received
+      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'messages' }, (payload) => {
+        const newMsg = payload.new as ChatMessage
+        const isRelevant =
+          (newMsg.sender_id === currentUserId && newMsg.receiver_id === recipient.id) ||
+          (newMsg.sender_id === recipient.id && newMsg.receiver_id === currentUserId)
+
+        if (isRelevant) {
+          setMessages((prev) => {
+            if (prev.some((m) => m.id === newMsg.id)) return prev
+            // If current user sent this, check if an optimistic temp message exists to replace
+            const tempIndex = prev.findIndex(
+              (m) =>
+                m.id.startsWith('temp_') &&
+                m.sender_id === newMsg.sender_id &&
+                m.content === newMsg.content
+            )
+            if (tempIndex !== -1) {
+              const copy = [...prev]
+              copy[tempIndex] = newMsg
+              return copy
+            }
+            return [...prev, newMsg]
+          })
+          setTimeout(scrollToBottom, 100)
         }
-      )
-      .subscribe()
+      })
+      // Message updated (e.g., is_read, deleted_by_* flags changed)
+      .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'messages' }, (payload) => {
+        const updated = payload.new as ChatMessage
+        setMessages((prev) =>
+          prev
+            .map((m) => (m.id === updated.id ? { ...m, ...updated } : m))
+            // Filter out if the current user's soft-delete flag just turned true
+            .filter((m) => {
+              if (m.sender_id === currentUserId && m.deleted_by_sender) return false
+              if (m.receiver_id === currentUserId && m.deleted_by_receiver) return false
+              return true
+            })
+        )
+      })
+      // Message hard-deleted (admin action)
+      .on('postgres_changes', { event: 'DELETE', schema: 'public', table: 'messages' }, (payload) => {
+        const deletedId = (payload.old as { id: string }).id
+        setMessages((prev) => prev.filter((m) => m.id !== deletedId))
+      })
+      .subscribe((status, err) => {
+        if (status === 'CHANNEL_ERROR') {
+          console.error('[Realtime] Channel error on', channelName, err)
+        }
+      })
 
     return () => {
-      // Prevent memory leaks
       supabase.removeChannel(channel)
     }
   }, [currentUserId, recipient])
@@ -98,26 +130,57 @@ export default function ChatWindow({ currentUserId, recipient, onClearRecipient 
     if (!recipient || !inputValue.trim() || isSending) return
 
     const content = inputValue.trim()
-    setInputValue('') // Optimistic clear
+    const tempId = `temp_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`
+    const optimisticMessage: ChatMessage = {
+      id: tempId,
+      sender_id: currentUserId,
+      receiver_id: recipient.id,
+      content,
+      is_read: false,
+      deleted_by_sender: false,
+      deleted_by_receiver: false,
+      created_at: new Date().toISOString(),
+    }
+
+    // Instant local UI feedback (WhatsApp-style instant message render)
+    setMessages((prev) => [...prev, optimisticMessage])
+    setInputValue('')
+    setTimeout(scrollToBottom, 50)
 
     startTransition(async () => {
-      const { success, error } = await sendMessageAction(recipient.id, content)
+      const { success, data, error } = await sendMessageAction(recipient.id, content)
       if (!success) {
+        // Rollback optimistic message on failure
+        setMessages((prev) => prev.filter((m) => m.id !== tempId))
+        setInputValue(content)
         alert(error || 'Failed to send message')
-        setInputValue(content) // Restore input on failure
+      } else if (data) {
+        // Replace temporary optimistic message with confirmed database record
+        setMessages((prev) => {
+          if (prev.some((m) => m.id === data.id)) {
+            return prev.filter((m) => m.id !== tempId)
+          }
+          return prev.map((m) => (m.id === tempId ? data : m))
+        })
       }
+      // Always re-focus after send attempt
+      focusInput()
     })
   }
 
   const handleDeleteConversation = async () => {
     if (!recipient) return
-    if (!window.confirm('This will permanently delete this conversation for both users. This cannot be undone.')) {
+    const confirmText = isAdmin
+      ? 'This will permanently delete this conversation for everyone from the database. This cannot be undone.'
+      : 'This will clear this conversation for you. Other participants will still be able to see their messages.'
+    if (!window.confirm(confirmText)) {
       return
     }
 
     const { success, error } = await deleteConversation(recipient.id)
     if (success) {
       if (onClearRecipient) onClearRecipient()
+      setMessages([])
     } else {
       alert(error || 'Failed to delete conversation')
     }
@@ -152,10 +215,10 @@ export default function ChatWindow({ currentUserId, recipient, onClearRecipient 
             </div>
           </div>
         </div>
-        
+
         <button
           onClick={handleDeleteConversation}
-          title="Delete Conversation"
+          title={isAdmin ? 'Delete Conversation for Everyone' : 'Clear Conversation for Me'}
           className="p-2 text-mist hover:text-red-400 hover:bg-red-500/10 rounded-xl transition-colors"
         >
           <Trash2 className="w-5 h-5" />
@@ -176,19 +239,21 @@ export default function ChatWindow({ currentUserId, recipient, onClearRecipient 
         ) : (
           messages.map((msg) => {
             const isMine = msg.sender_id === currentUserId
-            
+
             return (
               <div key={msg.id} className={`flex flex-col ${isMine ? 'items-end' : 'items-start'}`}>
-                <div 
+                <div
                   className={`max-w-[75%] rounded-2xl px-5 py-3 shadow-lg ${
-                    isMine 
-                      ? 'bg-veena-blue text-ink rounded-br-sm' 
+                    isMine
+                      ? 'bg-veena-blue text-ink rounded-br-sm'
                       : 'bg-ink border border-hairline text-parchment rounded-bl-sm'
                   }`}
                 >
-                  <p className={`text-[15px] leading-relaxed whitespace-pre-wrap break-words ${isMine ? 'font-medium' : ''}`}>{msg.content}</p>
+                  <p className={`text-[15px] leading-relaxed whitespace-pre-wrap break-words ${isMine ? 'font-medium' : ''}`}>
+                    {msg.content}
+                  </p>
                 </div>
-                
+
                 <div className="flex items-center gap-2 mt-2 px-1">
                   <span className="text-[10px] font-mono text-mist uppercase tracking-widest">
                     {new Date(msg.created_at).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })}
@@ -208,6 +273,7 @@ export default function ChatWindow({ currentUserId, recipient, onClearRecipient 
       <div className="p-5 bg-surface border-t border-hairline shrink-0">
         <form onSubmit={handleSend} className="flex gap-4">
           <input
+            ref={inputRef}
             type="text"
             value={inputValue}
             onChange={(e) => setInputValue(e.target.value)}
