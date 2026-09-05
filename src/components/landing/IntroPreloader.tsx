@@ -14,10 +14,14 @@ export default function IntroPreloader({
   role = "public",
   onComplete,
 }: IntroPreloaderProps) {
-  const [shouldRender, setShouldRender] = useState(true);
+  const [isDone, setIsDone] = useState(() => {
+    if (typeof window !== "undefined" && role === "public") {
+      return sessionStorage.getItem("rmsps_intro_shown") === "1";
+    }
+    return false;
+  });
   const [isExpanded, setIsExpanded] = useState(false);
   const [isExiting, setIsExiting] = useState(false);
-  const [isDone, setIsDone] = useState(false);
 
   // Direct DOM Refs for 120 FPS GPU-accelerated updates without React re-render thrashing
   const progressBarRef = useRef<HTMLDivElement>(null);
@@ -88,8 +92,8 @@ export default function IntroPreloader({
           : "Access Granted • Welcome Scholar",
     },
     public: {
-      color: "#FB7339",
-      glow: "rgba(251,115,57,0.35)",
+      color: "#F1917D",
+      glow: "rgba(241,145,125,0.35)",
       getStatus: (pct) =>
         pct < 35
           ? "Connecting High-Performance ERP..."
@@ -104,6 +108,8 @@ export default function IntroPreloader({
   const currentRole = roleConfig[role] || roleConfig.public;
 
   useEffect(() => {
+    if (isDone) return;
+
     // If loaded from back-forward cache (user clicking browser Back button), don't trap
     const handlePageShow = (e: PageTransitionEvent) => {
       if (e.persisted && role === "public") {
@@ -152,6 +158,9 @@ export default function IntroPreloader({
           // Reached 100%
           setTimeout(() => {
             if (role === "public") {
+              try {
+                sessionStorage.setItem("rmsps_intro_shown", "1");
+              } catch {}
               setIsExiting(true);
               if (onComplete) onComplete();
               setTimeout(() => {
@@ -179,9 +188,9 @@ export default function IntroPreloader({
         cancelAnimationFrame(animFrameRef.current);
       }
     };
-  }, [role, onComplete, currentRole]);
+  }, [role, onComplete, currentRole, isDone]);
 
-  if (isDone || !shouldRender) return null;
+  if (isDone) return null;
 
   return (
     <div

@@ -21,54 +21,6 @@ export interface SliderItemData {
   quote?: string;
 }
 
-const DEFAULT_PROJECTS: SliderItemData[] = [
-  {
-    title: "Practical STEM Laboratories",
-    image:
-      "https://images.unsplash.com/photo-1580582932707-520aed937b7b?q=80&w=1964&auto=format&fit=crop",
-    category: "Optics & Titration Labs",
-    year: "2026",
-    description: "Hands-on physics and chemistry optics labs with dedicated mentor faculty",
-    stat: "100% Practical Pass",
-  },
-  {
-    title: "Encrypted Geofenced Presence",
-    image:
-      "https://images.unsplash.com/photo-1509062522246-3755977927d7?q=80&w=1887&auto=format&fit=crop",
-    category: "Smart Campus ERP",
-    year: "2026",
-    description: "Real-time arrival authentication under 30s with instant parent alerts",
-    stat: "< 30s Scan",
-  },
-  {
-    title: "24/7 Supervised Hostels",
-    image:
-      "https://images.unsplash.com/photo-1546410531-bb4caa6b424d?q=80&w=1964&auto=format&fit=crop",
-    category: "Residential Living",
-    year: "2026",
-    description: "Dormitory care, morning yoga sessions, and disciplined evening study halls",
-    stat: "24/7 Wardens",
-  },
-  {
-    title: "BSEB 100% Pass Record",
-    image:
-      "https://images.unsplash.com/photo-1523240795612-9a054b0db644?q=80&w=1887&auto=format&fit=crop",
-    category: "Board Excellence",
-    year: "2025",
-    description: "Top state percentiles in BSEB board examinations and Olympiads",
-    stat: "98% Distinction",
-  },
-  {
-    title: "Athletics & Cultural Arts",
-    image:
-      "https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?q=80&w=1896&auto=format&fit=crop",
-    category: "Holistic Development",
-    year: "2026",
-    description: "Inter-house athletic championships and annual science exhibitions",
-    stat: "State Tournaments",
-  },
-];
-
 const CONFIG = {
   SCROLL_SPEED: 0.75,
   LERP_FACTOR: 0.08,
@@ -80,8 +32,9 @@ const lerp = (start: number, end: number, factor: number) =>
   start + (end - start) * factor;
 
 export function BoundedParallaxSlider({
-  items = DEFAULT_PROJECTS,
+  items = [],
   className = "",
+  badge,
 }: {
   items?: SliderItemData[];
   className?: string;
@@ -301,8 +254,8 @@ export function BoundedParallaxSlider({
 
             <div className="relative z-10 max-w-xl space-y-3 text-white">
               <div className="flex items-center gap-2">
-                <span className="text-xs font-mono uppercase tracking-widest text-[#FB7339] font-bold px-3 py-1 rounded-full bg-white/15 border border-white/20 inline-block">
-                  {data.category || data.tag || data.role || "RMSPS Feature"} {data.year || data.date ? `• ${data.year || data.date}` : ""}
+                <span className="text-xs font-mono uppercase tracking-widest text-[#F1917D] font-bold px-3 py-1 rounded-full bg-white/15 border border-white/20 inline-block">
+                  {badge || data.category || data.tag || data.role || "RMSPS Feature"} {data.year || data.date ? `• ${data.year || data.date}` : ""}
                 </span>
                 {data.stat && (
                   <span className="text-xs font-mono font-bold text-[#81B29A] bg-[#81B29A]/20 px-3 py-1 rounded-full border border-[#81B29A]/30">
@@ -316,7 +269,7 @@ export function BoundedParallaxSlider({
               </h3>
 
               {data.quote ? (
-                <blockquote className="text-white/90 text-xs sm:text-sm font-light leading-relaxed pl-3 border-l-2 border-[#FB7339] italic">
+                <blockquote className="text-white/90 text-xs sm:text-sm font-light leading-relaxed pl-3 border-l-2 border-[#F1917D] italic">
                   &ldquo;{data.quote}&rdquo;
                 </blockquote>
               ) : (
@@ -329,7 +282,7 @@ export function BoundedParallaxSlider({
               {data.author && (
                 <div className="flex items-center gap-3 pt-2">
                   {data.avatar && (
-                    <div className="w-8 h-8 rounded-full overflow-hidden relative border border-[#FB7339]">
+                    <div className="w-8 h-8 rounded-full overflow-hidden relative border border-[#F1917D]">
                       <Image
                         src={data.avatar}
                         alt={data.author}
@@ -353,7 +306,7 @@ export function BoundedParallaxSlider({
                       key={idx}
                       className="text-[11px] font-mono bg-white/10 px-2.5 py-0.5 rounded-full text-white/90 flex items-center gap-1.5"
                     >
-                      <CheckCircle2 className="w-3 h-3 text-[#FB7339]" />
+                      <CheckCircle2 className="w-3 h-3 text-[#F1917D]" />
                       {b}
                     </span>
                   ))}
@@ -374,7 +327,7 @@ export function BoundedParallaxSlider({
               onClick={() => jumpToSlide(idx)}
               className={`h-2.5 rounded-full transition-all cursor-pointer ${
                 activeIndex === idx
-                  ? "bg-[#FB7339] w-6"
+                  ? "bg-[#F1917D] w-6"
                   : "bg-white/40 hover:bg-white w-2.5"
               }`}
               aria-label={`Jump to slide ${idx + 1}`}
@@ -405,6 +358,3 @@ export function BoundedParallaxSlider({
     </div>
   );
 }
-
-// Alias for backwards compatibility
-export { BoundedParallaxSlider as InfiniteParallaxSlider, BoundedParallaxSlider as Component };

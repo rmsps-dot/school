@@ -1,22 +1,25 @@
 "use client";
 
-import { useState, useRef, useEffect } from "react";
-import {
-  motion,
-  useScroll,
-  useTransform,
-  AnimatePresence,
-} from "framer-motion";
+import { useState, useEffect } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 import Image from "next/image";
 import Link from "next/link";
 import {
-  ArrowRight, ArrowUpRight, Shield, Award, Users, BookOpen,
-  GraduationCap, Bell, Phone, MapPin, Mail, Sparkles,
-  ChevronRight, ChevronLeft, Check, Radio, Activity,
-  Clock, Trophy, Laptop, HeartHandshake, Compass,
-  X, Menu, MessageSquare, Play, Sun, Moon,
-  Building2, Atom, Layers, ChevronDown, CheckCircle2,
-  Star, Quote, CheckCheck, LogIn,
+  ArrowRight,
+  ArrowUpRight,
+  Shield,
+  BookOpen,
+  Bell,
+  Phone,
+  MapPin,
+  Mail,
+  X,
+  Menu,
+  Sun,
+  Moon,
+  Building2,
+  Atom,
+  LogIn,
 } from "lucide-react";
 
 import IntroPreloader from "@/components/landing/IntroPreloader";
@@ -190,6 +193,21 @@ export const LANDING_CONFIG = {
   },
 };
 
+
+function formatNoticeDate(dateStr: string): string {
+  try {
+    const d = new Date(dateStr);
+    if (isNaN(d.getTime())) return "Recently";
+    return d.toLocaleDateString("en-IN", {
+      day: "2-digit",
+      month: "short",
+      year: "numeric",
+    });
+  } catch {
+    return "Recently";
+  }
+}
+
 const defaultNotices = [
   {
     title: "Admissions Open — Academic Session 2026–27",
@@ -214,7 +232,7 @@ const defaultNotices = [
 /* ─── SECTION 1: ANNOUNCEMENT BAR ─── */
 function AnnouncementBar() {
   return (
-    <div className="fixed top-0 left-0 w-full z-[70] bg-[#FB7339] text-white py-2 px-3 text-center text-[10px] sm:text-xs font-mono font-bold tracking-wider uppercase flex items-center justify-center gap-2 shadow-md">
+    <div className="fixed top-0 left-0 w-full z-[70] bg-[#F1917D] text-white py-2 px-3 text-center text-[10px] sm:text-xs font-mono font-bold tracking-wider uppercase flex items-center justify-center gap-2 shadow-md">
       <span>Now Enrolling Session 2026–27</span>
       <span className="opacity-40">|</span>
       <Link href="/register" className="underline hover:opacity-80 transition-opacity">
@@ -248,6 +266,17 @@ function Navbar({
     return () => window.removeEventListener("scroll", handle);
   }, []);
 
+  useEffect(() => {
+    if (mobileMenuOpen) {
+      document.body.style.overflow = "hidden";
+    } else {
+      document.body.style.overflow = "";
+    }
+    return () => {
+      document.body.style.overflow = "";
+    };
+  }, [mobileMenuOpen]);
+
   const isLight = theme === "light";
 
   return (
@@ -263,7 +292,7 @@ function Navbar({
       >
         <div className="max-w-7xl mx-auto px-4 sm:px-8 flex items-center justify-between">
           <Link href="/" className="flex items-center gap-3.5 group">
-            <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-full overflow-hidden border-2 border-[#FB7339] p-0.5 bg-black shrink-0 shadow-lg transition-transform duration-300 group-hover:scale-105">
+            <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-full overflow-hidden border-2 border-[#F1917D] p-0.5 bg-black shrink-0 shadow-lg transition-transform duration-300 group-hover:scale-105">
               <Image
                 src="/icon-192.png"
                 alt="RMSPS Logo"
@@ -281,7 +310,7 @@ function Navbar({
               >
                 RMSPS
               </span>
-              <span className="text-[9px] sm:text-[10px] font-mono tracking-widest uppercase text-[#FB7339] font-bold mt-0.5">
+              <span className="text-[9px] sm:text-[10px] font-mono tracking-widest uppercase text-[#F1917D] font-bold mt-0.5">
                 Pipra, Bihar
               </span>
             </div>
@@ -300,7 +329,7 @@ function Navbar({
                     <div className="grid w-[360px] gap-2 p-2">
                       <NavigationMenuLink asChild>
                         <a href="#experience" className="group/item flex items-start gap-3 p-2 rounded-xl hover:bg-black/5 dark:hover:bg-white/5 transition-colors">
-                          <BookOpen className="w-5 h-5 text-[#FB7339] shrink-0 mt-0.5" />
+                          <BookOpen className="w-5 h-5 text-[#F1917D] shrink-0 mt-0.5" />
                           <div>
                             <div className="font-bold text-sm font-display uppercase">BSEB Curriculum</div>
                             <p className="text-xs text-muted-foreground line-clamp-2">Standardized board preparation and Olympiad coaching.</p>
@@ -414,7 +443,7 @@ function Navbar({
 
             <Link
               href="/login"
-              className="bg-[#FB7339] text-white px-5 py-2.5 rounded-full text-xs font-mono uppercase tracking-widest hover:scale-105 transition-transform active:scale-95 font-bold shadow-md ml-1"
+              className="bg-[#F1917D] text-white px-5 py-2.5 rounded-full text-xs font-mono uppercase tracking-widest hover:scale-105 transition-transform active:scale-95 font-bold shadow-md ml-1"
             >
               Portal Login
             </Link>
@@ -463,7 +492,7 @@ function Navbar({
               }`}
             >
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-full overflow-hidden border-2 border-[#FB7339] p-0.5 bg-black shrink-0">
+                <div className="w-10 h-10 rounded-full overflow-hidden border-2 border-[#F1917D] p-0.5 bg-black shrink-0">
                   <Image
                     src="/icon-192.png"
                     alt="RMSPS Logo"
@@ -488,35 +517,35 @@ function Navbar({
               <a
                 href="#experience"
                 onClick={() => setMobileMenuOpen(false)}
-                className="text-3xl font-display uppercase font-bold hover:text-[#FB7339] transition-colors"
+                className="text-3xl font-display uppercase font-bold hover:text-[#F1917D] transition-colors"
               >
                 Academics
               </a>
               <a
                 href="#features"
                 onClick={() => setMobileMenuOpen(false)}
-                className="text-3xl font-display uppercase font-bold hover:text-[#FB7339] transition-colors"
+                className="text-3xl font-display uppercase font-bold hover:text-[#F1917D] transition-colors"
               >
                 Campus Life
               </a>
               <a
                 href="#portals"
                 onClick={() => setMobileMenuOpen(false)}
-                className="text-3xl font-display uppercase font-bold hover:text-[#FB7339] transition-colors"
+                className="text-3xl font-display uppercase font-bold hover:text-[#F1917D] transition-colors"
               >
                 Portals
               </a>
               <a
                 href="#notices"
                 onClick={() => setMobileMenuOpen(false)}
-                className="text-3xl font-display uppercase font-bold hover:text-[#FB7339] transition-colors"
+                className="text-3xl font-display uppercase font-bold hover:text-[#F1917D] transition-colors"
               >
                 Circulars
               </a>
               <Link
                 href="/login"
                 onClick={() => setMobileMenuOpen(false)}
-                className="text-[#FB7339] text-3xl font-display uppercase font-bold"
+                className="text-[#F1917D] text-3xl font-display uppercase font-bold"
               >
                 Portal Login →
               </Link>
@@ -584,8 +613,8 @@ function Hero({ theme }: { theme: "light" | "dark" }) {
           isLight ? "border-black/15 text-[#575349]" : "border-white/15 text-mist"
         }`}
       >
-        <div className="flex items-center gap-2 text-[#FB7339]">
-          <span className="w-2 h-2 rounded-full bg-[#FB7339] animate-pulse" />
+        <div className="flex items-center gap-2 text-[#F1917D]">
+          <span className="w-2 h-2 rounded-full bg-[#F1917D] animate-pulse" />
           <span className="uppercase tracking-widest font-bold">{LANDING_CONFIG.hero.badge}</span>
         </div>
         <div className="uppercase tracking-widest hidden sm:block">
@@ -604,7 +633,7 @@ function Hero({ theme }: { theme: "light" | "dark" }) {
         </h1>
 
         {/* SHAPING FUTURES with matching Intro text style & gradient */}
-        <p className="font-display font-black text-2xl sm:text-4xl md:text-5xl uppercase tracking-tight bg-gradient-to-r from-[#FB7339] via-[#D4AF6A] to-[#FB7339] bg-clip-text text-transparent">
+        <p className="font-display font-black text-2xl sm:text-4xl md:text-5xl uppercase tracking-tight bg-gradient-to-r from-[#F1917D] via-[#D4AF6A] to-[#F1917D] bg-clip-text text-transparent">
           {LANDING_CONFIG.hero.taglineHeading}
         </p>
 
@@ -619,7 +648,7 @@ function Hero({ theme }: { theme: "light" | "dark" }) {
           <div className="lg:col-span-5 flex flex-wrap gap-3 sm:gap-4 items-center lg:justify-end">
             <Link
               href="/login"
-              className="btn-primary px-8 sm:px-10 py-4 rounded-2xl font-bold text-xs sm:text-sm uppercase tracking-widest hover:scale-105 transition-all flex items-center gap-3 shadow-xl shadow-[#FB7339]/25 cursor-pointer"
+              className="btn-primary px-8 sm:px-10 py-4 rounded-2xl font-bold text-xs sm:text-sm uppercase tracking-widest hover:scale-105 transition-all flex items-center gap-3 shadow-xl shadow-[#F1917D]/25 cursor-pointer"
             >
               <LogIn className="w-4 h-4 sm:w-5 sm:h-5" />
               <span>Portal Login</span>
@@ -636,7 +665,7 @@ function Hero({ theme }: { theme: "light" | "dark" }) {
         }`}
       >
         <div className="space-y-0.5">
-          <p className="font-display font-black text-2xl sm:text-3xl md:text-4xl text-[#FB7339]">98%</p>
+          <p className="font-display font-black text-2xl sm:text-3xl md:text-4xl text-[#F1917D]">98%</p>
           <p className={`text-[10px] sm:text-[11px] font-mono uppercase tracking-wider ${isLight ? "text-[#575349]" : "text-mist"}`}>
             Board Pass Distinction
           </p>
@@ -694,9 +723,9 @@ function InfiniteMarquee({ theme }: { theme: "light" | "dark" }) {
         {items.map((item, idx) => (
           <span
             key={`m1-${idx}`}
-            className="flex items-center gap-2.5 hover:text-[#FB7339] transition-colors cursor-default font-mono text-xs sm:text-sm font-semibold tracking-wider uppercase whitespace-nowrap shrink-0"
+            className="flex items-center gap-2.5 hover:text-[#F1917D] transition-colors cursor-default font-mono text-xs sm:text-sm font-semibold tracking-wider uppercase whitespace-nowrap shrink-0"
           >
-            <span className="w-2 h-2 rounded-full bg-[#FB7339] inline-block shrink-0" />
+            <span className="w-2 h-2 rounded-full bg-[#F1917D] inline-block shrink-0" />
             {item}
             <span className="opacity-30 font-mono text-xs ml-4">✦</span>
           </span>
@@ -706,9 +735,9 @@ function InfiniteMarquee({ theme }: { theme: "light" | "dark" }) {
         {items.map((item, idx) => (
           <span
             key={`m2-${idx}`}
-            className="flex items-center gap-2.5 hover:text-[#FB7339] transition-colors cursor-default font-mono text-xs sm:text-sm font-semibold tracking-wider uppercase whitespace-nowrap shrink-0"
+            className="flex items-center gap-2.5 hover:text-[#F1917D] transition-colors cursor-default font-mono text-xs sm:text-sm font-semibold tracking-wider uppercase whitespace-nowrap shrink-0"
           >
-            <span className="w-2 h-2 rounded-full bg-[#FB7339] inline-block shrink-0" />
+            <span className="w-2 h-2 rounded-full bg-[#F1917D] inline-block shrink-0" />
             {item}
             <span className="opacity-30 font-mono text-xs ml-4">✦</span>
           </span>
@@ -730,7 +759,7 @@ function IntroText({ theme }: { theme: "light" | "dark" }) {
       }`}
     >
       <div className="max-w-4xl mx-auto space-y-5">
-        <span className="text-xs font-mono uppercase tracking-[0.25em] text-[#FB7339] font-bold block">
+        <span className="text-xs font-mono uppercase tracking-[0.25em] text-[#F1917D] font-bold block">
           ✦ Academic Philosophy
         </span>
 
@@ -790,7 +819,7 @@ function GridReveal({ theme }: { theme: "light" | "dark" }) {
           }`}
         >
           <div>
-            <span className="text-xs font-mono uppercase tracking-widest text-[#FB7339] font-bold block mb-1">
+            <span className="text-xs font-mono uppercase tracking-widest text-[#F1917D] font-bold block mb-1">
               ✦ Smart Campus Architecture
             </span>
             <h2 className="font-display font-black text-2xl sm:text-4xl md:text-5xl tracking-tight uppercase">
@@ -872,7 +901,7 @@ function CredibilitySlider({ theme }: { theme: "light" | "dark" }) {
       <div className="max-w-7xl mx-auto space-y-6">
         <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 border-b border-black/10 dark:border-white/10 pb-4">
           <div>
-            <span className="text-xs font-mono uppercase tracking-widest text-[#FB7339] font-bold block mb-1">
+            <span className="text-xs font-mono uppercase tracking-widest text-[#F1917D] font-bold block mb-1">
               ✦ Community Voices & Verified Reviews
             </span>
             <h2 className="text-2xl sm:text-4xl md:text-5xl font-display font-black uppercase tracking-tight">
@@ -894,20 +923,40 @@ function CredibilitySlider({ theme }: { theme: "light" | "dark" }) {
 }
 
 /* ─── SECTION 8: CORE INSTITUTIONAL PILLARS (BOUNDED PARALLAX SLIDER) ─── */
-function FeatureStickySlider() {
+function FeatureStickySlider({ theme }: { theme: "light" | "dark" }) {
+  const isLight = theme === "light";
   return (
-    <section id="features" className="py-16 sm:py-24 bg-[#3E3A32] px-4 sm:px-8 text-white border-t border-white/10">
+    <section
+      id="features"
+      className={`py-16 sm:py-24 px-4 sm:px-8 border-t transition-colors ${
+        isLight
+          ? "bg-[#EFEAE1] text-[#0B0B10] border-black/10"
+          : "bg-[#181820] text-white border-white/10"
+      }`}
+    >
       <div className="max-w-7xl mx-auto space-y-6">
-        <div className="border-b border-white/15 pb-4 flex flex-col sm:flex-row sm:items-end justify-between gap-4">
+        <div
+          className={`border-b pb-4 flex flex-col sm:flex-row sm:items-end justify-between gap-4 ${
+            isLight ? "border-black/10" : "border-white/15"
+          }`}
+        >
           <div>
-            <span className="text-xs font-mono uppercase tracking-widest text-[#FB7339] font-bold block mb-1">
+            <span className="text-xs font-mono uppercase tracking-widest text-[#F1917D] font-bold block mb-1">
               ✦ Core Institutional Pillars
             </span>
-            <h2 className="font-display font-black text-2xl sm:text-4xl md:text-5xl text-white tracking-tight uppercase">
+            <h2
+              className={`font-display font-black text-2xl sm:text-4xl md:text-5xl tracking-tight uppercase ${
+                isLight ? "text-[#0B0B10]" : "text-white"
+              }`}
+            >
               Engineered For Excellence.
             </h2>
           </div>
-          <p className="text-xs font-mono uppercase text-white/70 hidden sm:block">
+          <p
+            className={`text-xs font-mono uppercase hidden sm:block ${
+              isLight ? "text-black/60" : "text-white/70"
+            }`}
+          >
             Pillars 01–04 • Bounded Glide
           </p>
         </div>
@@ -938,7 +987,7 @@ function PortalsSection({ theme }: { theme: "light" | "dark" }) {
         }`}
       >
         <div>
-          <span className="text-xs font-mono uppercase tracking-widest text-[#FB7339] font-bold block mb-1">
+          <span className="text-xs font-mono uppercase tracking-widest text-[#F1917D] font-bold block mb-1">
             ✦ Authenticated Access
           </span>
           <h2 className="font-display font-black text-2xl sm:text-4xl md:text-5xl tracking-tight uppercase">
@@ -953,7 +1002,7 @@ function PortalsSection({ theme }: { theme: "light" | "dark" }) {
             key={portal.role}
             className={`p-6 sm:p-8 rounded-[2rem] border transition-all flex flex-col justify-between min-h-[260px] shadow-sm ${
               isLight
-                ? "bg-white border-black/10 hover:border-[#FB7339]/50 hover:shadow-md"
+                ? "bg-white border-black/10 hover:border-[#F1917D]/50 hover:shadow-md"
                 : "bg-white/[0.02] border-white/10 hover:border-white/30"
             }`}
           >
@@ -1027,7 +1076,7 @@ function NoticesSection({
         }`}
       >
         <div>
-          <span className="text-xs font-mono uppercase tracking-widest text-[#FB7339] font-bold block mb-1">
+          <span className="text-xs font-mono uppercase tracking-widest text-[#F1917D] font-bold block mb-1">
             ✦ Official Circulars
           </span>
           <h2 className="font-display font-black text-2xl sm:text-4xl md:text-5xl tracking-tight uppercase">
@@ -1046,14 +1095,14 @@ function NoticesSection({
             onClick={() => onOpenNotice(notice)}
             className={`p-6 sm:p-8 rounded-[2rem] border transition-all cursor-pointer flex flex-col justify-between space-y-4 shadow-sm ${
               isLight
-                ? "bg-white border-black/10 hover:border-[#FB7339]/50 hover:shadow-md"
-                : "bg-white/[0.02] border-white/10 hover:border-[#FB7339]/50 hover:bg-white/[0.04]"
+                ? "bg-white border-black/10 hover:border-[#F1917D]/50 hover:shadow-md"
+                : "bg-white/[0.02] border-white/10 hover:border-[#F1917D]/50 hover:bg-white/[0.04]"
             }`}
           >
             <div className="space-y-3">
               <div className={`flex items-center justify-between text-xs font-mono ${isLight ? "text-black/50" : "text-white/50"}`}>
-                <span className="text-[#FB7339]">✦ Circular</span>
-                <span suppressHydrationWarning>{new Date(notice.created_at).toLocaleDateString("en-IN")}</span>
+                <span className="text-[#F1917D]">✦ Circular</span>
+                <span suppressHydrationWarning>{formatNoticeDate(notice.created_at)}</span>
               </div>
               <h3 className="font-display font-bold text-lg sm:text-xl line-clamp-2 uppercase">
                 {notice.title}
@@ -1062,7 +1111,7 @@ function NoticesSection({
                 {notice.content}
               </p>
             </div>
-            <div className="flex items-center text-xs font-bold font-mono text-[#FB7339] uppercase tracking-wider">
+            <div className="flex items-center text-xs font-bold font-mono text-[#F1917D] uppercase tracking-wider">
               <span>Read Full Circular</span>
               <ArrowRight className="w-3.5 h-3.5 ml-2" />
             </div>
@@ -1074,19 +1123,30 @@ function NoticesSection({
 }
 
 /* ─── SECTION 9: PRE-FOOTER CTA ─── */
-function PreFooter() {
+function PreFooter({ theme }: { theme: "light" | "dark" }) {
+  const isLight = theme === "light";
   return (
-    <section className="relative min-h-[75svh] w-full flex flex-col justify-center items-center text-white text-center px-4 sm:px-8 py-16 sm:py-24 bg-[#1F1E1B] overflow-hidden">
+    <section
+      className={`relative min-h-[70svh] w-full flex flex-col justify-center items-center text-center px-4 sm:px-8 py-16 sm:py-24 overflow-hidden transition-colors ${
+        isLight ? "bg-[#EAE5DC] text-[#0B0B10]" : "bg-[#14141A] text-white"
+      }`}
+    >
       <div className="absolute inset-0 z-0 pointer-events-none">
         <Image
           src="https://images.unsplash.com/photo-1580582932707-520aed937b7b?q=80&w=1600"
           alt="Campus View"
           fill
-          className="object-cover opacity-35"
+          className={`object-cover ${isLight ? "opacity-20" : "opacity-35"}`}
           sizes="100vw"
           loading="lazy"
         />
-        <div className="absolute inset-0 bg-gradient-to-t from-black via-black/75 to-black/60" />
+        <div
+          className={`absolute inset-0 ${
+            isLight
+              ? "bg-gradient-to-t from-[#EAE5DC] via-[#EAE5DC]/80 to-[#EAE5DC]/60"
+              : "bg-gradient-to-t from-black via-black/75 to-black/60"
+          }`}
+        />
       </div>
 
       <motion.div
@@ -1096,19 +1156,27 @@ function PreFooter() {
         transition={{ duration: 0.5 }}
         className="relative z-10 max-w-3xl space-y-6"
       >
-        <span className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full border border-[#FB7339]/40 bg-[#FB7339]/15 text-[#FB7339] text-xs font-mono uppercase tracking-widest font-bold">
-          <span className="w-2 h-2 rounded-full bg-[#FB7339] animate-pulse" />
+        <span className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full border border-[#F1917D]/40 bg-[#F1917D]/15 text-[#F1917D] text-xs font-mono uppercase tracking-widest font-bold">
+          <span className="w-2 h-2 rounded-full bg-[#F1917D] animate-pulse" />
           Academic Session 2026–27 Open
         </span>
 
-        <h2 className="text-3xl sm:text-5xl md:text-6xl font-display font-black leading-tight tracking-tight uppercase text-white">
+        <h2
+          className={`text-3xl sm:text-5xl md:text-6xl font-display font-black leading-tight tracking-tight uppercase ${
+            isLight ? "text-[#0B0B10]" : "text-white"
+          }`}
+        >
           Empowering Minds, <br />
-          <span className="bg-gradient-to-r from-[#FB7339] via-[#D4AF6A] to-[#FB7339] bg-clip-text text-transparent">
+          <span className="bg-gradient-to-r from-[#F1917D] via-[#D4AF6A] to-[#F1917D] bg-clip-text text-transparent">
             Shaping Tomorrow.
           </span>
         </h2>
 
-        <p className="text-white/80 text-sm sm:text-base md:text-lg max-w-xl mx-auto font-light leading-relaxed">
+        <p
+          className={`text-sm sm:text-base md:text-lg max-w-xl mx-auto font-light leading-relaxed ${
+            isLight ? "text-[#4A453C]" : "text-white/80"
+          }`}
+        >
           Give your child the foundation of disciplined residential education, modern science laboratories, and dedicated faculty mentorship in Bihar.
         </p>
 
@@ -1121,13 +1189,21 @@ function PreFooter() {
           </Link>
           <a
             href={`tel:${LANDING_CONFIG.contact.phone}`}
-            className="bg-white/15 backdrop-blur-xl border border-white/25 py-4 px-8 rounded-xl font-mono uppercase text-xs font-bold tracking-widest text-center text-white hover:bg-white/25 transition-colors"
+            className={`py-4 px-8 rounded-xl font-mono uppercase text-xs font-bold tracking-widest text-center transition-colors border ${
+              isLight
+                ? "bg-white/80 border-black/15 text-[#0B0B10] hover:bg-white"
+                : "bg-white/15 backdrop-blur-xl border-white/25 text-white hover:bg-white/25"
+            }`}
           >
             Call Admissions Desk
           </a>
         </div>
 
-        <p className="font-mono text-[11px] font-bold uppercase tracking-widest text-white/60 pt-2">
+        <p
+          className={`font-mono text-[11px] font-bold uppercase tracking-widest pt-2 ${
+            isLight ? "text-black/60" : "text-white/60"
+          }`}
+        >
           Reg No. {LANDING_CONFIG.contact.regNo} • UDISE CODE: {LANDING_CONFIG.contact.udiseCode} • Pipra, Bihar
         </p>
       </motion.div>
@@ -1150,7 +1226,7 @@ function Footer() {
       <div className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-12 gap-10 sm:gap-14 mb-16">
         <div className="md:col-span-5 space-y-4">
           <div className="flex items-center gap-3">
-            <div className="w-8 h-8 rounded-full overflow-hidden border border-[#FB7339] p-0.5 bg-black">
+            <div className="w-8 h-8 rounded-full overflow-hidden border border-[#F1917D] p-0.5 bg-black">
               <Image
                 src="/icon-192.png"
                 alt="RMSPS"
@@ -1159,7 +1235,7 @@ function Footer() {
                 className="w-full h-full object-cover rounded-full"
               />
             </div>
-            <span className="font-display font-black text-xl text-[#FB7339] tracking-wider uppercase">
+            <span className="font-display font-black text-xl text-[#F1917D] tracking-wider uppercase">
               RMSPS
             </span>
           </div>
@@ -1176,7 +1252,7 @@ function Footer() {
             <a
               key={l.name}
               href={l.href}
-              className="text-base sm:text-lg font-display font-bold uppercase hover:text-[#FB7339] transition-colors leading-tight"
+              className="text-base sm:text-lg font-display font-bold uppercase hover:text-[#F1917D] transition-colors leading-tight"
             >
               {l.name}
             </a>
@@ -1188,22 +1264,22 @@ function Footer() {
             Campus Information
           </p>
           <p className="flex items-start gap-2">
-            <MapPin className="w-4 h-4 text-[#FB7339] shrink-0 mt-0.5" />
+            <MapPin className="w-4 h-4 text-[#F1917D] shrink-0 mt-0.5" />
             <span>{LANDING_CONFIG.contact.address}</span>
           </p>
           <p className="flex items-center gap-2">
-            <Phone className="w-4 h-4 text-[#FB7339] shrink-0" />
+            <Phone className="w-4 h-4 text-[#F1917D] shrink-0" />
             <a href={`tel:${LANDING_CONFIG.contact.phone}`} className="underline hover:text-white">
               {LANDING_CONFIG.contact.phone}
             </a>
           </p>
           <p className="flex items-center gap-2">
-            <Mail className="w-4 h-4 text-[#FB7339] shrink-0" />
+            <Mail className="w-4 h-4 text-[#F1917D] shrink-0" />
             <a href={`mailto:${LANDING_CONFIG.contact.email}`} className="underline hover:text-white">
               {LANDING_CONFIG.contact.email}
             </a>
           </p>
-          <div className="pt-2 text-[#FB7339] font-mono font-bold text-xs space-y-0.5">
+          <div className="pt-2 text-[#F1917D] font-mono font-bold text-xs space-y-0.5">
             <p>Reg No. {LANDING_CONFIG.contact.regNo}</p>
             <p>UDISE CODE: {LANDING_CONFIG.contact.udiseCode}</p>
           </div>
@@ -1248,9 +1324,19 @@ export default function LandingPage({
 
   const displayNotices = notices.length > 0 ? notices : defaultNotices;
 
+  // Close notice modal on Escape key press
+  useEffect(() => {
+    if (!selectedNotice) return;
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setSelectedNotice(null);
+    };
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [selectedNotice]);
+
   return (
     <main
-      className={`relative min-h-screen selection:bg-[#FB7339] selection:text-white overflow-x-hidden transition-colors duration-300 ${
+      className={`relative min-h-screen selection:bg-[#F1917D] selection:text-[#0B0B10] overflow-x-hidden transition-colors duration-300 ${
         theme === "light" ? "bg-[#F8F6F0] text-[#1F1E1B]" : "bg-[#0B0B10] text-[#F3EFE6]"
       }`}
     >
@@ -1260,7 +1346,7 @@ export default function LandingPage({
       {/* 1. Announcement Bar */}
       <AnnouncementBar />
 
-      {/* 2. Navbar with Radix NavigationMenu & Theme Toggle */}
+      {/* 2. Navbar with NavigationMenu & Theme Toggle */}
       <Navbar theme={theme} onToggleTheme={handleToggleTheme} />
 
       {/* 3. Hero Section */}
@@ -1269,29 +1355,29 @@ export default function LandingPage({
       {/* 4. Infinite Marquee */}
       <InfiniteMarquee theme={theme} />
 
-      {/* 5. (Rank 2) Live Circulars & Notice Board */}
+      {/* 5. Live Circulars & Notice Board */}
       <NoticesSection notices={displayNotices} onOpenNotice={setSelectedNotice} theme={theme} />
 
-      {/* 6. (Rank 3) Apply for Admission & Call Admission Desk CTA */}
-      <PreFooter />
-
-      {/* 7. (Rank 4) 4 Dedicated Digital Portals */}
+      {/* 6. 4 Dedicated Digital Portals */}
       <PortalsSection theme={theme} />
 
-      {/* 8. Institutional Mission Statement */}
+      {/* 7. Institutional Mission Statement */}
       <IntroText theme={theme} />
 
-      {/* 9. The 3-Dimensional Campus (Bounded Parallax Slider) */}
+      {/* 8. The 3-Dimensional Campus (Bounded Parallax Slider) */}
       <GridReveal theme={theme} />
 
-      {/* 10. Press & Accreditation Badges */}
+      {/* 9. Press & Accreditation Badges */}
       <PressHeader theme={theme} />
 
-      {/* 11. Community Stories (Bounded Parallax Reviews) */}
+      {/* 10. Community Stories (Bounded Parallax Reviews) */}
       <CredibilitySlider theme={theme} />
 
-      {/* 12. Core Institutional Pillars (Bounded Parallax Pillars) */}
-      <FeatureStickySlider />
+      {/* 11. Core Institutional Pillars */}
+      <FeatureStickySlider theme={theme} />
+
+      {/* 12. Pre-Footer Admission CTA Banner */}
+      <PreFooter theme={theme} />
 
       {/* 13. Footer */}
       <Footer />
@@ -1299,12 +1385,16 @@ export default function LandingPage({
       {/* Notice Inspection Modal */}
       <AnimatePresence>
         {selectedNotice && (
-          <div className="fixed inset-0 z-[120] flex items-center justify-center p-4 bg-black/80 backdrop-blur-md">
+          <div
+            onClick={() => setSelectedNotice(null)}
+            className="fixed inset-0 z-[120] flex items-center justify-center p-4 bg-black/80 backdrop-blur-md cursor-pointer"
+          >
             <motion.div
+              onClick={(e) => e.stopPropagation()}
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0.95 }}
-              className={`rounded-3xl border w-full max-w-lg p-6 sm:p-8 shadow-2xl space-y-6 ${
+              className={`rounded-3xl border w-full max-w-lg p-6 sm:p-8 shadow-2xl space-y-6 cursor-default ${
                 theme === "light"
                   ? "bg-white text-[#0B0B10] border-black/15"
                   : "bg-[#0B0B10] text-white border-white/20"
@@ -1315,7 +1405,7 @@ export default function LandingPage({
                   theme === "light" ? "border-black/10" : "border-white/10"
                 }`}
               >
-                <div className="flex items-center gap-2 text-xs font-mono text-[#FB7339]">
+                <div className="flex items-center gap-2 text-xs font-mono text-[#F1917D]">
                   <Bell className="w-4 h-4" />
                   <span>Official Circular</span>
                 </div>
@@ -1334,12 +1424,7 @@ export default function LandingPage({
 
               <div className="space-y-3">
                 <p suppressHydrationWarning className={`text-xs font-mono ${theme === "light" ? "text-black/50" : "text-white/50"}`}>
-                  Published:{" "}
-                  {new Date(selectedNotice.created_at).toLocaleDateString("en-IN", {
-                    day: "2-digit",
-                    month: "long",
-                    year: "numeric",
-                  })}
+                  Published: {formatNoticeDate(selectedNotice.created_at)}
                 </p>
                 <h3 className="font-display font-bold text-xl uppercase">
                   {selectedNotice.title}
@@ -1360,7 +1445,7 @@ export default function LandingPage({
               >
                 <button
                   onClick={() => setSelectedNotice(null)}
-                  className="bg-[#FB7339] text-white px-6 py-2.5 rounded-xl text-xs font-bold font-mono uppercase tracking-wider hover:opacity-90 transition-opacity cursor-pointer"
+                  className="bg-[#F1917D] text-[#0B0B10] px-6 py-2.5 rounded-xl text-xs font-bold font-mono uppercase tracking-wider hover:opacity-90 transition-opacity cursor-pointer"
                 >
                   Close Circular
                 </button>
