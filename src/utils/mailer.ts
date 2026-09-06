@@ -586,7 +586,7 @@ export async function sendPasswordChangedAlertEmail({
             </p>
           </div>
 
-          <a href="${process.env.NEXT_PUBLIC_SITE_URL || 'https://rmsps.edu'}/forgot-password" style="display: inline-block; background-color: #DC2626; color: #ffffff; text-decoration: none; padding: 11px 26px; border-radius: 8px; font-weight: bold; margin-top: 10px; font-size: 13px;">
+          <a href="${process.env.NEXT_PUBLIC_SITE_URL || 'https://rmsps.vercel.app'}/forgot-password" style="display: inline-block; background-color: #DC2626; color: #ffffff; text-decoration: none; padding: 11px 26px; border-radius: 8px; font-weight: bold; margin-top: 10px; font-size: 13px;">
             Reset Password Now
           </a>
         </div>
