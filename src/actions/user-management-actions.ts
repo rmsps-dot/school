@@ -4,6 +4,7 @@ import { createClient } from '@/utils/supabase/server'
 import { supabaseAdmin as adminClient } from '@/utils/supabase/admin'
 import { revalidatePath } from 'next/cache'
 import { requireAdmin } from '@/utils/auth-helpers'
+import { sendPasswordResetEmail } from '@/utils/mailer'
 
 function getAdminAuthClient() {
   return adminClient
@@ -542,8 +543,36 @@ export async function sendPasswordResetLink(profileId: string) {
   const email = userData.user.email
   if (!email) return { error: 'User does not have an email address' }
 
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || process.env.NEXT_PUBLIC_APP_URL || 'https://rmsps.vercel.app'
+  
+  // Try generating the branded link for direct SMTP delivery
+  try {
+    const { data: linkData, error: linkError } = await adminAuthClient.auth.admin.generateLink({
+      type: 'recovery',
+      email,
+      options: {
+        redirectTo: `${siteUrl}/reset-password`,
+      },
+    })
+
+    if (!linkError && linkData?.properties?.action_link) {
+      const fullName = (userData.user.user_metadata?.full_name as string) || (userData.user.user_metadata?.name as string) || 'Parent'
+      const mailRes = await sendPasswordResetEmail({
+        toEmail: email,
+        resetUrl: linkData.properties.action_link,
+        userName: fullName,
+      })
+      if (mailRes.success) {
+        return { success: true, email }
+      }
+    }
+  } catch (err) {
+    console.warn('Direct SMTP password reset generation error, falling back to standard flow:', err)
+  }
+
+  // Fallback to standard Supabase auth email delivery
   const { error } = await adminAuthClient.auth.resetPasswordForEmail(email, {
-    redirectTo: `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/reset-password`,
+    redirectTo: `${siteUrl}/reset-password`,
   })
   
   if (error) return { error: error.message }

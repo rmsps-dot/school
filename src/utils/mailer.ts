@@ -710,3 +710,141 @@ ${content}
     return { success: false, sentCount: 0, error: error instanceof Error ? error.message : 'Failed to send email' }
   }
 }
+
+/* ══════════════════════════════════════════════════════════════
+   9. PASSWORD RESET EMAIL (BRANDED DIRECT SMTP)
+   ══════════════════════════════════════════════════════════════ */
+export interface PasswordResetEmailParams {
+  toEmail: string
+  resetUrl: string
+  userName?: string
+}
+
+export async function sendPasswordResetEmail({
+  toEmail,
+  resetUrl,
+  userName = 'User',
+}: PasswordResetEmailParams): Promise<{ success: boolean; error?: string }> {
+  if (!process.env.SMTP_EMAIL || !process.env.SMTP_PASSWORD) {
+    console.warn('SMTP credentials not configured. Skipping password reset email.')
+    return { success: false, error: 'SMTP not configured' }
+  }
+
+  const mailOptions = {
+    from: `"RMSPS Security Desk" <${process.env.SMTP_EMAIL}>`,
+    to: toEmail,
+    subject: `Password Reset Request — RMSPS Portal`,
+    html: `
+      <div style="font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; max-width: 600px; margin: 0 auto; border: 1px solid #E2E8F0; border-radius: 16px; overflow: hidden; background-color: #ffffff; box-shadow: 0 4px 20px rgba(0,0,0,0.06);">
+        ${getSchoolHeaderHtml('Password Recovery', 'Official Account Security')}
+        <div style="padding: 32px 28px; background-color: #ffffff;">
+          <p style="font-size: 16px; color: #0F172A; margin: 0 0 12px 0;">Hello <strong>${userName}</strong>,</p>
+          <p style="font-size: 14.5px; color: #334155; line-height: 1.6; margin: 0 0 20px 0;">
+            We received a request to reset the password for your Residential Maa Saraswati Public School portal account (<strong>${toEmail}</strong>).
+          </p>
+
+          <div style="background-color: #F8FAFC; border: 1.5px solid #E2E8F0; border-left: 4px solid #3E5C76; border-radius: 10px; padding: 20px; margin: 20px 0;">
+            <p style="margin: 0 0 8px 0; font-size: 13px; font-weight: bold; color: #0F172A;">
+              🔐 Security Notice
+            </p>
+            <p style="margin: 0; font-size: 13px; color: #475569; line-height: 1.6;">
+              This link is valid for <strong>60 minutes</strong> and can only be used once. For your safety, do not forward or share this link with anyone.
+            </p>
+          </div>
+
+          <div style="text-align: center; margin: 28px 0 20px 0;">
+            <a href="${resetUrl}" style="display: inline-block; background: linear-gradient(135deg, #3E5C76 0%, #1e293b 100%); color: #ffffff; text-decoration: none; padding: 13px 34px; border-radius: 10px; font-weight: bold; font-size: 14px; letter-spacing: 0.4px; box-shadow: 0 4px 12px rgba(62, 92, 118, 0.35);">
+              Reset My Password 🔑
+            </a>
+          </div>
+
+          <p style="font-size: 12px; color: #64748B; line-height: 1.5; margin: 20px 0 0 0; text-align: center;">
+            If you did not request this, you can safely ignore this email. Your password will remain unchanged and your account remains secure.
+          </p>
+
+          <div style="background-color: #F1F5F9; border-radius: 8px; padding: 10px 14px; margin-top: 24px; text-align: center; border: 1px dashed #CBD5E1; font-size: 11px; color: #64748B; word-break: break-all;">
+            Link not clicking? Copy this URL: <br/><span style="color: #3E5C76;">${resetUrl}</span>
+          </div>
+        </div>
+        ${getSchoolFooterHtml()}
+      </div>
+    `,
+  }
+
+  try {
+    await transporter.sendMail(mailOptions)
+    return { success: true }
+  } catch (error: unknown) {
+    console.error('Error sending password reset email:', error)
+    return { success: false, error: error instanceof Error ? error.message : 'Failed to send email' }
+  }
+}
+
+/* ══════════════════════════════════════════════════════════════
+   10. SIGNUP CONFIRMATION / ACCOUNT ACTIVATION EMAIL
+   ══════════════════════════════════════════════════════════════ */
+export interface SignUpConfirmationEmailParams {
+  toEmail: string
+  confirmationUrl: string
+  userName?: string
+}
+
+export async function sendSignUpConfirmationEmail({
+  toEmail,
+  confirmationUrl,
+  userName = 'Member',
+}: SignUpConfirmationEmailParams): Promise<{ success: boolean; error?: string }> {
+  if (!process.env.SMTP_EMAIL || !process.env.SMTP_PASSWORD) {
+    console.warn('SMTP credentials not configured. Skipping signup confirmation email.')
+    return { success: false, error: 'SMTP not configured' }
+  }
+
+  const mailOptions = {
+    from: `"RMSPS Admissions & Portal Desk" <${process.env.SMTP_EMAIL}>`,
+    to: toEmail,
+    subject: `Confirm Your Account — Residential Maa Saraswati Public School`,
+    html: `
+      <div style="font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; max-width: 600px; margin: 0 auto; border: 1px solid #E2E8F0; border-radius: 16px; overflow: hidden; background-color: #ffffff; box-shadow: 0 4px 20px rgba(0,0,0,0.06);">
+        ${getSchoolHeaderHtml('Account Activation', 'Welcome to RMSPS Digital Portal')}
+        <div style="padding: 32px 28px; background-color: #ffffff;">
+          <p style="font-size: 16px; color: #0F172A; margin: 0 0 12px 0;">Dear <strong>${userName}</strong>,</p>
+          <p style="font-size: 14.5px; color: #334155; line-height: 1.6; margin: 0 0 20px 0;">
+            Thank you for registering with <strong>Residential Maa Saraswati Public School (RMSPS)</strong>. To verify your email address (<strong>${toEmail}</strong>) and activate your portal access, please confirm your account below:
+          </p>
+
+          <div style="background-color: #F8FAFC; border: 1.5px solid #E2E8F0; border-left: 4px solid #3E5C76; border-radius: 10px; padding: 20px; margin: 20px 0;">
+            <p style="margin: 0 0 8px 0; font-size: 13px; font-weight: bold; color: #0F172A;">
+              🎓 Portal Access
+            </p>
+            <p style="margin: 0; font-size: 13px; color: #475569; line-height: 1.6;">
+              Once verified, you will have immediate access to attendance records, homework assignments, examination results, fee receipts, and official school circulars.
+            </p>
+          </div>
+
+          <div style="text-align: center; margin: 28px 0 20px 0;">
+            <a href="${confirmationUrl}" style="display: inline-block; background: linear-gradient(135deg, #3E5C76 0%, #1e293b 100%); color: #ffffff; text-decoration: none; padding: 13px 34px; border-radius: 10px; font-weight: bold; font-size: 14px; letter-spacing: 0.4px; box-shadow: 0 4px 12px rgba(62, 92, 118, 0.35);">
+              Confirm & Activate Account ✨
+            </a>
+          </div>
+
+          <p style="font-size: 12px; color: #64748B; line-height: 1.5; margin: 20px 0 0 0; text-align: center;">
+            If you did not create an account at Residential Maa Saraswati Public School, please ignore this message.
+          </p>
+
+          <div style="background-color: #F1F5F9; border-radius: 8px; padding: 10px 14px; margin-top: 24px; text-align: center; border: 1px dashed #CBD5E1; font-size: 11px; color: #64748B; word-break: break-all;">
+            Button not working? Copy and paste this link into your browser: <br/><span style="color: #3E5C76;">${confirmationUrl}</span>
+          </div>
+        </div>
+        ${getSchoolFooterHtml()}
+      </div>
+    `,
+  }
+
+  try {
+    await transporter.sendMail(mailOptions)
+    return { success: true }
+  } catch (error: unknown) {
+    console.error('Error sending signup confirmation email:', error)
+    return { success: false, error: error instanceof Error ? error.message : 'Failed to send email' }
+  }
+}
