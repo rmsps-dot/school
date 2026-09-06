@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect, useRef } from 'react'
-import { Bell, CheckCircle2, AlertCircle, Loader2, Send, X, ExternalLink } from 'lucide-react'
+import { Bell, CheckCircle2, AlertCircle, Loader2, Send, X, ShieldAlert } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { registerPushSubscription, isBraveBrowser } from '@/utils/push-client'
 import { sendTestPushToCurrentUser } from '@/actions/push-actions'
@@ -23,22 +23,26 @@ export function TopBarPushNotification({ variant = 'desktop' }: TopBarPushNotifi
 
   useEffect(() => {
     function checkStatus() {
-      if (
-        typeof window === 'undefined' ||
-        !('serviceWorker' in navigator) ||
-        !('Notification' in window)
-      ) {
-        setIsSupported(false)
-        return
+      if (typeof window === 'undefined') return
+
+      const hasNotification = 'Notification' in window
+      const hasSW = 'serviceWorker' in navigator
+      const hasPush = 'PushManager' in window
+      const supported = hasNotification && hasSW && hasPush
+
+      setIsSupported(supported)
+
+      if (hasNotification) {
+        setPermission(Notification.permission)
       }
 
-      setPermission(Notification.permission)
-
-      if (Notification.permission === 'granted' && 'PushManager' in window) {
+      if (hasNotification && Notification.permission === 'granted' && hasSW && hasPush) {
         navigator.serviceWorker.getRegistration('/sw.js').then((reg) => {
           if (reg) {
             reg.pushManager.getSubscription().then((sub) => {
               setIsSubscribed(Boolean(sub))
+            }).catch(() => {
+              setIsSubscribed(false)
             })
           }
         }).catch(() => {
@@ -74,7 +78,41 @@ export function TopBarPushNotification({ variant = 'desktop' }: TopBarPushNotifi
     }
   }, [menuOpen])
 
-  async function handleEnablePush() {
+  async function handleButtonClick() {
+    // If already subscribed, toggle menu to show status & test button
+    if (isSubscribed) {
+      setMenuOpen(!menuOpen)
+      return
+    }
+
+    // Check secure context
+    if (typeof window !== 'undefined' && !window.isSecureContext) {
+      setErrorMsg(
+        'Push notifications ke liye HTTPS (secure link) zaroori hai. Agar aap phone me test kar rahe hain, to production https:// link se open karein.'
+      )
+      setMenuOpen(true)
+      return
+    }
+
+    // Check browser support
+    if (!isSupported) {
+      setErrorMsg(
+        'Aapke current browser me Web Push support nahi mila. Kripya Google Chrome ka upyog karein.'
+      )
+      setMenuOpen(true)
+      return
+    }
+
+    // Check if user blocked in browser
+    if (typeof window !== 'undefined' && 'Notification' in window && Notification.permission === 'denied') {
+      setErrorMsg(
+        'Browser me notification block hai. Address bar ke left side me Lock/Settings 🔒 icon per tap karein aur Notifications ko "Allow" karein.'
+      )
+      setMenuOpen(true)
+      return
+    }
+
+    // Otherwise attempt subscription
     setLoading(true)
     setErrorMsg(null)
     setTestResult(null)
@@ -107,30 +145,20 @@ export function TopBarPushNotification({ variant = 'desktop' }: TopBarPushNotifi
     }
   }
 
-  if (!isSupported) {
-    return null
-  }
-
   return (
-    <div className="relative" ref={menuRef}>
+    <div className="relative inline-flex items-center" ref={menuRef}>
       {/* ── Mobile Trigger ── */}
       {variant === 'mobile' ? (
         <button
           type="button"
-          onClick={() => {
-            if (!isSubscribed) {
-              handleEnablePush()
-            } else {
-              setMenuOpen(!menuOpen)
-            }
-          }}
+          onClick={handleButtonClick}
           disabled={loading}
-          className={`relative p-2 rounded-xl transition-all flex items-center justify-center ${
+          className={`relative p-2 rounded-xl transition-all flex items-center justify-center shrink-0 ${
             isSubscribed
-              ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20'
-              : 'bg-coral/10 text-coral border border-coral/30 hover:bg-coral/20'
+              ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/25'
+              : 'bg-coral/15 text-coral border border-coral/30 hover:bg-coral/25'
           }`}
-          title={isSubscribed ? 'Notifications Active' : 'Enable Notifications'}
+          title={isSubscribed ? 'Alerts Active' : 'Enable Notifications'}
           aria-label="Push Notifications"
         >
           {loading ? (
@@ -150,13 +178,7 @@ export function TopBarPushNotification({ variant = 'desktop' }: TopBarPushNotifi
         /* ── Desktop Trigger ── */
         <button
           type="button"
-          onClick={() => {
-            if (!isSubscribed) {
-              handleEnablePush()
-            } else {
-              setMenuOpen(!menuOpen)
-            }
-          }}
+          onClick={handleButtonClick}
           disabled={loading}
           className={`group flex items-center gap-2 px-3 py-1.5 rounded-xl text-xs font-semibold transition-all shadow-sm ${
             isSubscribed
@@ -183,7 +205,7 @@ export function TopBarPushNotification({ variant = 'desktop' }: TopBarPushNotifi
             initial={{ opacity: 0, scale: 0.95, y: 8 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.95, y: 4 }}
-            className="absolute right-0 mt-2 w-80 sm:w-88 z-50 glass-panel rounded-2xl p-4 border border-hairline shadow-2xl bg-ink/95 backdrop-blur-xl"
+            className="absolute right-0 top-full mt-2 w-80 sm:w-88 z-50 glass-panel rounded-2xl p-4 border border-hairline shadow-2xl bg-ink/95 backdrop-blur-xl"
           >
             {/* Header */}
             <div className="flex items-center justify-between pb-3 border-b border-hairline mb-3">
@@ -195,8 +217,8 @@ export function TopBarPushNotification({ variant = 'desktop' }: TopBarPushNotifi
                 >
                   <Bell className="w-4 h-4" />
                 </div>
-                <h4 className="text-sm font-bold text-parchment">
-                  {isSubscribed ? 'Push Notifications' : 'Enable Device Alerts'}
+                <h4 className="text-sm font-bold text-parchment font-display">
+                  {isSubscribed ? 'Push Notifications Active' : 'Device Push Alerts'}
                 </h4>
               </div>
               <button
@@ -211,10 +233,10 @@ export function TopBarPushNotification({ variant = 'desktop' }: TopBarPushNotifi
             {/* Active Status */}
             {isSubscribed ? (
               <div className="space-y-3">
-                <div className="flex items-start gap-2.5 p-2.5 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-xs text-emerald-300">
+                <div className="flex items-start gap-2.5 p-2.5 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-xs text-emerald-300 leading-relaxed">
                   <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0 mt-0.5" />
                   <p>
-                    Yeh device registered hai. Attendance alerts, fee receipts aur notices background me deliver honge.
+                    Yeh device successfully registered hai. Attendance, fee receipts aur school notices real-time me deliver honge.
                   </p>
                 </div>
 
@@ -258,9 +280,9 @@ export function TopBarPushNotification({ variant = 'desktop' }: TopBarPushNotifi
 
                 {errorMsg && (
                   <div className="text-xs text-amber-300 bg-amber-500/10 p-2.5 rounded-xl border border-amber-500/20 space-y-1">
-                    <p className="font-semibold flex items-center gap-1.5">
-                      <AlertCircle className="w-3.5 h-3.5 text-amber-400 shrink-0" />
-                      Alert Note
+                    <p className="font-semibold flex items-center gap-1.5 text-amber-400">
+                      <AlertCircle className="w-3.5 h-3.5 shrink-0" />
+                      Guide / Solution:
                     </p>
                     <p className="text-[11px] leading-relaxed text-mist">{errorMsg}</p>
                   </div>
@@ -268,7 +290,7 @@ export function TopBarPushNotification({ variant = 'desktop' }: TopBarPushNotifi
 
                 <button
                   type="button"
-                  onClick={handleEnablePush}
+                  onClick={handleButtonClick}
                   disabled={loading}
                   className="w-full py-2.5 px-3 rounded-xl text-xs font-bold text-ink bg-coral hover:bg-coral/90 transition-all flex items-center justify-center gap-2 shadow-lg shadow-coral/20"
                 >
