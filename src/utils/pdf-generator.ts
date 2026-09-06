@@ -2,8 +2,23 @@ import { renderToBuffer, Document } from '@react-pdf/renderer'
 import { FeeReceiptDocument, FeeReceiptData } from '@/components/pdf/FeeReceiptPdf'
 import { TeacherPaymentDocument, TeacherPaymentData } from '@/components/pdf/TeacherPaymentPdf'
 import type { ComponentProps, ReactElement } from 'react'
+import fs from 'fs'
+import path from 'path'
 
 type DocumentElement = ReactElement<ComponentProps<typeof Document>>
+
+function getSchoolLogoDataUri(): string {
+  try {
+    const filePath = path.join(process.cwd(), 'public', 'icon-192.png')
+    if (fs.existsSync(filePath)) {
+      const fileBuffer = fs.readFileSync(filePath)
+      return `data:image/png;base64,${fileBuffer.toString('base64')}`
+    }
+  } catch (e) {
+    console.warn('Failed to load logo for PDF:', e)
+  }
+  return ''
+}
 
 /**
  * Convert numeric Indian currency into words (e.g. 2500 -> "Two Thousand Five Hundred Rupees Only")
@@ -63,7 +78,8 @@ export function numberToWords(amount: number): string {
  * Generate Fee Receipt PDF Buffer for email attachments or direct downloads.
  */
 export async function generateFeeReceiptPdfBuffer(data: FeeReceiptData): Promise<Buffer> {
-  const doc = FeeReceiptDocument({ data }) as DocumentElement
+  const logoUrl = data.logoUrl || getSchoolLogoDataUri()
+  const doc = FeeReceiptDocument({ data: { ...data, logoUrl } }) as DocumentElement
   return await renderToBuffer(doc)
 }
 
@@ -71,6 +87,7 @@ export async function generateFeeReceiptPdfBuffer(data: FeeReceiptData): Promise
  * Generate Teacher Payment Voucher PDF Buffer for email attachments or downloads.
  */
 export async function generateTeacherPaymentPdfBuffer(data: TeacherPaymentData): Promise<Buffer> {
-  const doc = TeacherPaymentDocument({ data }) as DocumentElement
+  const logoUrl = data.logoUrl || getSchoolLogoDataUri()
+  const doc = TeacherPaymentDocument({ data: { ...data, logoUrl } }) as DocumentElement
   return await renderToBuffer(doc)
 }

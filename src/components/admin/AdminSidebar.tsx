@@ -24,6 +24,7 @@ import {
   ChevronRight,
   Settings,
   FileStack,
+  Receipt,
 } from "lucide-react";
 import { supabase } from "@/utils/supabase/client";
 import NotificationBadge from "@/components/ui/NotificationBadge";
@@ -36,6 +37,7 @@ const NAV_ITEMS = [
   { label: "Pending Requests",  href: "/admin/requests",  icon: ClipboardList   },
   { label: "Result Approval",   href: "/admin/results",        icon: ClipboardCheck  },
   { label: "Manage Results",    href: "/admin/manage-results",  icon: FileStack       },
+  { label: "Fee & Salary Receipts", href: "/admin/receipts",   icon: Receipt         },
   { label: "Leave Approvals",   href: "/admin/leaves",    icon: CalendarClock   },
   { label: "Messages",          href: "/admin/chat",      icon: MessageSquare   },
   { label: "Manage Classes",    href: "/admin/classes",   icon: BookOpen        },

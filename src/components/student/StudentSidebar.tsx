@@ -7,7 +7,7 @@ import { usePathname } from 'next/navigation'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
   LayoutDashboard, BookOpen,
-  CalendarDays, CalendarClock, MessageSquare, Bell, ImageIcon, LogOut, Menu, X, ChevronRight,
+  CalendarDays, CalendarClock, MessageSquare, Bell, ImageIcon, LogOut, Menu, X, ChevronRight, IndianRupee,
 } from 'lucide-react'
 import { supabase } from '@/utils/supabase/client'
 import NotificationBadge from '@/components/ui/NotificationBadge'
@@ -17,6 +17,7 @@ import { TopBarPushNotification } from '@/components/notifications/TopBarPushNot
 const NAV_ITEMS = [
   { label: 'Dashboard', href: '/student', icon: LayoutDashboard },
   { label: 'My Results', href: '/student/results', icon: BookOpen },
+  { label: 'Fees & Receipts', href: '/student/fees', icon: IndianRupee },
   { label: 'Attendance', href: '/student/attendance', icon: CalendarDays },
   { label: 'Leave Application', href: '/student/leave', icon: CalendarClock },
   { label: 'Messages', href: '/student/chat', icon: MessageSquare },

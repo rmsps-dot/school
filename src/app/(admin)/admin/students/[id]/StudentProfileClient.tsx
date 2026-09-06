@@ -1346,13 +1346,13 @@ function FeeRecordModal({
     setIsSubmitting(true)
 
     const numAmount = Number(feeAmount)
-    let numPaid = Number(feePaidAmount) || 0
+    const numPaid = Number(feePaidAmount) || 0
     let targetStatus: 'paid' | 'due' | 'upcoming' = feeStatus
 
-    if (targetStatus === 'paid' && numPaid < numAmount) {
-      numPaid = numAmount
-    } else if (numPaid >= numAmount) {
+    if (numPaid >= numAmount && numAmount > 0) {
       targetStatus = 'paid'
+    } else if (targetStatus === 'paid' && numPaid < numAmount) {
+      targetStatus = 'due'
     }
 
     const res = await onSave({
@@ -1431,7 +1431,17 @@ function FeeRecordModal({
                 min="1"
                 placeholder="e.g. 5000"
                 value={feeAmount}
-                onChange={(e) => setFeeAmount(e.target.value === '' ? '' : Number(e.target.value))}
+                onChange={(e) => {
+                  const val = e.target.value === '' ? '' : Number(e.target.value)
+                  setFeeAmount(val)
+                  const numTot = Number(val) || 0
+                  const numP = Number(feePaidAmount) || 0
+                  if (numTot > 0 && numP >= numTot) {
+                    setFeeStatus('paid')
+                  } else if (numTot > 0 && numP < numTot && feeStatus === 'paid') {
+                    setFeeStatus('due')
+                  }
+                }}
                 className="w-full input-glass rounded-xl p-3 text-sm text-parchment font-mono focus:outline-none focus:border-coral"
               />
             </div>
@@ -1445,11 +1455,32 @@ function FeeRecordModal({
                 min="0"
                 placeholder="e.g. 5000"
                 value={feePaidAmount}
-                onChange={(e) => setFeePaidAmount(e.target.value === '' ? '' : Number(e.target.value))}
+                onChange={(e) => {
+                  const val = e.target.value === '' ? '' : Number(e.target.value)
+                  setFeePaidAmount(val)
+                  const numP = Number(val) || 0
+                  const numTot = Number(feeAmount) || 0
+                  if (numTot > 0 && numP >= numTot) {
+                    setFeeStatus('paid')
+                  } else if (numTot > 0 && numP < numTot && feeStatus === 'paid') {
+                    setFeeStatus('due')
+                  }
+                }}
                 className="w-full input-glass rounded-xl p-3 text-sm text-parchment font-mono focus:outline-none focus:border-coral"
               />
             </div>
           </div>
+
+          {feeAmount !== '' && Number(feeAmount) > 0 && (
+            <div className="flex justify-between items-center text-xs px-3 py-2 rounded-xl bg-surface/80 border border-hairline/60 font-mono">
+              <span className="text-mist">Remaining Balance:</span>
+              <span className={Math.max(0, Number(feeAmount) - (Number(feePaidAmount) || 0)) > 0 ? 'text-coral font-bold' : 'text-emerald-400 font-bold'}>
+                ₹{Math.max(0, Number(feeAmount) - (Number(feePaidAmount) || 0)).toLocaleString('en-IN')}
+                {(Number(feePaidAmount) || 0) > 0 && (Number(feePaidAmount) || 0) < Number(feeAmount) && ' · Partial Deposit'}
+                {Number(feeAmount) > 0 && (Number(feePaidAmount) || 0) >= Number(feeAmount) && ' · Fully Cleared'}
+              </span>
+            </div>
+          )}
 
           <div className="grid grid-cols-2 gap-4">
             <div>

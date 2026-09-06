@@ -306,9 +306,15 @@ export async function recordStudentFee(
     const supabase = await createClient()
 
     // Validate status according to database constraint: ('paid', 'due', 'upcoming')
+    const numPaid = payload.paid_amount || 0
     let validStatus = payload.status?.toLowerCase() || 'due'
+    if (numPaid >= payload.amount && payload.amount > 0) {
+      validStatus = 'paid'
+    } else if (validStatus === 'paid' && numPaid < payload.amount) {
+      validStatus = 'due'
+    }
     if (validStatus !== 'paid' && validStatus !== 'due' && validStatus !== 'upcoming') {
-      validStatus = payload.paid_amount >= payload.amount ? 'paid' : 'due'
+      validStatus = 'due'
     }
 
     const { data, error } = await supabase
@@ -317,7 +323,7 @@ export async function recordStudentFee(
         student_id: studentIdStr,
         fee_name: payload.fee_name.trim(),
         amount: payload.amount,
-        paid_amount: payload.paid_amount || 0,
+        paid_amount: numPaid,
         due_date: payload.due_date,
         status: validStatus,
       })
@@ -367,9 +373,15 @@ export async function editStudentFee(
     const supabase = await createClient()
 
     // Validate status according to database constraint: ('paid', 'due', 'upcoming')
+    const numPaid = payload.paid_amount ?? 0
     let validStatus = payload.status?.toLowerCase() || 'due'
+    if (numPaid >= payload.amount && payload.amount > 0) {
+      validStatus = 'paid'
+    } else if (validStatus === 'paid' && numPaid < payload.amount) {
+      validStatus = 'due'
+    }
     if (validStatus !== 'paid' && validStatus !== 'due' && validStatus !== 'upcoming') {
-      validStatus = payload.paid_amount >= payload.amount ? 'paid' : 'due'
+      validStatus = 'due'
     }
 
     const { data, error } = await supabase
@@ -377,7 +389,7 @@ export async function editStudentFee(
       .update({
         fee_name: payload.fee_name.trim(),
         amount: payload.amount,
-        paid_amount: payload.paid_amount,
+        paid_amount: numPaid,
         due_date: payload.due_date,
         status: validStatus,
       })

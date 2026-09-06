@@ -19,6 +19,7 @@ import {
   ChevronRight,
   Users,
   IdCard,
+  IndianRupee,
 } from "lucide-react";
 import { supabase } from "@/utils/supabase/client";
 import NotificationBadge from "@/components/ui/NotificationBadge";
@@ -26,8 +27,9 @@ import { getSidebarCounts, SidebarCounts } from "@/actions/notification-actions"
 import { TopBarPushNotification } from "@/components/notifications/TopBarPushNotification";
 
 const NAV_ITEMS = [
-  { label: "Dashboard",      href: "/teacher",             icon: LayoutDashboard },
-  { label: "My Digital ID",  href: "/teacher/profile",     icon: IdCard          },
+  { label: "Dashboard",        href: "/teacher",             icon: LayoutDashboard },
+  { label: "My Digital ID",    href: "/teacher/profile",     icon: IdCard          },
+  { label: "Salary & Payments",href: "/teacher/payments",    icon: IndianRupee     },
   { label: "Mark Attendance",href: "/teacher/attendance",  icon: Camera          },
   { label: "Class Attendance",href:"/teacher/class-attendance",icon: Users        },
   { label: "Leave Application",href:"/teacher/leave",      icon: CalendarClock   },

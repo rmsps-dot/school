@@ -431,27 +431,27 @@ export async function sendTeacherPaymentEmail({
             We are pleased to inform you that your salary / honorarium payment has been processed and credited to your account.
           </p>
 
-          <div style="background-color: #F0FDF4; border: 1.5px solid #22C55E; border-radius: 8px; padding: 20px; margin: 20px 0;">
-            <p style="margin: 0 0 10px 0; font-size: 12px; color: #15803D; font-weight: bold; text-transform: uppercase;">
-              Payment Advice Summary
-            </p>
-            <table style="width: 100%; border-collapse: collapse; font-size: 14px; color: #0F172A;">
+          <div style="background-color: #F0FDF4; border: 1.5px solid #22C55E; border-radius: 8px; padding: 18px; margin: 20px 0;">
+            <div style="color: #15803D; font-weight: bold; font-size: 12px; text-transform: uppercase; margin-bottom: 12px; letter-spacing: 0.5px;">
+              ✓ PAYMENT ADVICE SUMMARY
+            </div>
+            <table style="width: 100%; border-collapse: collapse; font-size: 14px; table-layout: fixed;">
               <tr>
-                <td style="padding: 4px 0; color: #64748B;"><strong>Voucher No:</strong></td>
-                <td style="padding: 4px 0; font-family: monospace; font-weight: bold;">${voucherNo}</td>
+                <td style="padding: 6px 0; color: #64748B; width: 38%; vertical-align: top;"><strong>Voucher No:</strong></td>
+                <td style="padding: 6px 0; font-family: monospace; font-weight: bold; color: #0F172A; width: 62%; word-break: break-all; vertical-align: top;">${voucherNo}</td>
               </tr>
               <tr>
-                <td style="padding: 4px 0; color: #64748B;"><strong>Net Amount:</strong></td>
-                <td style="padding: 4px 0; font-weight: bold; color: #15803D; font-size: 16px;">₹ ${amount.toFixed(2)}</td>
+                <td style="padding: 6px 0; color: #64748B; width: 38%; vertical-align: top;"><strong>Net Amount:</strong></td>
+                <td style="padding: 6px 0; font-weight: bold; color: #15803D; font-size: 16px; width: 62%; vertical-align: top;">₹ ${amount.toFixed(2)}</td>
               </tr>
               <tr>
-                <td style="padding: 4px 0; color: #64748B;"><strong>Disbursement Date:</strong></td>
-                <td style="padding: 4px 0;">${paymentDate}</td>
+                <td style="padding: 6px 0; color: #64748B; width: 38%; vertical-align: top;"><strong>Payment Date:</strong></td>
+                <td style="padding: 6px 0; color: #0F172A; width: 62%; vertical-align: top;">${paymentDate}</td>
               </tr>
               ${remarks ? `
               <tr>
-                <td style="padding: 4px 0; color: #64748B;"><strong>Remarks:</strong></td>
-                <td style="padding: 4px 0;">${remarks}</td>
+                <td style="padding: 6px 0; color: #64748B; width: 38%; vertical-align: top;"><strong>Remarks:</strong></td>
+                <td style="padding: 6px 0; color: #0F172A; width: 62%; word-break: break-word; vertical-align: top;">${remarks}</td>
               </tr>
               ` : ''}
             </table>
@@ -461,8 +461,8 @@ export async function sendTeacherPaymentEmail({
             Your detailed payment slip has been attached to this email as a PDF document (<strong>${voucherNo}.pdf</strong>). For any questions regarding deductions or calculations, please get in touch with the school accounts department.
           </p>
 
-          <a href="${process.env.NEXT_PUBLIC_SITE_URL || 'https://rmsps.edu'}/teacher" style="display: inline-block; background-color: #3E5C76; color: #ffffff; text-decoration: none; padding: 11px 26px; border-radius: 8px; font-weight: bold; margin-top: 14px; font-size: 13px;">
-            Go to Teacher Portal
+          <a href="${process.env.NEXT_PUBLIC_SITE_URL || 'https://rmsps.vercel.app'}/teacher/payments" style="display: inline-block; background-color: #3E5C76; color: #ffffff; text-decoration: none; padding: 11px 26px; border-radius: 8px; font-weight: bold; margin-top: 14px; font-size: 13px;">
+            View Salary Vouchers in Portal
           </a>
         </div>
         ${getSchoolFooterHtml()}
