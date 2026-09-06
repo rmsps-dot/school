@@ -19,10 +19,21 @@ export async function getStudentFees(studentIdStr: string): Promise<{ data: FeeR
 
     const supabase = await createClient()
 
+    const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(studentIdStr)
+    const { data: st } = await supabase
+      .from('students')
+      .select('id, student_id')
+      .eq(isUuid ? 'id' : 'student_id', studentIdStr)
+      .maybeSingle()
+
+    const targetIds = new Set<string>([studentIdStr])
+    if (st?.student_id) targetIds.add(st.student_id)
+    if (st?.id) targetIds.add(st.id)
+
     const { data, error } = await supabase
       .from('student_fees')
       .select('*')
-      .eq('student_id', studentIdStr)
+      .in('student_id', Array.from(targetIds))
       .order('due_date', { ascending: true })
 
     if (error) throw error

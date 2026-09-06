@@ -65,8 +65,7 @@ export async function getAllStudentFeeReceipts(): Promise<{
           class_id,
           profiles (
             full_name,
-            email,
-            phone_number
+            mobile
           ),
           classes (
             id,
@@ -102,7 +101,7 @@ export async function getAllStudentFeeReceipts(): Promise<{
         class_id: studentRel?.class_id || undefined,
         class_name: classRel?.class_name || 'General',
         section: classRel?.section || '',
-        parent_email: profileRel?.email || undefined,
+        parent_email: undefined,
       }
     })
 
@@ -142,8 +141,7 @@ export async function getAllTeacherPayments(): Promise<{
           qualification,
           profiles (
             full_name,
-            email,
-            phone_number
+            mobile
           )
         )
       `)
@@ -207,8 +205,7 @@ export async function getTeacherPaymentsForCurrentTeacher(): Promise<{
         qualification,
         profiles (
           full_name,
-          email,
-          phone_number
+          mobile
         )
       `)
       .eq('profile_id', auth.profile.id)

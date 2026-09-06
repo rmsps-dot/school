@@ -1,5 +1,4 @@
 import { createClient } from './supabase/server'
-import { SupabaseClient } from '@supabase/supabase-js'
 import { redirect } from 'next/navigation'
 
 export type AuthResult<T = unknown> = 
@@ -145,11 +144,11 @@ export async function requireSelfOrGuardianOf(
     // Check if the caller is the student themselves
     const { data: student } = await supabase
       .from('students')
-      .select('id')
+      .select('id, student_id')
       .eq('profile_id', auth.profile.id)
       .single()
       
-    if (!student || student.id !== studentId) {
+    if (!student || (student.id !== studentId && student.student_id !== studentId)) {
       return { ok: false, error: 'Forbidden: You can only access your own records' }
     }
     return auth
