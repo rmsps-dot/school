@@ -2,15 +2,17 @@
 
 import { useState, useTransition } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Save, Clock, Loader2, CheckCircle2, MapPin, Trash2, Users, Shield } from 'lucide-react'
+import { Save, Clock, Loader2, CheckCircle2, MapPin, Trash2, Users, Shield, Bell, Mail, Send, Check } from 'lucide-react'
 import { updateSetting, type AppSetting, type TeacherAttendanceSetting } from '@/actions/settings-actions'
+import { sendMonthEndFeeReminders } from '@/actions/fee-actions'
 import LocationMapPicker from '@/components/admin/LocationMapPicker'
+import { PushNotificationManager } from '@/components/notifications/PushNotificationManager'
 
 interface SettingsClientProps {
   initialSettings: AppSetting[]
 }
 
-type SettingsTab = 'teacher' | 'student'
+type SettingsTab = 'teacher' | 'student' | 'notifications'
 
 export default function SettingsClient({ initialSettings }: SettingsClientProps) {
   const [activeTab, setActiveTab] = useState<SettingsTab>('teacher')
@@ -46,6 +48,26 @@ export default function SettingsClient({ initialSettings }: SettingsClientProps)
   const [isStudentPending, startStudentTransition] = useTransition()
   const [studentSuccessMsg, setStudentSuccessMsg] = useState('')
   const [studentErrorMsg, setStudentErrorMsg] = useState('')
+
+  // ── 3. Notification & Fee Reminder State ──
+  const [isFeeReminderPending, startFeeReminderTransition] = useTransition()
+  const [feeReminderStatus, setFeeReminderStatus] = useState<string | null>(null)
+  const [feeReminderError, setFeeReminderError] = useState<string | null>(null)
+
+  const handleSendFeeReminders = () => {
+    setFeeReminderStatus(null)
+    setFeeReminderError(null)
+    startFeeReminderTransition(async () => {
+      const res = await sendMonthEndFeeReminders()
+      if (res.success) {
+        setFeeReminderStatus(
+          `Processed ${res.processedCount} student dues. Dispatched ${res.sentCount} reminder emails & alerts.`
+        )
+      } else {
+        setFeeReminderError(res.error || 'Failed to dispatch reminders.')
+      }
+    })
+  }
 
   const handleSaveTeacherSettings = () => {
     setTeacherErrorMsg('')
@@ -100,31 +122,44 @@ export default function SettingsClient({ initialSettings }: SettingsClientProps)
     <div className="space-y-6">
       
       {/* ── Top Section-Wise Tabs Switcher ── */}
-      <div className="flex items-center gap-2 p-1.5 rounded-2xl bg-ink border border-hairline max-w-xl">
+      <div className="flex flex-wrap items-center gap-2 p-1.5 rounded-2xl bg-ink border border-hairline max-w-2xl">
         <button
           type="button"
           onClick={() => setActiveTab('teacher')}
-          className={`flex-1 py-3 px-4 rounded-xl text-xs md:text-sm font-bold transition-all flex items-center justify-center gap-2 ${
+          className={`flex-1 min-w-[140px] py-3 px-4 rounded-xl text-xs md:text-sm font-bold transition-all flex items-center justify-center gap-2 ${
             activeTab === 'teacher'
               ? 'bg-coral text-ink shadow-lg'
               : 'text-mist hover:text-parchment hover:bg-white/5'
           }`}
         >
           <MapPin className="w-4 h-4" />
-          <span>Teacher Attendance & Geofence</span>
+          <span>Teacher Geofence</span>
         </button>
 
         <button
           type="button"
           onClick={() => setActiveTab('student')}
-          className={`flex-1 py-3 px-4 rounded-xl text-xs md:text-sm font-bold transition-all flex items-center justify-center gap-2 ${
+          className={`flex-1 min-w-[140px] py-3 px-4 rounded-xl text-xs md:text-sm font-bold transition-all flex items-center justify-center gap-2 ${
             activeTab === 'student'
               ? 'bg-veena-blue text-ink shadow-lg'
               : 'text-mist hover:text-parchment hover:bg-white/5'
           }`}
         >
           <Users className="w-4 h-4" />
-          <span>Student Attendance Window</span>
+          <span>Student Window</span>
+        </button>
+
+        <button
+          type="button"
+          onClick={() => setActiveTab('notifications')}
+          className={`flex-1 min-w-[140px] py-3 px-4 rounded-xl text-xs md:text-sm font-bold transition-all flex items-center justify-center gap-2 ${
+            activeTab === 'notifications'
+              ? 'bg-gold text-ink shadow-lg'
+              : 'text-mist hover:text-parchment hover:bg-white/5'
+          }`}
+        >
+          <Bell className="w-4 h-4" />
+          <span>Alerts & Notifications</span>
         </button>
       </div>
 
@@ -347,6 +382,98 @@ export default function SettingsClient({ initialSettings }: SettingsClientProps)
                   {isStudentPending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
                   Save Student Window
                 </button>
+              </div>
+            </div>
+          </motion.div>
+        )}
+
+        {/* ─────────────────────────────────────────────────────────────
+            TAB 3: ALERTS & NOTIFICATIONS (PUSH & EMAIL WORKFLOWS)
+        ───────────────────────────────────────────────────────────── */}
+        {activeTab === 'notifications' && (
+          <motion.div
+            key="tab-notifications"
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -8 }}
+            transition={{ duration: 0.2 }}
+            className="glass-panel rounded-3xl border border-hairline overflow-hidden space-y-6 p-6 md:p-8"
+          >
+            <div>
+              <h2 className="text-xl font-bold text-parchment flex items-center gap-2">
+                <Bell className="w-5 h-5 text-gold" />
+                Notification System & Multi-Channel Workflows
+              </h2>
+              <p className="text-xs md:text-sm text-mist mt-1">
+                Manage device push subscriptions, dispatch month-end fee reminders, and monitor automated alert channels.
+              </p>
+            </div>
+
+            {/* 1. Device Push Notifications Toggle */}
+            <PushNotificationManager />
+
+            {/* 2. Month-End Fee Reminders Action */}
+            <div className="glass-panel p-5 rounded-2xl border border-hairline flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 bg-ink/40">
+              <div className="flex items-center gap-3.5">
+                <div className="w-11 h-11 rounded-xl flex items-center justify-center bg-gold/10 border border-gold/30 text-gold shrink-0">
+                  <Mail className="w-5 h-5" />
+                </div>
+                <div>
+                  <h4 className="text-sm font-bold text-parchment">
+                    Month-End Student Fee Reminders
+                  </h4>
+                  <p className="text-xs text-mist mt-0.5">
+                    Scans all students with unpaid/due fees and dispatches personalized email & push reminders to parents.
+                  </p>
+                  {feeReminderStatus && (
+                    <p className="text-xs text-emerald-400 mt-1 font-mono flex items-center gap-1">
+                      <CheckCircle2 className="w-3 h-3" /> {feeReminderStatus}
+                    </p>
+                  )}
+                  {feeReminderError && (
+                    <p className="text-xs text-red-400 mt-1 font-mono">
+                      {feeReminderError}
+                    </p>
+                  )}
+                </div>
+              </div>
+
+              <button
+                type="button"
+                onClick={handleSendFeeReminders}
+                disabled={isFeeReminderPending}
+                className="px-5 py-2.5 rounded-xl text-xs font-bold text-ink bg-gold hover:bg-gold/90 transition-all disabled:opacity-50 shadow-lg shadow-gold/20 flex items-center gap-2 shrink-0"
+              >
+                {isFeeReminderPending ? (
+                  <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                ) : (
+                  <Send className="w-3.5 h-3.5" />
+                )}
+                Send Reminders Now
+              </button>
+            </div>
+
+            {/* 3. Channel Status Badges */}
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-2">
+              <div className="p-3.5 rounded-xl bg-white/[0.02] border border-hairline">
+                <p className="text-[11px] text-mist font-semibold uppercase tracking-wider">Web Push Engine</p>
+                <p className="text-sm font-bold text-parchment mt-0.5 flex items-center gap-1.5">
+                  <span className="w-2 h-2 rounded-full bg-emerald-400"></span> VAPID PWA Active
+                </p>
+              </div>
+
+              <div className="p-3.5 rounded-xl bg-white/[0.02] border border-hairline">
+                <p className="text-[11px] text-mist font-semibold uppercase tracking-wider">Email Transporter</p>
+                <p className="text-sm font-bold text-parchment mt-0.5 flex items-center gap-1.5">
+                  <span className="w-2 h-2 rounded-full bg-veena-blue"></span> SMTP / Nodemailer
+                </p>
+              </div>
+
+              <div className="p-3.5 rounded-xl bg-white/[0.02] border border-hairline">
+                <p className="text-[11px] text-mist font-semibold uppercase tracking-wider">PDF Receipt Engine</p>
+                <p className="text-sm font-bold text-parchment mt-0.5 flex items-center gap-1.5">
+                  <span className="w-2 h-2 rounded-full bg-coral"></span> @react-pdf Buffer
+                </p>
               </div>
             </div>
           </motion.div>

@@ -3,6 +3,7 @@
 import { createClient } from '@/utils/supabase/server'
 import { revalidatePath } from 'next/cache'
 import { requireTeacher, requireAuth, requireAdmin } from '@/utils/auth-helpers'
+import { dispatchNoticeAlert } from '@/utils/notification-dispatcher'
 
 /* ════════════════════════════════════════════════════════════
    TYPES
@@ -62,6 +63,13 @@ export async function createNotice(
       })
 
     if (error) throw new Error(error.message)
+
+    // Broadcast email and push alert to target audience (non-blocking)
+    dispatchNoticeAlert({
+      title: title.trim(),
+      content: content.trim(),
+      targetRole: target_role,
+    }).catch((e) => console.warn('Background notice alert error:', e))
 
     revalidatePath('/admin/notices')
     revalidatePath('/teacher/notices')

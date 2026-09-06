@@ -480,13 +480,20 @@ function LoginForm() {
                 }
               />
 
-              <div className="flex justify-end mt-1">
+              <div className="flex items-center justify-between mt-1.5">
+                <Link
+                  href="/forgot-password"
+                  className="text-xs text-mist/70 hover:text-parchment transition-colors"
+                >
+                  Trouble signing in?
+                </Link>
                 <button
                   type="button"
                   onClick={() => setShowForgotPwd(true)}
-                  className="text-xs font-medium text-mist hover:text-parchment transition-colors"
+                  className="text-xs font-medium text-mist hover:text-parchment transition-colors flex items-center gap-1"
                 >
-                  Forgot password?
+                  <KeyRound className="w-3 h-3" />
+                  Forgot / Reset password?
                 </button>
               </div>
 

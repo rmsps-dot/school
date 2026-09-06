@@ -52,6 +52,16 @@ export default function ResetPasswordPage() {
       setError(updateError.message)
     } else {
       setSuccess(true)
+      // Send security alert email via background fetch
+      supabase.auth.getUser().then(({ data: { user } }) => {
+        if (user?.email) {
+          fetch('/api/auth/notify-password-changed', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ email: user.email, name: user.user_metadata?.full_name }),
+          }).catch((err) => console.warn('Security alert fetch failed:', err))
+        }
+      })
       setTimeout(() => {
         supabase.auth.signOut().then(() => { router.push('/login') })
       }, 3000)

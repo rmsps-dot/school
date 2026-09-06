@@ -29,6 +29,7 @@ export async function getStudentAttendance(classId: string, date: string) {
   return { data, error: null }
 }
 import type { Database } from '@/types/supabase'
+import { dispatchAttendanceAlert } from '@/utils/notification-dispatcher'
 
 export async function markStudentAttendance(records: Database['public']['Tables']['student_attendance']['Insert'][]) {
   // records array should have { student_id, class_id, date, status }
@@ -59,5 +60,22 @@ export async function markStudentAttendance(records: Database['public']['Tables'
     .upsert(payload, { onConflict: 'student_id,date' })
 
   if (error) return { error: error.message }
+
+  // Trigger async attendance alerts for absent or late students (non-blocking)
+  const alertRecords = records.filter(
+    (r) => r.status === 'absent' || r.status === 'late'
+  )
+  if (alertRecords.length > 0) {
+    Promise.allSettled(
+      alertRecords.map((r) =>
+        dispatchAttendanceAlert({
+          studentId: r.student_id,
+          date: r.date || new Date().toISOString().split('T')[0],
+          status: r.status as 'absent' | 'late',
+        })
+      )
+    ).catch((e) => console.warn('Background attendance alert dispatch error:', e))
+  }
+
   return { success: true }
 }
