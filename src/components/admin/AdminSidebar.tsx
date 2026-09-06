@@ -28,6 +28,7 @@ import {
 import { supabase } from "@/utils/supabase/client";
 import NotificationBadge from "@/components/ui/NotificationBadge";
 import { getSidebarCounts, SidebarCounts } from "@/actions/notification-actions";
+import { TopBarPushNotification } from "@/components/notifications/TopBarPushNotification";
 
 const NAV_ITEMS = [
   { label: "Dashboard",         href: "/admin",           icon: LayoutDashboard },
@@ -165,6 +166,9 @@ export default function AdminSidebar({ adminName, adminAvatar }: Props) {
             <Image src="/icon-192.png" alt="RMSPS School Logo" width={32} height={32} className="w-full h-full object-cover" />
           </div>
           <span className="font-display text-parchment font-bold text-lg tracking-widest">RMSPS Admin</span>
+        </div>
+        <div className="ml-auto flex items-center">
+          <TopBarPushNotification variant="mobile" />
         </div>
       </div>
 

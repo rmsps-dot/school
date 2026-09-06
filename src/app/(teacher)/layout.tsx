@@ -2,6 +2,7 @@ import { redirect } from 'next/navigation'
 import { createClient } from '@/utils/supabase/server'
 import TeacherSidebar from '@/components/teacher/TeacherSidebar'
 import { LoginPushModal } from '@/components/notifications/LoginPushModal'
+import { TopBarPushNotification } from '@/components/notifications/TopBarPushNotification'
 
 export default async function TeacherLayout({
   children,
@@ -28,6 +29,9 @@ export default async function TeacherLayout({
     <div className="relative min-h-screen bg-ink">
       <TeacherSidebar teacherName={profile.full_name ?? 'Teacher'} teacherAvatar={profile.profile_photo_url ?? null} />
       <main className="lg:ml-72 min-h-screen pt-14 lg:pt-0 p-4 sm:p-6 lg:p-8">
+        <div className="hidden lg:flex items-center justify-end mb-3">
+          <TopBarPushNotification variant="desktop" />
+        </div>
         <LoginPushModal />
         {children}
       </main>

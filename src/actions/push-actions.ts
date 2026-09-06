@@ -4,6 +4,7 @@ import { requireAuth } from '@/utils/auth-helpers'
 import {
   savePushSubscription,
   removePushSubscription,
+  sendPushNotification,
   VAPID_PUBLIC_KEY,
 } from '@/utils/web-push'
 
@@ -41,3 +42,24 @@ export async function unsubscribeUserFromPush(
 
   return await removePushSubscription(endpoint)
 }
+
+export async function sendTestPushToCurrentUser(): Promise<{ success: boolean; error?: string }> {
+  const auth = await requireAuth()
+  if (!auth.ok) return { success: false, error: auth.error }
+
+  const res = await sendPushNotification([auth.profile.id], {
+    title: 'RMSPS Notification Test 🔔',
+    body: `Hello ${auth.profile.full_name || 'User'}, your device is successfully connected to RMSPS Realtime Alerts!`,
+    url: '/',
+  })
+
+  if (res.sentCount === 0) {
+    return {
+      success: false,
+      error: 'No active device subscription found for your account. Please click Allow / Enable first.',
+    }
+  }
+
+  return { success: true }
+}
+

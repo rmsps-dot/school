@@ -2,20 +2,8 @@
 
 import { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Bell, X, Loader2, CheckCircle2 } from 'lucide-react'
-import { getVapidPublicKey, subscribeUserToPush } from '@/actions/push-actions'
-
-function urlBase64ToUint8Array(base64String: string): Uint8Array {
-  const clean = base64String.trim()
-  const padding = '='.repeat((4 - (clean.length % 4)) % 4)
-  const base64 = (clean + padding).replace(/-/g, '+').replace(/_/g, '/')
-  const rawData = window.atob(base64)
-  const outputArray = new Uint8Array(rawData.length)
-  for (let i = 0; i < rawData.length; ++i) {
-    outputArray[i] = rawData.charCodeAt(i)
-  }
-  return outputArray
-}
+import { Bell, X, Loader2, CheckCircle2, ShieldCheck } from 'lucide-react'
+import { registerPushSubscription } from '@/utils/push-client'
 
 export function LoginPushModal() {
   const [isOpen, setIsOpen] = useState(false)
@@ -24,117 +12,61 @@ export function LoginPushModal() {
   const [errorText, setErrorText] = useState<string | null>(null)
 
   useEffect(() => {
-    // Only run on client with service worker, Notification API, and PushManager support
-    if (
-      typeof window === 'undefined' ||
-      !('serviceWorker' in navigator) ||
-      !('Notification' in window) ||
-      !('PushManager' in window)
-    ) {
+    if (typeof window === 'undefined' || !('Notification' in window)) {
       return
     }
 
-    // 1. If user already granted permission, ensure background registration and DO NOT show popup!
+    // 1. If user already granted permission, never show popup!
     if (Notification.permission === 'granted') {
-      autoSyncSubscription()
       return
     }
 
-    // 2. If user already dismissed in this current session tab, don't nag immediately
+    // 2. If user already dismissed in this current session, don't nag immediately
     if (sessionStorage.getItem('rmsps_login_push_dismissed') === '1') {
       return
     }
 
-    // 3. If not granted, show permission prompt on login
+    // 3. Gentle delay so page elements render first
     const timer = setTimeout(() => {
       setIsOpen(true)
     }, 1200)
 
-    return () => clearTimeout(timer)
-  }, [])
-
-  async function autoSyncSubscription() {
-    try {
-      const reg = await navigator.serviceWorker.getRegistration('/sw.js')
-      if (reg) {
-        const sub = await reg.pushManager.getSubscription()
-        if (sub) {
-          const subJson = sub.toJSON()
-          if (subJson.endpoint && subJson.keys?.p256dh && subJson.keys?.auth) {
-            await subscribeUserToPush(
-              {
-                endpoint: subJson.endpoint,
-                keys: { p256dh: subJson.keys.p256dh, auth: subJson.keys.auth },
-              },
-              navigator.userAgent
-            )
-          }
-        }
+    const handleStatusChanged = () => {
+      if (Notification.permission === 'granted') {
+        setIsOpen(false)
       }
-    } catch {
-      // Silently handle
     }
-  }
+    window.addEventListener('rmsps_push_status_changed', handleStatusChanged)
+
+    return () => {
+      clearTimeout(timer)
+      window.removeEventListener('rmsps_push_status_changed', handleStatusChanged)
+    }
+  }, [])
 
   async function handleAllow() {
     setLoading(true)
     setErrorText(null)
 
-    try {
-      // Trigger native browser permission prompt
-      const permission = await Notification.requestPermission()
+    const res = await registerPushSubscription()
+    setLoading(false)
 
-      if (permission !== 'granted') {
-        setErrorText('Notification permission was not allowed.')
-        setLoading(false)
-        return
-      }
-
-      // Register SW & VAPID subscription
-      const { publicKey } = await getVapidPublicKey()
-      const reg = await navigator.serviceWorker.register('/sw.js', { scope: '/' })
-      await navigator.serviceWorker.ready
-
-      // Clean old subscription if key changed
-      const oldSub = await reg.pushManager.getSubscription()
-      if (oldSub) {
-        try {
-          await oldSub.unsubscribe()
-        } catch {
-          // Ignore
-        }
-      }
-
-      const applicationServerKey = urlBase64ToUint8Array(publicKey)
-      const sub = await reg.pushManager.subscribe({
-        userVisibleOnly: true,
-        applicationServerKey: applicationServerKey.buffer as ArrayBuffer,
-      })
-
-      const subJson = sub.toJSON()
-      if (subJson.endpoint && subJson.keys?.p256dh && subJson.keys?.auth) {
-        await subscribeUserToPush(
-          {
-            endpoint: subJson.endpoint,
-            keys: {
-              p256dh: subJson.keys.p256dh,
-              auth: subJson.keys.auth,
-            },
-          },
-          navigator.userAgent
-        )
-      }
-
+    if (res.success) {
       setSuccess(true)
       setTimeout(() => {
         setIsOpen(false)
       }, 1500)
-    } catch (err: unknown) {
-      console.warn('Push subscription failed:', err)
-      // If browser push service failed (e.g. Brave/adblocker), close gracefully without crash
-      setIsOpen(false)
-    } finally {
-      setLoading(false)
+    } else {
+      setErrorText(res.error || 'Permission not granted.')
+      // Auto dismiss after 4 seconds if error so user isn't stuck
+      setTimeout(() => {
+        setIsOpen(false)
+        try {
+          sessionStorage.setItem('rmsps_login_push_dismissed', '1')
+        } catch {
+          // ignore
+        }
+      }, 4500)
     }
   }
 
@@ -151,69 +83,81 @@ export function LoginPushModal() {
 
   return (
     <AnimatePresence>
-      <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-ink/80 backdrop-blur-md">
+      {/* ── Compact Floating Toast Card (NO full-screen dark backdrop!) ── */}
+      <div className="fixed bottom-4 sm:bottom-6 right-4 sm:right-6 z-50 max-w-sm w-[calc(100%-2rem)] sm:w-96 pointer-events-auto">
         <motion.div
-          initial={{ opacity: 0, scale: 0.92, y: 15 }}
-          animate={{ opacity: 1, scale: 1, y: 0 }}
-          exit={{ opacity: 0, scale: 0.95, y: -10 }}
-          className="relative w-full max-w-md glass-panel rounded-3xl p-6 md:p-8 border border-hairline shadow-2xl bg-ink/95 overflow-hidden"
+          initial={{ opacity: 0, y: 30, scale: 0.95 }}
+          animate={{ opacity: 1, y: 0, scale: 1 }}
+          exit={{ opacity: 0, y: 20, scale: 0.95 }}
+          transition={{ type: 'spring', damping: 25, stiffness: 300 }}
+          className="relative glass-panel rounded-2xl p-4 sm:p-5 border border-coral/30 shadow-2xl bg-ink/95 backdrop-blur-xl overflow-hidden"
         >
-          {/* Ambient Glow */}
+          {/* Subtle Ambient Glow */}
           <div
-            className="absolute top-0 right-0 w-36 h-36 rounded-full blur-3xl pointer-events-none opacity-20"
+            className="absolute top-0 right-0 w-28 h-28 rounded-full blur-2xl pointer-events-none opacity-20"
             style={{ background: 'var(--coral)' }}
           />
 
+          {/* Close Button */}
           <button
             type="button"
             onClick={handleSkip}
-            className="absolute right-4 top-4 p-2 text-mist hover:text-parchment rounded-xl transition-colors"
-            title="Close"
+            className="absolute right-3 top-3 p-1.5 text-mist hover:text-parchment rounded-lg transition-colors"
+            title="Dismiss for now"
           >
-            <X className="w-5 h-5" />
+            <X className="w-4 h-4" />
           </button>
 
-          <div className="w-14 h-14 rounded-2xl bg-coral/10 border border-coral/30 flex items-center justify-center mb-5 text-coral">
-            {success ? (
-              <CheckCircle2 className="w-7 h-7 text-emerald-400 animate-bounce" />
-            ) : (
-              <Bell className="w-7 h-7 animate-pulse" />
-            )}
+          <div className="flex items-start gap-3.5">
+            <div
+              className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 ${
+                success
+                  ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20'
+                  : 'bg-coral/10 text-coral border border-coral/30'
+              }`}
+            >
+              {success ? (
+                <CheckCircle2 className="w-5 h-5 text-emerald-400 animate-bounce" />
+              ) : (
+                <Bell className="w-5 h-5 animate-pulse" />
+              )}
+            </div>
+
+            <div className="min-w-0 flex-1 pr-4">
+              <h4 className="text-sm font-bold text-parchment font-display">
+                {success ? 'Notifications Connected!' : 'Enable School Alerts?'}
+              </h4>
+              <p className="text-xs text-mist leading-relaxed mt-1">
+                {success
+                  ? 'Real-time attendance, fee receipts aur notices is device per aayenge.'
+                  : 'Receive instant student attendance, fee receipts & school notices on this device.'}
+              </p>
+            </div>
           </div>
 
-          <h3 className="text-xl font-display font-bold text-parchment mb-2">
-            {success ? 'Notifications Enabled!' : 'Allow School Notifications?'}
-          </h3>
-
-          <p className="text-sm text-mist leading-relaxed mb-6">
-            {success
-              ? 'Your device is now connected. You will receive real-time updates directly on this screen.'
-              : 'Turn on notifications to receive instant student attendance alerts, fee deposit receipts, report cards, and official notices.'}
-          </p>
-
           {errorText && (
-            <p className="text-xs text-red-400 mb-4 bg-red-500/10 p-2.5 rounded-xl border border-red-500/20">
+            <p className="text-[11px] text-amber-300 mt-3 bg-amber-500/10 p-2.5 rounded-xl border border-amber-500/20 leading-relaxed">
               {errorText}
             </p>
           )}
 
           {!success && (
-            <div className="flex flex-col sm:flex-row items-center gap-3">
+            <div className="flex items-center gap-2 mt-4 pt-1">
               <button
                 type="button"
                 onClick={handleAllow}
                 disabled={loading}
-                className="w-full sm:flex-1 py-3 px-5 rounded-xl text-sm font-bold text-ink bg-coral hover:bg-coral/90 transition-all shadow-lg shadow-coral/20 flex items-center justify-center gap-2"
+                className="flex-1 py-2 px-3.5 rounded-xl text-xs font-bold text-ink bg-coral hover:bg-coral/90 transition-all shadow-md shadow-coral/10 flex items-center justify-center gap-1.5"
               >
                 {loading ? (
                   <>
-                    <Loader2 className="w-4 h-4 animate-spin" />
+                    <Loader2 className="w-3.5 h-3.5 animate-spin" />
                     Connecting...
                   </>
                 ) : (
                   <>
-                    <Bell className="w-4 h-4" />
-                    Allow Notifications
+                    <Bell className="w-3.5 h-3.5" />
+                    Allow Alerts
                   </>
                 )}
               </button>
@@ -221,9 +165,9 @@ export function LoginPushModal() {
               <button
                 type="button"
                 onClick={handleSkip}
-                className="w-full sm:w-auto py-3 px-5 rounded-xl text-sm font-medium text-mist hover:text-parchment transition-colors"
+                className="py-2 px-3 rounded-xl text-xs font-medium text-mist hover:text-parchment transition-colors"
               >
-                Skip for now
+                Later
               </button>
             </div>
           )}
