@@ -1,6 +1,7 @@
 import { redirect } from 'next/navigation'
 import { createClient } from '@/utils/supabase/server'
 import AdminSidebar from '@/components/admin/AdminSidebar'
+import { GlobalPushBanner } from '@/components/notifications/GlobalPushBanner'
 
 export default async function AdminLayout({
   children,
@@ -37,6 +38,7 @@ export default async function AdminLayout({
 
       {/* Main content — offset for desktop sidebar, top-bar on mobile */}
       <main className="lg:ml-72 min-h-screen pt-14 lg:pt-0 p-4 sm:p-6 lg:p-8">
+        <GlobalPushBanner />
         {children}
       </main>
     </div>

@@ -1,6 +1,6 @@
 import { MetadataRoute } from 'next'
 
-export default function manifest(): MetadataRoute.Manifest {
+export default function manifest(): MetadataRoute.Manifest & { gcm_sender_id?: string } {
   return {
     name: 'RMSPS - Residential Maa Saraswati Public School',
     short_name: 'RMSPS',
@@ -9,6 +9,7 @@ export default function manifest(): MetadataRoute.Manifest {
     display: 'standalone',
     background_color: '#0b0b10',
     theme_color: '#0b0b10',
+    gcm_sender_id: '103953800507',
     icons: [
       {
         src: '/icon-192.png',
