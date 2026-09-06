@@ -24,8 +24,13 @@ export function LoginPushModal() {
   const [errorText, setErrorText] = useState<string | null>(null)
 
   useEffect(() => {
-    // Only run on client with service worker & Notification API
-    if (typeof window === 'undefined' || !('serviceWorker' in navigator) || !('Notification' in window)) {
+    // Only run on client with service worker, Notification API, and PushManager support
+    if (
+      typeof window === 'undefined' ||
+      !('serviceWorker' in navigator) ||
+      !('Notification' in window) ||
+      !('PushManager' in window)
+    ) {
       return
     }
 
