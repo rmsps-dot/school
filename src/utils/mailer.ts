@@ -9,30 +9,41 @@ const transporter = nodemailer.createTransport({
 })
 
 function getSchoolHeaderHtml(title: string, subtitle?: string): string {
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://rmsps.vercel.app'
   return `
-    <div style="background-color: #0B0B10; padding: 28px 24px; text-align: center; border-bottom: 3px solid #3E5C76;">
-      <h1 style="color: #F3EFE6; margin: 0 0 6px 0; font-size: 20px; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; letter-spacing: 0.5px; text-transform: uppercase;">
+    <div style="background: linear-gradient(135deg, #3E5C76 0%, #1e293b 100%); padding: 28px 20px 24px; text-align: center; border-bottom: 3px solid #D4AF6A;">
+      <div style="margin-bottom: 12px;">
+        <img src="${siteUrl}/icon-192.png" alt="RMSPS School Logo" style="width: 70px; height: 70px; border-radius: 50%; border: 3px solid #ffffff; box-shadow: 0 4px 14px rgba(0,0,0,0.25); display: inline-block;" />
+      </div>
+      <h1 style="color: #ffffff; margin: 0 0 8px 0; font-size: 18px; font-weight: 800; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; letter-spacing: 0.8px; text-transform: uppercase;">
         Residential Maa Saraswati Public School
       </h1>
-      <p style="color: #D4AF6A; margin: 0 0 4px 0; font-size: 13px; font-weight: bold;">
+      <div style="display: inline-block; background-color: #D4AF6A; color: #0B0B10; padding: 4px 14px; border-radius: 9999px; font-size: 11px; font-weight: bold; letter-spacing: 0.6px; text-transform: uppercase; margin-bottom: 4px;">
         ${title}
-      </p>
-      ${subtitle ? `<p style="color: #8A8F98; margin: 0; font-size: 11px;">${subtitle}</p>` : ''}
+      </div>
+      ${subtitle ? `<p style="color: #E2E8F0; margin: 6px 0 0 0; font-size: 12px; opacity: 0.95;">${subtitle}</p>` : ''}
     </div>
   `
 }
 
 function getSchoolFooterHtml(): string {
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://rmsps.vercel.app'
   return `
-    <div style="background-color: #F1F5F9; padding: 20px 24px; text-align: center; border-top: 1px solid #E2E8F0;">
-      <p style="font-size: 12px; color: #64748B; margin: 0 0 4px 0; font-weight: bold;">
+    <div style="background-color: #F8FAFC; padding: 24px 20px; text-align: center; border-top: 1px solid #E2E8F0; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;">
+      <p style="font-size: 13px; color: #1E293B; margin: 0 0 4px 0; font-weight: bold;">
         Residential Maa Saraswati Public School (RMSPS)
       </p>
-      <p style="font-size: 11px; color: #94A3B8; margin: 0 0 8px 0;">
-        Near Railway Crossing, Main Campus • Phone: +91 94700 00000 • Email: admin@rmsps.edu
+      <p style="font-size: 12px; color: #475569; margin: 0 0 4px 0;">
+        Kating Chowk, Maheshpur road, Pipra, Supaul, Bihar - 852109
+      </p>
+      <p style="font-size: 11px; color: #64748B; margin: 0 0 6px 0;">
+        Helpline: <a href="tel:+919546536279" style="color: #3E5C76; text-decoration: none; font-weight: bold;">+91 95465 36279</a> • Email: <a href="mailto:srzsurazzrajput@gmail.com" style="color: #3E5C76; text-decoration: none;">srzsurazzrajput@gmail.com</a>
+      </p>
+      <p style="font-size: 10px; color: #94A3B8; margin: 0 0 6px 0;">
+        Govt Reg No: PSS217/19 • UDISE Code: 10060603629
       </p>
       <p style="font-size: 10px; color: #CBD5E1; margin: 0;">
-        &copy; ${new Date().getFullYear()} Residential Maa Saraswati Public School. All rights reserved.
+        &copy; ${new Date().getFullYear()} Residential Maa Saraswati Public School. All rights reserved. • <a href="${siteUrl}" style="color: #3E5C76; text-decoration: underline;">rmsps.vercel.app</a>
       </p>
     </div>
   `
@@ -601,6 +612,7 @@ export interface NoticeAlertEmailParams {
   title: string
   content: string
   targetRole: string
+  noticeId?: string
   noticeDate?: string
 }
 
@@ -609,6 +621,7 @@ export async function sendNoticeAlertEmail({
   title,
   content,
   targetRole,
+  noticeId,
   noticeDate,
 }: NoticeAlertEmailParams): Promise<{ success: boolean; sentCount: number; error?: string }> {
   if (!process.env.SMTP_EMAIL || !process.env.SMTP_PASSWORD) {
@@ -621,35 +634,68 @@ export async function sendNoticeAlertEmail({
   }
 
   const validEmails = Array.from(new Set(toEmails.filter(Boolean)))
-  const dateStr = noticeDate || new Date().toLocaleDateString('en-IN', { timeZone: 'Asia/Kolkata' })
+  const dateStr = noticeDate || new Date().toLocaleDateString('en-IN', { timeZone: 'Asia/Kolkata', day: '2-digit', month: 'short', year: 'numeric' })
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://rmsps.vercel.app'
+  const publicNoticeUrl = noticeId ? `${siteUrl}/notice/${noticeId}` : `${siteUrl}`
+
+  const roleLabelMap: Record<string, string> = {
+    all: 'ALL STUDENTS, PARENTS & STAFF',
+    parent: 'ALL PARENTS / GUARDIANS',
+    student: 'ALL ENROLLED STUDENTS',
+    teacher: 'TEACHING FACULTY & STAFF',
+  }
+  const audienceLabel = roleLabelMap[targetRole] || targetRole.toUpperCase()
 
   const mailOptions = {
     from: `"RMSPS Notice Desk" <${process.env.SMTP_EMAIL}>`,
     bcc: validEmails,
-    subject: `[RMSPS Notice] ${title}`,
+    subject: `[RMSPS Official Notice] ${title}`,
     html: `
-      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; border: 1px solid #E2E8F0; border-radius: 12px; overflow: hidden; background-color: #ffffff;">
-        ${getSchoolHeaderHtml('Official Notice & Announcement', `Circulated to: ${targetRole.toUpperCase()}`)}
-        <div style="padding: 32px; background-color: #ffffff;">
-          <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1.5px solid #F1F5F9; padding-bottom: 12px; margin-bottom: 18px;">
-            <h2 style="font-size: 18px; color: #0B0B10; margin: 0; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;">
-              ${title}
-            </h2>
+      <div style="font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; max-width: 620px; margin: 0 auto; border: 1px solid #E2E8F0; border-radius: 16px; overflow: hidden; background-color: #ffffff; box-shadow: 0 4px 20px rgba(0,0,0,0.06);">
+        ${getSchoolHeaderHtml('Official Institutional Circular', `Circular Target: ${audienceLabel}`)}
+        <div style="padding: 32px 28px; background-color: #ffffff;">
+          
+          <!-- Notice Reference Bar -->
+          <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #F1F5F9; padding-bottom: 14px; margin-bottom: 20px;">
+            <div>
+              <span style="font-size: 11px; font-weight: bold; color: #3E5C76; background-color: #EFF6FF; padding: 4px 10px; border-radius: 6px; border: 1px solid #BFDBFE;">
+                CIRCULAR ${noticeId ? '#' + noticeId.slice(0, 8).toUpperCase() : ''}
+              </span>
+            </div>
+            <div style="text-align: right;">
+              <span style="font-size: 12px; color: #64748B; font-weight: 500;">
+                📅 Date: <strong>${dateStr}</strong>
+              </span>
+            </div>
           </div>
 
-          <div style="margin-bottom: 16px;">
-            <span style="font-size: 12px; color: #64748B; background-color: #F1F5F9; padding: 4px 10px; border-radius: 4px;">
-              Date: ${dateStr}
-            </span>
-          </div>
+          <!-- Notice Title -->
+          <h2 style="font-size: 20px; font-weight: 800; color: #0F172A; margin: 0 0 16px 0; line-height: 1.4; letter-spacing: -0.2px;">
+            ${title}
+          </h2>
 
-          <div style="background-color: #F8FAFC; border: 1px solid #E2E8F0; border-radius: 8px; padding: 22px; font-size: 14px; color: #1E293B; line-height: 1.7; white-space: pre-wrap;">
+          <!-- Notice Content Card -->
+          <div style="background-color: #F8FAFC; border: 1.5px solid #E2E8F0; border-left: 4px solid #3E5C76; border-radius: 10px; padding: 22px; font-size: 14.5px; color: #334155; line-height: 1.75; white-space: pre-wrap;">
 ${content}
           </div>
 
-          <a href="${process.env.NEXT_PUBLIC_SITE_URL || 'https://rmsps.edu'}/notices" style="display: inline-block; background-color: #3E5C76; color: #ffffff; text-decoration: none; padding: 11px 26px; border-radius: 8px; font-weight: bold; margin-top: 20px; font-size: 13px;">
-            View Full Notice Board
-          </a>
+          <!-- Direct Web View Button (NO LOGIN REQUIRED) -->
+          <div style="text-align: center; margin: 28px 0 16px 0;">
+            <a href="${publicNoticeUrl}" style="display: inline-block; background: linear-gradient(135deg, #3E5C76 0%, #1e293b 100%); color: #ffffff; text-decoration: none; padding: 13px 32px; border-radius: 10px; font-weight: bold; font-size: 14px; letter-spacing: 0.4px; box-shadow: 0 4px 12px rgba(62, 92, 118, 0.35);">
+              View Official Circular & Notice 📜
+            </a>
+            <p style="font-size: 12px; color: #64748B; margin: 10px 0 0 0;">
+              ✨ <em>Direct access — No password or login required to read this notice.</em>
+            </p>
+          </div>
+
+          <!-- School Seal Verification Note -->
+          <div style="background-color: #F1F5F9; border-radius: 8px; padding: 12px 16px; margin-top: 24px; text-align: center; border: 1px dashed #CBD5E1;">
+            <p style="font-size: 11px; color: #475569; margin: 0;">
+              Verified by: <strong>Office of the Principal / Administration</strong> • Residential Maa Saraswati Public School
+            </p>
+          </div>
+
         </div>
         ${getSchoolFooterHtml()}
       </div>

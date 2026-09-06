@@ -208,7 +208,7 @@ export function TeacherPaymentDocument({ data }: { data: TeacherPaymentData }) {
                 Affiliated & Recognised • English Medium Residential School
               </Text>
               <Text style={styles.schoolAddress}>
-                Campus: Near Railway Crossing, Main Road • Contact: +91 94700 00000 • Web: rmsps.edu
+                Campus: Kating Chowk, Maheshpur road, Pipra, Supaul, Bihar - 852109 • Contact: +91 95465 36279
               </Text>
             </View>
 

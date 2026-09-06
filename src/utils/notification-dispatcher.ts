@@ -488,12 +488,14 @@ export async function dispatchTeacherAbsentAlert(params: {
  * Dispatches notice announcement alert (Email broadcast + Web Push).
  */
 export async function dispatchNoticeAlert(params: {
+  id?: string
   title: string
   content: string
   targetRole: 'all' | 'teacher' | 'parent' | 'student'
 }): Promise<void> {
   try {
     const { emails } = await resolveTargetRoleContacts(params.targetRole)
+    const noticeUrl = params.id ? `/notice/${params.id}` : '/'
 
     // 1. Send Email Broadcast
     if (emails.length > 0) {
@@ -502,15 +504,16 @@ export async function dispatchNoticeAlert(params: {
         title: params.title,
         content: params.content,
         targetRole: params.targetRole,
+        noticeId: params.id,
       }).catch((e) => console.warn('Notice email broadcast failed:', e))
     }
 
-    // 2. Send Push Broadcast
+    // 2. Send Push Broadcast (Tapping directly opens the public notice!)
     broadcastPushNotification(params.targetRole, {
       title: `[Notice] ${params.title}`,
       body: params.content.length > 120 ? `${params.content.substring(0, 117)}...` : params.content,
-      url: '/notices',
-      tag: `notice-${Date.now()}`,
+      url: noticeUrl,
+      tag: `notice-${params.id || Date.now()}`,
     }).catch((e) => console.warn('Notice push broadcast failed:', e))
   } catch (err) {
     console.warn('dispatchNoticeAlert error:', err)

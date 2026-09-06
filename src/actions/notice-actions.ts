@@ -53,7 +53,7 @@ export async function createNotice(
     }
 
     const supabase = await createClient()
-    const { error } = await supabase
+    const { data: inserted, error } = await supabase
       .from('notices')
       .insert({
         title: title.trim(),
@@ -61,11 +61,14 @@ export async function createNotice(
         target_role,
         created_by: adminId,
       })
+      .select('id')
+      .single()
 
     if (error) throw new Error(error.message)
 
-    // Broadcast email and push alert to target audience (non-blocking)
+    // Broadcast email and push alert to target audience (non-blocking) with exact notice ID
     dispatchNoticeAlert({
+      id: inserted?.id,
       title: title.trim(),
       content: content.trim(),
       targetRole: target_role,
@@ -146,3 +149,24 @@ export async function deleteNotice(id: string): Promise<{ success: boolean; erro
     return { success: false, error: err instanceof Error ? err.message : 'Unknown error' }
   }
 }
+
+/**
+ * Fetch a single public notice by UUID (No authentication or login required).
+ * Uses service role client so parents/students opening direct links in email can view it.
+ */
+export async function fetchPublicNotice(id: string): Promise<{ data: Notice | null; error?: string }> {
+  try {
+    const { supabaseAdmin } = await import('@/utils/supabase/admin')
+    const { data, error } = await supabaseAdmin
+      .from('notices')
+      .select('id, title, content, target_role, created_by, created_at')
+      .eq('id', id)
+      .maybeSingle()
+
+    if (error) throw new Error(error.message)
+    return { data: (data as Notice) || null }
+  } catch (err) {
+    return { data: null, error: err instanceof Error ? err.message : 'Notice not found' }
+  }
+}
+
