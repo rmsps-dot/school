@@ -1,7 +1,7 @@
 import { redirect } from 'next/navigation'
 import { createClient } from '@/utils/supabase/server'
 import ParentSidebar from '@/components/parent/ParentSidebar'
-import { GlobalPushBanner } from '@/components/notifications/GlobalPushBanner'
+import { LoginPushModal } from '@/components/notifications/LoginPushModal'
 
 export default async function ParentLayout({ children }: { children: React.ReactNode }) {
   const supabase = await createClient()
@@ -20,7 +20,7 @@ export default async function ParentLayout({ children }: { children: React.React
     <div className="relative min-h-screen bg-ink">
       <ParentSidebar parentName={profile.full_name ?? 'Parent'} parentAvatar={profile.profile_photo_url} />
       <main className="lg:ml-72 min-h-screen pt-14 lg:pt-0 p-4 sm:p-6 lg:p-8">
-        <GlobalPushBanner />
+        <LoginPushModal />
         {children}
       </main>
     </div>

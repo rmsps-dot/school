@@ -2,17 +2,15 @@
 
 import { useState, useTransition } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Save, Clock, Loader2, CheckCircle2, MapPin, Trash2, Users, Shield, Bell, Mail, Send, Check } from 'lucide-react'
+import { Save, Clock, Loader2, CheckCircle2, MapPin, Trash2, Users, Shield } from 'lucide-react'
 import { updateSetting, type AppSetting, type TeacherAttendanceSetting } from '@/actions/settings-actions'
-import { sendMonthEndFeeReminders } from '@/actions/fee-actions'
 import LocationMapPicker from '@/components/admin/LocationMapPicker'
-import { PushNotificationManager } from '@/components/notifications/PushNotificationManager'
 
 interface SettingsClientProps {
   initialSettings: AppSetting[]
 }
 
-type SettingsTab = 'teacher' | 'student' | 'notifications'
+type SettingsTab = 'teacher' | 'student'
 
 export default function SettingsClient({ initialSettings }: SettingsClientProps) {
   const [activeTab, setActiveTab] = useState<SettingsTab>('teacher')
@@ -49,26 +47,6 @@ export default function SettingsClient({ initialSettings }: SettingsClientProps)
   const [studentSuccessMsg, setStudentSuccessMsg] = useState('')
   const [studentErrorMsg, setStudentErrorMsg] = useState('')
 
-  // ── 3. Notification & Fee Reminder State ──
-  const [isFeeReminderPending, startFeeReminderTransition] = useTransition()
-  const [feeReminderStatus, setFeeReminderStatus] = useState<string | null>(null)
-  const [feeReminderError, setFeeReminderError] = useState<string | null>(null)
-
-  const handleSendFeeReminders = () => {
-    setFeeReminderStatus(null)
-    setFeeReminderError(null)
-    startFeeReminderTransition(async () => {
-      const res = await sendMonthEndFeeReminders()
-      if (res.success) {
-        setFeeReminderStatus(
-          `Processed ${res.processedCount} student dues. Dispatched ${res.sentCount} reminder emails & alerts.`
-        )
-      } else {
-        setFeeReminderError(res.error || 'Failed to dispatch reminders.')
-      }
-    })
-  }
-
   const handleSaveTeacherSettings = () => {
     setTeacherErrorMsg('')
     setTeacherSuccessMsg('')
@@ -86,34 +64,38 @@ export default function SettingsClient({ initialSettings }: SettingsClientProps)
       if (res.error) {
         setTeacherErrorMsg(res.error)
       } else {
-        setTeacherSuccessMsg('Teacher attendance window & geofence location saved successfully.')
-        setTimeout(() => setTeacherSuccessMsg(''), 4000)
+        setTeacherSuccessMsg('Teacher attendance settings and geofence updated successfully!')
       }
     })
-  }
-
-  const handleClearLocation = () => {
-    if (confirm('Are you sure you want to remove the school location and radius? Teachers will not be able to mark attendance until a location is configured.')) {
-      setTeacherLat(null)
-      setTeacherLng(null)
-      setLocationName('')
-    }
   }
 
   const handleSaveStudentAttendanceWindow = () => {
     setStudentErrorMsg('')
     setStudentSuccessMsg('')
     startStudentTransition(async () => {
-      const res1 = await updateSetting('student_attendance_window', { start: studentStartTime, end: studentEndTime })
-      const res2 = await updateSetting('teacher_attendance_window', { start: studentStartTime, end: studentEndTime })
-
-      if (res1.error || res2.error) {
-        setStudentErrorMsg(res1.error || res2.error || 'Failed to save student attendance window.')
+      const payload = { start: studentStartTime, end: studentEndTime }
+      // Update both keys for backward-compatibility
+      await updateSetting('teacher_attendance_window', payload)
+      const res = await updateSetting('student_attendance_window', payload)
+      if (res.error) {
+        setStudentErrorMsg(res.error)
       } else {
-        setStudentSuccessMsg('Student attendance window updated successfully.')
-        setTimeout(() => setStudentSuccessMsg(''), 3000)
+        setStudentSuccessMsg('Student attendance window updated successfully!')
       }
     })
+  }
+
+  const handleSelectLocation = (lat: number, lng: number, address?: string) => {
+    setTeacherLat(lat)
+    setTeacherLng(lng)
+    if (address && !locationName) {
+      setLocationName(address)
+    }
+  }
+
+  const handleClearLocation = () => {
+    setTeacherLat(null)
+    setTeacherLng(null)
   }
 
   const timeInputClass = "w-full input-glass rounded-xl px-4 py-3 text-parchment focus:outline-none focus:border-coral/60 focus:ring-1 focus:ring-coral/20 transition-all text-sm font-mono"
@@ -122,44 +104,31 @@ export default function SettingsClient({ initialSettings }: SettingsClientProps)
     <div className="space-y-6">
       
       {/* ── Top Section-Wise Tabs Switcher ── */}
-      <div className="flex flex-wrap items-center gap-2 p-1.5 rounded-2xl bg-ink border border-hairline max-w-2xl">
+      <div className="flex items-center gap-2 p-1.5 rounded-2xl bg-ink border border-hairline max-w-xl">
         <button
           type="button"
           onClick={() => setActiveTab('teacher')}
-          className={`flex-1 min-w-[140px] py-3 px-4 rounded-xl text-xs md:text-sm font-bold transition-all flex items-center justify-center gap-2 ${
+          className={`flex-1 py-3 px-4 rounded-xl text-xs md:text-sm font-bold transition-all flex items-center justify-center gap-2 ${
             activeTab === 'teacher'
               ? 'bg-coral text-ink shadow-lg'
               : 'text-mist hover:text-parchment hover:bg-white/5'
           }`}
         >
           <MapPin className="w-4 h-4" />
-          <span>Teacher Geofence</span>
+          <span>Teacher Attendance & Geofence</span>
         </button>
 
         <button
           type="button"
           onClick={() => setActiveTab('student')}
-          className={`flex-1 min-w-[140px] py-3 px-4 rounded-xl text-xs md:text-sm font-bold transition-all flex items-center justify-center gap-2 ${
+          className={`flex-1 py-3 px-4 rounded-xl text-xs md:text-sm font-bold transition-all flex items-center justify-center gap-2 ${
             activeTab === 'student'
               ? 'bg-veena-blue text-ink shadow-lg'
               : 'text-mist hover:text-parchment hover:bg-white/5'
           }`}
         >
           <Users className="w-4 h-4" />
-          <span>Student Window</span>
-        </button>
-
-        <button
-          type="button"
-          onClick={() => setActiveTab('notifications')}
-          className={`flex-1 min-w-[140px] py-3 px-4 rounded-xl text-xs md:text-sm font-bold transition-all flex items-center justify-center gap-2 ${
-            activeTab === 'notifications'
-              ? 'bg-gold text-ink shadow-lg'
-              : 'text-mist hover:text-parchment hover:bg-white/5'
-          }`}
-        >
-          <Bell className="w-4 h-4" />
-          <span>Alerts & Notifications</span>
+          <span>Student Attendance Window</span>
         </button>
       </div>
 
@@ -174,51 +143,32 @@ export default function SettingsClient({ initialSettings }: SettingsClientProps)
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -8 }}
             transition={{ duration: 0.2 }}
-            className="surface-card rounded-3xl border border-hairline overflow-hidden shadow-2xl"
+            className="glass-panel rounded-3xl border border-hairline overflow-hidden space-y-8"
           >
-            <div className="p-6 md:p-8 border-b border-hairline bg-gradient-to-r from-coral/10 via-transparent to-transparent">
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                <div className="flex items-center gap-4">
-                  <div className="w-12 h-12 rounded-2xl flex items-center justify-center border border-coral/30 bg-coral/10 text-coral flex-shrink-0">
-                    <MapPin className="w-6 h-6" />
-                  </div>
-                  <div>
-                    <h2 className="font-display text-2xl font-bold text-parchment">Teacher Attendance & Geofence</h2>
-                    <p className="text-xs md:text-sm text-mist mt-1">
-                      Set daily check-in window and configure school gate GPS radius for faculty selfies.
-                    </p>
-                  </div>
+            {/* Header */}
+            <div className="p-6 md:p-8 border-b border-hairline bg-ink/30">
+              <div className="flex items-center gap-3 mb-1">
+                <div className="w-10 h-10 rounded-xl bg-coral/10 border border-coral/30 flex items-center justify-center text-coral">
+                  <MapPin className="w-5 h-5" />
                 </div>
-                {teacherLat !== null && teacherLng !== null ? (
-                  <div className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 text-xs font-mono font-semibold self-start sm:self-auto">
-                    <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-                    Active Geofence
-                  </div>
-                ) : (
-                  <div className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-amber-500/10 border border-amber-500/30 text-amber-400 text-xs font-mono font-semibold self-start sm:self-auto">
-                    <Shield className="w-3.5 h-3.5" />
-                    Location Not Set
-                  </div>
-                )}
+                <div>
+                  <h2 className="text-xl font-bold text-parchment">Teacher Geofence & Check-In Window</h2>
+                  <p className="text-xs md:text-sm text-mist mt-1">
+                    Control GPS geofence boundary and allowed morning hours for teachers to check in.
+                  </p>
+                </div>
               </div>
             </div>
 
             <div className="p-6 md:p-8 space-y-8">
-              
-              {/* Time Window */}
-              <div className="space-y-4">
-                <div className="flex items-center gap-2">
-                  <Clock className="w-4 h-4 text-veena-blue" />
-                  <h3 className="text-xs font-bold text-parchment uppercase tracking-wider">
-                    1. Daily Teacher Attendance Time Window
-                  </h3>
-                </div>
-                <p className="text-xs text-mist">
-                  Teachers cannot mark photo attendance outside this timeframe.
-                </p>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 max-w-xl">
+              {/* Timing settings */}
+              <div>
+                <h3 className="text-sm font-bold text-parchment uppercase tracking-wider mb-4 flex items-center gap-2">
+                  <Clock className="w-4 h-4 text-coral" /> Daily Check-In Time Limits
+                </h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-2xl">
                   <div className="space-y-1.5">
-                    <label className="text-xs font-semibold text-mist uppercase tracking-wider">Allowed Start Time</label>
+                    <label className="text-xs font-semibold text-mist uppercase tracking-wider">Start Time</label>
                     <input
                       type="time"
                       value={teacherStartTime}
@@ -227,7 +177,7 @@ export default function SettingsClient({ initialSettings }: SettingsClientProps)
                     />
                   </div>
                   <div className="space-y-1.5">
-                    <label className="text-xs font-semibold text-mist uppercase tracking-wider">Allowed End Time</label>
+                    <label className="text-xs font-semibold text-mist uppercase tracking-wider">End Time</label>
                     <input
                       type="time"
                       value={teacherEndTime}
@@ -238,75 +188,99 @@ export default function SettingsClient({ initialSettings }: SettingsClientProps)
                 </div>
               </div>
 
-              {/* Location Name & Map Picker */}
-              <div className="space-y-4 pt-6 border-t border-hairline">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <MapPin className="w-4 h-4 text-coral" />
-                    <h3 className="text-xs font-bold text-parchment uppercase tracking-wider">
-                      2. School Location & Geofence Radius
-                    </h3>
+              {/* Location details */}
+              <div className="border-t border-hairline pt-6">
+                <h3 className="text-sm font-bold text-parchment uppercase tracking-wider mb-4 flex items-center gap-2">
+                  <Shield className="w-4 h-4 text-coral" /> Campus Geofence Boundary
+                </h3>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-2xl mb-6">
+                  <div className="space-y-1.5">
+                    <label className="text-xs font-semibold text-mist uppercase tracking-wider">Campus / Location Name</label>
+                    <input
+                      type="text"
+                      value={locationName}
+                      onChange={(e) => setLocationName(e.target.value)}
+                      placeholder="e.g. RMSPS Main Campus"
+                      className="w-full input-glass rounded-xl px-4 py-3 text-parchment text-sm focus:outline-none focus:border-coral/60 transition-all"
+                    />
                   </div>
-                  {teacherLat !== null && (
-                    <button
-                      type="button"
-                      onClick={handleClearLocation}
-                      className="text-xs text-red-400 hover:text-red-300 transition-colors flex items-center gap-1 font-semibold"
-                    >
-                      <Trash2 className="w-3.5 h-3.5" />
-                      Clear Location
-                    </button>
+
+                  <div className="space-y-1.5">
+                    <label className="text-xs font-semibold text-mist uppercase tracking-wider">Allowed Radius (Meters)</label>
+                    <div className="flex items-center gap-3">
+                      <input
+                        type="number"
+                        min="10"
+                        max="2000"
+                        step="10"
+                        value={teacherRadius}
+                        onChange={(e) => setTeacherRadius(Number(e.target.value) || 50)}
+                        className={timeInputClass}
+                      />
+                      <span className="text-xs text-mist font-mono shrink-0">meters</span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Map Picker */}
+                <div className="space-y-2">
+                  <label className="text-xs font-semibold text-mist uppercase tracking-wider flex items-center justify-between">
+                    <span>Pin Campus Center on Interactive Map</span>
+                    {teacherLat && teacherLng && (
+                      <button
+                        type="button"
+                        onClick={handleClearLocation}
+                        className="text-red-400 hover:text-red-300 text-xs flex items-center gap-1"
+                      >
+                        <Trash2 className="w-3 h-3" /> Clear Pin
+                      </button>
+                    )}
+                  </label>
+                  <LocationMapPicker
+                    lat={teacherLat}
+                    lng={teacherLng}
+                    radiusMeters={teacherRadius}
+                    locationName={locationName}
+                    onChange={({ lat, lng, radiusMeters, locationName: newName }) => {
+                      setTeacherLat(lat)
+                      setTeacherLng(lng)
+                      setTeacherRadius(radiusMeters)
+                      if (newName) setLocationName(newName)
+                    }}
+                  />
+                  {teacherLat && teacherLng ? (
+                    <p className="text-xs text-emerald-400 font-mono mt-2">
+                      Coordinates Set: {teacherLat.toFixed(6)}, {teacherLng.toFixed(6)} (Radius: {teacherRadius}m)
+                    </p>
+                  ) : (
+                    <p className="text-xs text-amber-400 font-mono mt-2">
+                      No coordinates selected. Geofencing check will be disabled for teachers until set.
+                    </p>
                   )}
                 </div>
-
-                <div className="max-w-xl space-y-1.5">
-                  <label className="text-xs font-semibold text-mist uppercase tracking-wider">School / Campus Name</label>
-                  <input
-                    type="text"
-                    placeholder="e.g. RMSPS Main Campus, Bihar"
-                    value={locationName}
-                    onChange={(e) => setLocationName(e.target.value)}
-                    className="w-full input-glass rounded-xl px-4 py-2.5 text-xs text-parchment focus:outline-none focus:border-coral transition-colors"
-                  />
-                </div>
-
-                {/* Interactive Map & Google Maps URL Parser */}
-                <LocationMapPicker
-                  lat={teacherLat}
-                  lng={teacherLng}
-                  radiusMeters={teacherRadius}
-                  locationName={locationName}
-                  onChange={({ lat, lng, radiusMeters, locationName: newName }) => {
-                    setTeacherLat(lat)
-                    setTeacherLng(lng)
-                    setTeacherRadius(radiusMeters)
-                    if (newName) setLocationName(newName)
-                  }}
-                />
               </div>
 
-              {/* Teacher Section Feedback */}
               {teacherErrorMsg && (
-                <div className="text-red-400 text-xs bg-red-500/10 p-4 rounded-xl border border-red-500/20 font-mono">
+                <div className="text-red-400 text-xs bg-red-500/10 p-3 rounded-xl border border-red-500/20 font-mono">
                   {teacherErrorMsg}
                 </div>
               )}
 
               {teacherSuccessMsg && (
-                <div className="text-emerald-400 text-xs bg-emerald-500/10 p-4 rounded-xl border border-emerald-500/20 flex items-center gap-2 font-mono">
+                <div className="text-emerald-400 text-xs bg-emerald-500/10 p-3 rounded-xl border border-emerald-500/20 flex items-center gap-2 font-mono">
                   <CheckCircle2 className="w-4 h-4" /> {teacherSuccessMsg}
                 </div>
               )}
 
-              <div className="pt-4 flex items-center gap-4">
+              <div className="pt-2">
                 <button
                   onClick={handleSaveTeacherSettings}
                   disabled={isTeacherPending}
-                  className="flex items-center gap-2 px-8 py-3.5 rounded-xl text-sm font-bold text-ink transition-all hover:scale-[1.01] active:scale-[0.99] disabled:opacity-50 shadow-lg"
-                  style={{ background: 'var(--coral)' }}
+                  className="flex items-center gap-2 px-8 py-3.5 rounded-xl text-sm font-bold text-ink bg-coral hover:bg-coral/90 transition-all disabled:opacity-50 shadow-lg"
                 >
                   {isTeacherPending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
-                  Save Teacher Attendance Settings
+                  Save Teacher Geofence
                 </button>
               </div>
             </div>
@@ -314,7 +288,7 @@ export default function SettingsClient({ initialSettings }: SettingsClientProps)
         )}
 
         {/* ─────────────────────────────────────────────────────────────
-            TAB 2: STUDENT ATTENDANCE WINDOW (RENAMED)
+            TAB 2: STUDENT ATTENDANCE WINDOW
         ───────────────────────────────────────────────────────────── */}
         {activeTab === 'student' && (
           <motion.div
@@ -323,15 +297,15 @@ export default function SettingsClient({ initialSettings }: SettingsClientProps)
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -8 }}
             transition={{ duration: 0.2 }}
-            className="surface-card rounded-3xl border border-hairline overflow-hidden shadow-2xl"
+            className="glass-panel rounded-3xl border border-hairline overflow-hidden space-y-6"
           >
-            <div className="p-6 md:p-8 border-b border-hairline bg-gradient-to-r from-veena-blue/10 via-transparent to-transparent">
-              <div className="flex items-center gap-4">
-                <div className="w-12 h-12 rounded-2xl flex items-center justify-center border border-veena-blue/30 bg-veena-blue/10 text-veena-blue flex-shrink-0">
-                  <Users className="w-6 h-6" />
+            <div className="p-6 md:p-8 border-b border-hairline bg-ink/30">
+              <div className="flex items-center gap-3 mb-1">
+                <div className="w-10 h-10 rounded-xl bg-veena-blue/10 border border-veena-blue/30 flex items-center justify-center text-veena-blue">
+                  <Users className="w-5 h-5" />
                 </div>
                 <div>
-                  <h2 className="font-display text-2xl font-bold text-parchment">Student Attendance Window</h2>
+                  <h2 className="text-xl font-bold text-parchment">Student Class Attendance Window</h2>
                   <p className="text-xs md:text-sm text-mist mt-1">
                     Set the allowed time limits for teachers to mark student attendance in their assigned classes.
                   </p>
@@ -382,98 +356,6 @@ export default function SettingsClient({ initialSettings }: SettingsClientProps)
                   {isStudentPending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
                   Save Student Window
                 </button>
-              </div>
-            </div>
-          </motion.div>
-        )}
-
-        {/* ─────────────────────────────────────────────────────────────
-            TAB 3: ALERTS & NOTIFICATIONS (PUSH & EMAIL WORKFLOWS)
-        ───────────────────────────────────────────────────────────── */}
-        {activeTab === 'notifications' && (
-          <motion.div
-            key="tab-notifications"
-            initial={{ opacity: 0, y: 8 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -8 }}
-            transition={{ duration: 0.2 }}
-            className="glass-panel rounded-3xl border border-hairline overflow-hidden space-y-6 p-6 md:p-8"
-          >
-            <div>
-              <h2 className="text-xl font-bold text-parchment flex items-center gap-2">
-                <Bell className="w-5 h-5 text-gold" />
-                Notification System & Multi-Channel Workflows
-              </h2>
-              <p className="text-xs md:text-sm text-mist mt-1">
-                Manage device push subscriptions, dispatch month-end fee reminders, and monitor automated alert channels.
-              </p>
-            </div>
-
-            {/* 1. Device Push Notifications Toggle */}
-            <PushNotificationManager />
-
-            {/* 2. Month-End Fee Reminders Action */}
-            <div className="glass-panel p-5 rounded-2xl border border-hairline flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 bg-ink/40">
-              <div className="flex items-center gap-3.5">
-                <div className="w-11 h-11 rounded-xl flex items-center justify-center bg-gold/10 border border-gold/30 text-gold shrink-0">
-                  <Mail className="w-5 h-5" />
-                </div>
-                <div>
-                  <h4 className="text-sm font-bold text-parchment">
-                    Month-End Student Fee Reminders
-                  </h4>
-                  <p className="text-xs text-mist mt-0.5">
-                    Scans all students with unpaid/due fees and dispatches personalized email & push reminders to parents.
-                  </p>
-                  {feeReminderStatus && (
-                    <p className="text-xs text-emerald-400 mt-1 font-mono flex items-center gap-1">
-                      <CheckCircle2 className="w-3 h-3" /> {feeReminderStatus}
-                    </p>
-                  )}
-                  {feeReminderError && (
-                    <p className="text-xs text-red-400 mt-1 font-mono">
-                      {feeReminderError}
-                    </p>
-                  )}
-                </div>
-              </div>
-
-              <button
-                type="button"
-                onClick={handleSendFeeReminders}
-                disabled={isFeeReminderPending}
-                className="px-5 py-2.5 rounded-xl text-xs font-bold text-ink bg-gold hover:bg-gold/90 transition-all disabled:opacity-50 shadow-lg shadow-gold/20 flex items-center gap-2 shrink-0"
-              >
-                {isFeeReminderPending ? (
-                  <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                ) : (
-                  <Send className="w-3.5 h-3.5" />
-                )}
-                Send Reminders Now
-              </button>
-            </div>
-
-            {/* 3. Channel Status Badges */}
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-2">
-              <div className="p-3.5 rounded-xl bg-white/[0.02] border border-hairline">
-                <p className="text-[11px] text-mist font-semibold uppercase tracking-wider">Web Push Engine</p>
-                <p className="text-sm font-bold text-parchment mt-0.5 flex items-center gap-1.5">
-                  <span className="w-2 h-2 rounded-full bg-emerald-400"></span> VAPID PWA Active
-                </p>
-              </div>
-
-              <div className="p-3.5 rounded-xl bg-white/[0.02] border border-hairline">
-                <p className="text-[11px] text-mist font-semibold uppercase tracking-wider">Email Transporter</p>
-                <p className="text-sm font-bold text-parchment mt-0.5 flex items-center gap-1.5">
-                  <span className="w-2 h-2 rounded-full bg-veena-blue"></span> SMTP / Nodemailer
-                </p>
-              </div>
-
-              <div className="p-3.5 rounded-xl bg-white/[0.02] border border-hairline">
-                <p className="text-[11px] text-mist font-semibold uppercase tracking-wider">PDF Receipt Engine</p>
-                <p className="text-sm font-bold text-parchment mt-0.5 flex items-center gap-1.5">
-                  <span className="w-2 h-2 rounded-full bg-coral"></span> @react-pdf Buffer
-                </p>
               </div>
             </div>
           </motion.div>
