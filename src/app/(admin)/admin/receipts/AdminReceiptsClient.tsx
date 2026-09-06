@@ -22,7 +22,7 @@ import type { SchoolClass } from '@/actions/class-actions'
 import FeeReceiptModal from '@/components/shared/FeeReceiptModal'
 import TeacherPaymentModal from '@/components/shared/TeacherPaymentModal'
 import { downloadFeeReceiptPDF, downloadTeacherPaymentPDF } from '@/utils/download-receipt-pdf'
-import { numberToWords } from '@/utils/pdf-generator'
+import { numberToWords } from '@/utils/number-to-words'
 import type { FeeReceiptData } from '@/components/pdf/FeeReceiptPdf'
 import type { TeacherPaymentData } from '@/components/pdf/TeacherPaymentPdf'
 

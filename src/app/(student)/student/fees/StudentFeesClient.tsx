@@ -17,7 +17,7 @@ import type { StudentProfile } from '@/actions/portal-actions'
 import type { FeeRecord } from '@/actions/fee-actions'
 import FeeReceiptModal from '@/components/shared/FeeReceiptModal'
 import { downloadFeeReceiptPDF } from '@/utils/download-receipt-pdf'
-import { numberToWords } from '@/utils/pdf-generator'
+import { numberToWords } from '@/utils/number-to-words'
 import type { FeeReceiptData } from '@/components/pdf/FeeReceiptPdf'
 
 interface Props {

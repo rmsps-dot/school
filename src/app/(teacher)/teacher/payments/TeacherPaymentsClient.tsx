@@ -16,7 +16,7 @@ import {
 import type { TeacherPaymentReceiptItem } from '@/actions/receipt-actions'
 import TeacherPaymentModal from '@/components/shared/TeacherPaymentModal'
 import { downloadTeacherPaymentPDF } from '@/utils/download-receipt-pdf'
-import { numberToWords } from '@/utils/pdf-generator'
+import { numberToWords } from '@/utils/number-to-words'
 import type { TeacherPaymentData } from '@/components/pdf/TeacherPaymentPdf'
 
 interface Props {
