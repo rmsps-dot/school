@@ -10,7 +10,16 @@ interface Props {
 
 export default function TeacherPaymentPreview({ data }: Props) {
   return (
-    <div className="w-full max-w-3xl mx-auto bg-white text-slate-900 rounded-2xl shadow-xl overflow-hidden border border-slate-200 p-6 sm:p-8 font-sans">
+    <div
+      className="bg-white text-slate-900 rounded-xl shadow-xl overflow-hidden border border-slate-200 p-6 sm:p-8 font-sans"
+      style={{
+        width: '100%',
+        minWidth: '780px',
+        maxWidth: '820px',
+        margin: '0 auto',
+        boxSizing: 'border-box',
+      }}
+    >
       {/* Outer Border Frame */}
       <div className="border-2 border-[#3E5C76] rounded-xl p-4 sm:p-6 relative">
         <div className="border border-[#D4AF6A] rounded-lg p-4 sm:p-5">

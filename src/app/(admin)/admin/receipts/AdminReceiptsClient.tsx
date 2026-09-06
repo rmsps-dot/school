@@ -1,7 +1,6 @@
 'use client'
 
 import { useState, useMemo } from 'react'
-import Image from 'next/image'
 import {
   GraduationCap,
   UserCheck,
@@ -13,8 +12,6 @@ import {
   CheckCircle2,
   AlertCircle,
   Clock,
-  CreditCard,
-  Calendar,
   IndianRupee,
 } from 'lucide-react'
 import type { StudentFeeReceiptItem, TeacherPaymentReceiptItem } from '@/actions/receipt-actions'
@@ -358,15 +355,15 @@ export default function AdminReceiptsClient({
                               <button
                                 onClick={() => handleDownloadStudentReceipt(item)}
                                 disabled={isDownloading}
-                                className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-gold/10 border border-gold/30 text-xs font-semibold text-gold hover:bg-gold/20 transition-colors cursor-pointer disabled:opacity-50"
-                                title="Download PDF"
+                                className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-gold text-ink font-semibold text-xs hover:bg-[#E5C17B] transition-colors cursor-pointer disabled:opacity-50 shadow-sm flex-shrink-0"
+                                title="Download Official Receipt PDF"
                               >
                                 {isDownloading ? (
                                   <Loader2 className="w-3.5 h-3.5 animate-spin" />
                                 ) : (
                                   <Download className="w-3.5 h-3.5" />
                                 )}
-                                <span className="hidden sm:inline">PDF</span>
+                                <span>Download</span>
                               </button>
                             </div>
                           </td>
@@ -480,7 +477,7 @@ export default function AdminReceiptsClient({
                               <button
                                 onClick={() => handleDownloadTeacherVoucher(item)}
                                 disabled={isDownloading}
-                                className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-gold/10 border border-gold/30 text-xs font-semibold text-gold hover:bg-gold/20 transition-colors cursor-pointer disabled:opacity-50"
+                                className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-gold text-ink font-semibold text-xs hover:bg-[#E5C17B] transition-colors cursor-pointer disabled:opacity-50 shadow-sm flex-shrink-0"
                                 title="Download PDF Voucher"
                               >
                                 {isDownloading ? (
@@ -488,7 +485,7 @@ export default function AdminReceiptsClient({
                                 ) : (
                                   <Download className="w-3.5 h-3.5" />
                                 )}
-                                <span className="hidden sm:inline">PDF</span>
+                                <span>Download</span>
                               </button>
                             </div>
                           </td>

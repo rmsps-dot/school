@@ -39,11 +39,11 @@ export default function TeacherPaymentModal({ data, onClose }: Props) {
       }}
     >
       <div
-        className="relative w-full max-w-4xl my-6 bg-surface border border-hairline rounded-3xl flex flex-col shadow-2xl overflow-hidden"
+        className="relative w-full max-w-5xl my-4 sm:my-6 bg-surface border border-hairline rounded-2xl sm:rounded-3xl flex flex-col shadow-2xl overflow-hidden"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Modal Header */}
-        <div className="flex items-center justify-between p-5 sm:p-6 border-b border-hairline bg-surface/90 backdrop-blur-md">
+        <div className="flex items-center justify-between p-4 sm:p-6 border-b border-hairline bg-surface/90 backdrop-blur-md">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-xl bg-gold/10 text-gold flex items-center justify-center">
               <IndianRupee className="w-5 h-5" />
@@ -89,9 +89,21 @@ export default function TeacherPaymentModal({ data, onClose }: Props) {
           </div>
         )}
 
-        {/* Scrollable Preview Container */}
-        <div className="p-4 sm:p-6 overflow-y-auto max-h-[calc(100vh-180px)] bg-ink/50">
-          <TeacherPaymentPreview data={data} />
+        {/* Scrollable Preview Container with Result Preview Style Sliding */}
+        <div className="p-3 sm:p-6 overflow-y-auto max-h-[calc(100vh-160px)] bg-ink/50">
+          {/* Mobile swipe hint */}
+          <div className="sm:hidden flex items-center justify-center gap-1.5 text-[11px] font-mono text-mist mb-3 bg-ink/70 py-1 px-3 rounded-lg border border-hairline w-max mx-auto">
+            <span className="text-gold">⇄</span> Slide horizontally to view full advice slip
+          </div>
+
+          <div
+            className="rounded-2xl overflow-x-auto shadow-2xl border border-hairline bg-ink/30 p-2 sm:p-4"
+            style={{ WebkitOverflowScrolling: 'touch' }}
+          >
+            <div className="w-max min-w-full flex justify-center">
+              <TeacherPaymentPreview data={data} />
+            </div>
+          </div>
         </div>
       </div>
     </div>

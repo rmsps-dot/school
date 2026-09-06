@@ -250,7 +250,7 @@ export default function TeacherPaymentsClient({ initialPayments, teacherInfo, er
                     <button
                       onClick={() => handleDirectDownload(item)}
                       disabled={downloadingId === item.id}
-                      className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-gold/10 border border-gold/30 text-xs font-semibold text-gold hover:bg-gold/20 transition-colors cursor-pointer disabled:opacity-50"
+                      className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-gold text-ink font-semibold text-xs hover:bg-[#E5C17B] transition-colors cursor-pointer disabled:opacity-50 shadow-sm flex-shrink-0"
                       title="Download Voucher PDF"
                     >
                       {downloadingId === item.id ? (
@@ -258,7 +258,7 @@ export default function TeacherPaymentsClient({ initialPayments, teacherInfo, er
                       ) : (
                         <Download className="w-3.5 h-3.5" />
                       )}
-                      <span className="hidden sm:inline">PDF</span>
+                      <span>Download</span>
                     </button>
                   </div>
                 </div>
