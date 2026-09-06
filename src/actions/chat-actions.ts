@@ -152,6 +152,85 @@ export async function getContactsForTeacher(tab: string, classId?: string): Prom
     }
     const client = await createClient()
 
+    // All contacts: combine Staff (Teachers + Admin), Students, and Parents
+    if (tab === 'all') {
+      // 1. Staff (Teachers and Admin)
+      const { data: staffData, error: staffErr } = await supabaseAdmin
+        .from('profiles')
+        .select('id, full_name, role')
+        .in('role', ['teacher', 'admin'])
+        .eq('is_active', true)
+        .neq('id', auth.profile.id)
+        .order('full_name', { ascending: true })
+
+      if (staffErr) throw staffErr
+      const staffContacts: ChatContact[] = (staffData || []) as ChatContact[]
+
+      // 2. Students
+      let studQuery = client
+        .from('students')
+        .select('id, profile_id, profiles!students_profile_id_fkey(full_name, role)')
+
+      if (classId && classId !== 'all') {
+        studQuery = studQuery.eq('class_id', classId)
+      }
+
+      const { data: studentsData, error: studErr } = await studQuery
+      if (studErr) throw studErr
+
+      const studentContacts: ChatContact[] = (studentsData || []).map((row) => {
+        const prof = Array.isArray(row.profiles) ? row.profiles[0] : row.profiles
+        return {
+          id: row.profile_id,
+          full_name: prof?.full_name || 'Unknown',
+          role: 'student' as const
+        }
+      })
+
+      // 3. Parents
+      let parentContacts: ChatContact[] = []
+      const studentUuids = (studentsData || []).map((s) => s.id)
+      if (studentUuids.length > 0) {
+        const { data: parentLinks } = await supabaseAdmin
+          .from('parent_students')
+          .select('parent_id, student_id')
+          .in('student_id', studentUuids)
+
+        if (parentLinks && parentLinks.length > 0) {
+          const parentIds = [...new Set(parentLinks.map((p) => p.parent_id))]
+          const { data: parents } = await supabaseAdmin
+            .from('parents')
+            .select('id, profile_id, profiles!parents_profile_id_fkey(full_name, role)')
+            .in('id', parentIds)
+
+          parentContacts = (parents || [])
+            .map((parent) => {
+              const prof = Array.isArray(parent.profiles) ? parent.profiles[0] : parent.profiles
+              if (!prof) return null
+              const linkedStudentIds = parentLinks.filter((pl) => pl.parent_id === parent.id).map((pl) => pl.student_id)
+              const linkedStudentNames = (studentsData || [])
+                .filter((s) => linkedStudentIds.includes(s.id))
+                .map((s) => {
+                  const sprof = Array.isArray(s.profiles) ? s.profiles[0] : s.profiles
+                  return sprof?.full_name || 'Unknown'
+                })
+                .join(', ')
+
+              return {
+                id: parent.profile_id,
+                full_name: prof.full_name,
+                role: 'parent' as const,
+                extraInfo: `Parent of: ${linkedStudentNames}`
+              }
+            })
+            .filter((item): item is NonNullable<typeof item> => item !== null)
+        }
+      }
+
+      const combined = [...staffContacts, ...studentContacts, ...parentContacts]
+      return { data: combined }
+    }
+
     // Teachers/Admins list: use Admin client to bypass RLS (teachers can't read other staff profiles by default)
     if (tab === 'teachers' || tab === 'admin') {
       const { data, error } = await supabaseAdmin
@@ -347,8 +426,7 @@ export async function getUnreadCounts(): Promise<{
     if (error) throw error
 
     const bySender: { [key: string]: number } = {}
-    const byRole: { [key: string]: number } = {}
-    let total = 0
+    const byRoleSenders: { [key: string]: Set<string> } = {}
 
     data?.forEach((msg) => {
       // Exclude messages deleted by receiver
@@ -357,13 +435,47 @@ export async function getUnreadCounts(): Promise<{
       bySender[msg.sender_id] = (bySender[msg.sender_id] || 0) + 1
       const prof = Array.isArray(msg.profiles) ? msg.profiles[0] : msg.profiles
       const role = prof?.role || 'unknown'
-      byRole[role] = (byRole[role] || 0) + 1
-      total++
+      if (!byRoleSenders[role]) byRoleSenders[role] = new Set()
+      byRoleSenders[role].add(msg.sender_id)
     })
+
+    // byRole represents number of UNIQUE senders/conversations in that role!
+    // (If 1 student sends 5 messages, the role badge shows 1, exactly like WhatsApp)
+    const byRole: { [key: string]: number } = {}
+    Object.keys(byRoleSenders).forEach((r) => {
+      byRole[r] = byRoleSenders[r].size
+    })
+
+    // total represents number of UNIQUE chats with unread messages
+    const total = Object.keys(bySender).length
 
     return { data: { bySender, byRole, total } }
   } catch (err) {
     return { data: { bySender: {}, byRole: {}, total: 0 }, error: err instanceof Error ? err.message : 'Unknown error' }
+  }
+}
+
+/**
+ * Mark all unread messages from a specific sender as read
+ */
+export async function markMessagesAsReadAction(senderId: string): Promise<{ success: boolean; error?: string }> {
+  try {
+    if (!UUID_REGEX.test(senderId)) return { success: false, error: 'Invalid sender ID format.' }
+    const auth = await requireAuth()
+    if (!auth.ok) return { success: false, error: auth.error }
+    const myId = auth.profile.id
+
+    const { error } = await supabaseAdmin
+      .from('messages')
+      .update({ is_read: true })
+      .eq('receiver_id', myId)
+      .eq('sender_id', senderId)
+      .eq('is_read', false)
+
+    if (error) throw error
+    return { success: true }
+  } catch (err) {
+    return { success: false, error: err instanceof Error ? err.message : 'Unknown error' }
   }
 }
 
@@ -420,14 +532,16 @@ export async function getMessageHistory(receiverId: string): Promise<{ data: Cha
       return true
     })
 
-    // Mark as read if user is receiver
+    // Mark as read if user is receiver — fully awaited with admin client
     const unreadIds = visibleData
       .filter(m => m.receiver_id === userId && !m.is_read)
       .map(m => m.id)
 
     if (unreadIds.length > 0) {
-      // Fire and forget update
-      client.from('messages').update({ is_read: true }).in('id', unreadIds).then()
+      await supabaseAdmin
+        .from('messages')
+        .update({ is_read: true })
+        .in('id', unreadIds)
     }
 
     return { data: visibleData as ChatMessage[] }

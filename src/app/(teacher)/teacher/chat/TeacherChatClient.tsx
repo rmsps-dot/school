@@ -20,6 +20,7 @@ interface Props {
 }
 
 const TABS = [
+  { id: 'all', label: 'All', icon: MessageSquare, color: 'text-coral' },
   { id: 'teachers', label: 'Teachers', icon: Users, color: 'text-sky-400' },
   { id: 'students', label: 'Students', icon: GraduationCap, color: 'text-emerald-400' },
   { id: 'parents', label: 'Parents', icon: Heart, color: 'text-pink-400' },
@@ -27,7 +28,7 @@ const TABS = [
 ]
 
 export default function TeacherChatClient({ currentUserId, schoolClasses }: Props) {
-  const [activeTab, setActiveTab] = useState('teachers')
+  const [activeTab, setActiveTab] = useState('all')
   const [selectedClassId, setSelectedClassId] = useState<string>('all')
   
   const [contacts, setContacts] = useState<ChatContact[]>([])
@@ -35,7 +36,16 @@ export default function TeacherChatClient({ currentUserId, schoolClasses }: Prop
   const [searchQuery, setSearchQuery] = useState('')
   
   const [selectedContact, setSelectedContact] = useState<ChatContact | null>(null)
-  const { unreadCounts, clearUnreadCount } = useUnreadCounts(currentUserId)
+  const { unreadCounts, unreadByRole, totalUnreadChats, clearUnreadCount } = useUnreadCounts(currentUserId)
+
+  const getTabBadgeCount = (tabId: string) => {
+    if (tabId === 'all') return totalUnreadChats
+    if (tabId === 'teachers') return unreadByRole['teacher'] || 0
+    if (tabId === 'students') return unreadByRole['student'] || 0
+    if (tabId === 'parents') return unreadByRole['parent'] || 0
+    if (tabId === 'admin') return unreadByRole['admin'] || 0
+    return 0
+  }
 
   useEffect(() => {
     let isMounted = true
@@ -71,35 +81,47 @@ export default function TeacherChatClient({ currentUserId, schoolClasses }: Prop
       <div className="w-full lg:w-96 flex flex-col gap-4">
         
         {/* Tab Selector */}
-        <div className="surface-card rounded-2xl p-2 grid grid-cols-4 gap-1 border border-hairline">
-          {TABS.map(tab => (
-            <button
-              key={tab.id}
-              onClick={() => {
-                setActiveTab(tab.id)
-                setSearchQuery('')
-              }}
-              className={`relative flex flex-col items-center justify-center p-3 rounded-xl transition-colors ${
-                activeTab === tab.id ? 'text-parchment' : 'text-mist hover:text-parchment hover:bg-white/[0.02]'
-              }`}
-            >
-              <tab.icon className={`w-5 h-5 mb-1 ${activeTab === tab.id ? tab.color : 'text-mist/50'}`} />
-              <span className="text-[10px] font-bold uppercase tracking-wider">{tab.label}</span>
-              
-              {activeTab === tab.id && (
-                <motion.div
-                  layoutId="activeChatTab"
-                  className="absolute inset-0 bg-white/5 rounded-xl border border-hairline"
-                  transition={{ type: 'spring', bounce: 0.2, duration: 0.6 }}
-                />
-              )}
-            </button>
-          ))}
+        <div className="surface-card rounded-2xl p-2 grid grid-cols-5 gap-1 border border-hairline">
+          {TABS.map(tab => {
+            const badge = getTabBadgeCount(tab.id)
+            return (
+              <button
+                key={tab.id}
+                onClick={() => {
+                  setActiveTab(tab.id)
+                  setSearchQuery('')
+                }}
+                className={`relative flex flex-col items-center justify-center p-2 rounded-xl transition-colors ${
+                  activeTab === tab.id ? 'text-parchment' : 'text-mist hover:text-parchment hover:bg-white/[0.02]'
+                }`}
+              >
+                <div className="relative mb-1">
+                  <tab.icon className={`w-4 h-4 sm:w-5 sm:h-5 ${activeTab === tab.id ? tab.color : 'text-mist/50'}`} />
+                  {badge > 0 && (
+                    <span className="absolute -top-1 -right-2 bg-coral text-ink text-[9px] font-bold min-w-3.5 h-3.5 px-1 rounded-full flex items-center justify-center shadow-md">
+                      {badge > 9 ? '9+' : badge}
+                    </span>
+                  )}
+                </div>
+                <span className="text-[9px] sm:text-[10px] font-bold uppercase tracking-wider truncate max-w-full">
+                  {tab.label}
+                </span>
+                
+                {activeTab === tab.id && (
+                  <motion.div
+                    layoutId="activeChatTab"
+                    className="absolute inset-0 bg-white/5 rounded-xl border border-hairline"
+                    transition={{ type: 'spring', bounce: 0.2, duration: 0.6 }}
+                  />
+                )}
+              </button>
+            )
+          })}
         </div>
 
-        {/* Dynamic Class Dropdown (Only for Students & Parents) */}
+        {/* Dynamic Class Dropdown (For All, Students & Parents) */}
         <AnimatePresence>
-          {(activeTab === 'students' || activeTab === 'parents') && (
+          {(activeTab === 'all' || activeTab === 'students' || activeTab === 'parents') && (
             <motion.div
               initial={{ opacity: 0, height: 0 }}
               animate={{ opacity: 1, height: 'auto' }}

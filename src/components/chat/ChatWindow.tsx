@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef, useTransition } from 'react'
 import { Send, Loader2, MessageSquare, Check, CheckCheck, Trash2 } from 'lucide-react'
 import { supabase } from '@/utils/supabase/client'
-import { getMessageHistory, sendMessageAction, deleteConversation } from '@/actions/chat-actions'
+import { getMessageHistory, sendMessageAction, deleteConversation, markMessagesAsReadAction } from '@/actions/chat-actions'
 import type { ChatMessage, ChatContact } from '@/actions/chat-actions'
 
 interface Props {
@@ -49,6 +49,8 @@ export default function ChatWindow({ currentUserId, recipient, isAdmin = false, 
       } else {
         setMessages(data)
         setTimeout(scrollToBottom, 100)
+        // Notify other components that this conversation has been read
+        window.dispatchEvent(new CustomEvent('messages-read', { detail: { senderId: recipient.id } }))
       }
       setIsLoading(false)
       // Auto-focus input when conversation loads
@@ -76,6 +78,12 @@ export default function ChatWindow({ currentUserId, recipient, isAdmin = false, 
           (newMsg.sender_id === recipient.id && newMsg.receiver_id === currentUserId)
 
         if (isRelevant) {
+          // If the message is from recipient to current user, mark it as read immediately since user is actively viewing this chat!
+          if (newMsg.sender_id === recipient.id && newMsg.receiver_id === currentUserId) {
+            markMessagesAsReadAction(recipient.id)
+            window.dispatchEvent(new CustomEvent('messages-read', { detail: { senderId: recipient.id } }))
+          }
+
           setMessages((prev) => {
             if (prev.some((m) => m.id === newMsg.id)) return prev
             // If current user sent this, check if an optimistic temp message exists to replace

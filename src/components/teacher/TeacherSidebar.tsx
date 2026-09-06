@@ -143,6 +143,20 @@ export default function TeacherSidebar({ teacherName, teacherAvatar }: Props) {
     }
     document.addEventListener('visibilitychange', handleVisibility)
 
+    // Listen to local messages-read event for instant badge clearing
+    const handleMessagesRead = () => {
+      fetchCounts()
+    }
+    window.addEventListener('messages-read', handleMessagesRead)
+
+    // Realtime subscription for incoming/read messages
+    const channel = supabase
+      .channel('teacher_sidebar_unread_sync')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'messages' }, () => {
+        fetchCounts()
+      })
+      .subscribe()
+
     const interval = setInterval(() => {
       if (!document.hidden) fetchCounts()
     }, 60000)
@@ -150,6 +164,8 @@ export default function TeacherSidebar({ teacherName, teacherAvatar }: Props) {
     return () => {
       clearInterval(interval)
       document.removeEventListener('visibilitychange', handleVisibility)
+      window.removeEventListener('messages-read', handleMessagesRead)
+      supabase.removeChannel(channel)
     }
   }, [])
 
