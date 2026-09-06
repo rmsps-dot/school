@@ -160,7 +160,10 @@ const styles = StyleSheet.create({
   wordsText: {
     fontSize: 8.5,
     color: '#475569',
-    fontStyle: 'italic',
+  },
+  wordsBold: {
+    fontFamily: 'Helvetica-Bold',
+    color: '#0B0B10',
   },
   statusBadgePaid: {
     color: '#059669',
@@ -291,7 +294,7 @@ export function FeeReceiptDocument({ data }: { data: FeeReceiptData }) {
             {/* Amount In Words */}
             <View style={styles.wordsBox}>
               <Text style={styles.wordsText}>
-                Amount in words: <Text style={{ fontFamily: 'Helvetica-Bold' }}>{data.amountInWords}</Text>
+                Amount in words: <Text style={styles.wordsBold}>{data.amountInWords}</Text>
               </Text>
             </View>
           </View>

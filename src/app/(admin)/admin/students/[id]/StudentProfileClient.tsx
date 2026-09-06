@@ -100,12 +100,7 @@ export default function StudentProfileClient({ data, classes }: StudentProfilePr
 
   // ── Fee Modals State ──
   const [isFeeModalOpen, setIsFeeModalOpen] = useState(false)
-  const [editingFeeId, setEditingFeeId] = useState<string | null>(null)
-  const [feeName, setFeeName] = useState('')
-  const [feeAmount, setFeeAmount] = useState<number | ''>('')
-  const [feePaidAmount, setFeePaidAmount] = useState<number | ''>('')
-  const [feeDueDate, setFeeDueDate] = useState(new Date().toISOString().split('T')[0])
-  const [feeStatus, setFeeStatus] = useState<'paid' | 'due' | 'upcoming'>('due')
+  const [selectedFee, setSelectedFee] = useState<typeof fees[0] | null>(null)
 
   // ── Result Modals State ──
   const [editingResult, setEditingResult] = useState<typeof results[0] | null>(null)
@@ -192,91 +187,71 @@ export default function StudentProfileClient({ data, classes }: StudentProfilePr
 
   // ── Fee Actions ──
   const handleOpenAddFee = () => {
-    setEditingFeeId(null)
-    setFeeName('')
-    setFeeAmount('')
-    setFeePaidAmount(0)
-    setFeeDueDate(new Date().toISOString().split('T')[0])
-    setFeeStatus('due')
+    setSelectedFee(null)
     setIsFeeModalOpen(true)
   }
 
   const handleOpenEditFee = (f: typeof fees[0]) => {
-    setEditingFeeId(f.id)
-    setFeeName(f.fee_name)
-    setFeeAmount(f.amount)
-    setFeePaidAmount(f.paid_amount || 0)
-    setFeeDueDate(f.due_date ? f.due_date.split('T')[0] : new Date().toISOString().split('T')[0])
-    setFeeStatus((f.status as 'paid' | 'due' | 'upcoming') || 'due')
+    setSelectedFee(f)
     setIsFeeModalOpen(true)
   }
 
-  const handleSaveFee = async (e: React.FormEvent) => {
-    e.preventDefault()
-    if (!feeName.trim() || feeAmount === '' || Number(feeAmount) <= 0) return
+  const handleSaveFeeRecord = async (payload: {
+    feeName: string
+    amount: number
+    paidAmount: number
+    dueDate: string
+    status: 'paid' | 'due' | 'upcoming'
+  }): Promise<{ success: boolean; error?: string }> => {
     setErrorMsg('')
-
-    const numAmount = Number(feeAmount)
-    let numPaid = Number(feePaidAmount) || 0
-    let targetStatus: 'paid' | 'due' | 'upcoming' = feeStatus
-
-    // If user selected 'paid', ensure paid_amount matches amount
-    if (targetStatus === 'paid' && numPaid < numAmount) {
-      numPaid = numAmount
-    } else if (numPaid >= numAmount) {
-      targetStatus = 'paid'
-    }
-
-    startTransition(async () => {
-      if (editingFeeId) {
-        // Edit existing fee
-        const res = await editStudentFee(editingFeeId, {
-          fee_name: feeName.trim(),
-          amount: numAmount,
-          paid_amount: numPaid,
-          due_date: feeDueDate,
-          status: targetStatus,
-        })
-        if (res.error) {
-          setErrorMsg(res.error)
-        } else {
-          setFees((prev) =>
-            prev.map((f) =>
-              f.id === editingFeeId
-                ? {
-                    ...f,
-                    fee_name: feeName.trim(),
-                    amount: numAmount,
-                    paid_amount: numPaid,
-                    due_date: feeDueDate,
-                    status: targetStatus,
-                  }
-                : f
-            )
-          )
-          setIsFeeModalOpen(false)
-          setSuccessMsg('Fee record updated.')
-          setTimeout(() => setSuccessMsg(''), 3000)
-        }
-      } else {
-        // Record new fee
-        const res = await recordStudentFee(studentInfo.studentId, {
-          fee_name: feeName.trim(),
-          amount: numAmount,
-          paid_amount: numPaid,
-          due_date: feeDueDate,
-          status: targetStatus,
-        })
-        if (res.error || !res.data) {
-          setErrorMsg(res.error || 'Failed to record fee')
-        } else {
-          setFees([res.data, ...fees])
-          setIsFeeModalOpen(false)
-          setSuccessMsg('Fee record created.')
-          setTimeout(() => setSuccessMsg(''), 3000)
-        }
+    if (selectedFee) {
+      // Edit existing fee
+      const res = await editStudentFee(selectedFee.id, {
+        fee_name: payload.feeName,
+        amount: payload.amount,
+        paid_amount: payload.paidAmount,
+        due_date: payload.dueDate,
+        status: payload.status,
+      })
+      if (res.error) {
+        return { success: false, error: res.error }
       }
-    })
+      setFees((prev) =>
+        prev.map((f) =>
+          f.id === selectedFee.id
+            ? {
+                ...f,
+                fee_name: payload.feeName,
+                amount: payload.amount,
+                paid_amount: payload.paidAmount,
+                due_date: payload.dueDate,
+                status: payload.status,
+              }
+            : f
+        )
+      )
+      setIsFeeModalOpen(false)
+      setSuccessMsg('Fee record updated.')
+      setTimeout(() => setSuccessMsg(''), 3000)
+      return { success: true }
+    } else {
+      // Record new fee
+      const res = await recordStudentFee(studentInfo.studentId, {
+        fee_name: payload.feeName,
+        amount: payload.amount,
+        paid_amount: payload.paidAmount,
+        due_date: payload.dueDate,
+        status: payload.status,
+      })
+      if (res.error || !res.data) {
+        return { success: false, error: res.error || 'Failed to record fee' }
+      }
+      setFees([res.data, ...fees])
+      setIsFeeModalOpen(false)
+      setSuccessMsg('Fee record created.')
+      setTimeout(() => setSuccessMsg(''), 3000)
+      return { success: true }
+    }
   }
 
   const handleDeleteFee = (id: string) => {
@@ -1127,124 +1102,15 @@ export default function StudentProfileClient({ data, classes }: StudentProfilePr
       ───────────────────────────────────────────────────────────── */}
       <AnimatePresence>
         {isFeeModalOpen && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-ink/80 backdrop-blur-sm">
-            <motion.div
-              initial={{ opacity: 0, scale: 0.95 }}
-              animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0, scale: 0.95 }}
-              className="surface-card shadow-2xl rounded-3xl border border-hairline w-full max-w-lg overflow-hidden bg-ink text-parchment"
-            >
-              <div className="p-6 border-b border-hairline flex justify-between items-center bg-ink/90">
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-xl bg-gold/10 text-gold flex items-center justify-center">
-                    <IndianRupee className="w-5 h-5" />
-                  </div>
-                  <div>
-                    <h2 className="font-display text-xl font-bold text-parchment">
-                      {editingFeeId ? 'Edit Fee Record' : 'Record Fee Deposit'}
-                    </h2>
-                    <p className="text-xs text-mist">{studentInfo.fullName} · {studentInfo.studentId}</p>
-                  </div>
-                </div>
-                <button
-                  type="button"
-                  onClick={() => setIsFeeModalOpen(false)}
-                  className="text-mist hover:text-coral transition-colors"
-                >
-                  <X className="w-5 h-5" />
-                </button>
-              </div>
-
-              <form onSubmit={handleSaveFee} className="p-6 space-y-4">
-                <div>
-                  <label className="text-xs font-semibold text-mist uppercase tracking-wider block mb-1">
-                    Fee Title / Description
-                  </label>
-                  <input
-                    type="text"
-                    required
-                    placeholder="e.g. Tuition Fee Q1, Annual Sports Fee"
-                    value={feeName}
-                    onChange={(e) => setFeeName(e.target.value)}
-                    className="w-full input-glass rounded-xl p-3 text-sm text-parchment focus:outline-none focus:border-coral"
-                  />
-                </div>
-
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <label className="text-xs font-semibold text-mist uppercase tracking-wider block mb-1">
-                      Total Amount (₹)
-                    </label>
-                    <input
-                      type="number"
-                      required
-                      min="1"
-                      placeholder="e.g. 5000"
-                      value={feeAmount}
-                      onChange={(e) => setFeeAmount(e.target.value === '' ? '' : Number(e.target.value))}
-                      className="w-full input-glass rounded-xl p-3 text-sm text-parchment font-mono focus:outline-none focus:border-coral"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="text-xs font-semibold text-mist uppercase tracking-wider block mb-1">
-                      Amount Paid (₹)
-                    </label>
-                    <input
-                      type="number"
-                      min="0"
-                      placeholder="e.g. 5000"
-                      value={feePaidAmount}
-                      onChange={(e) => setFeePaidAmount(e.target.value === '' ? '' : Number(e.target.value))}
-                      className="w-full input-glass rounded-xl p-3 text-sm text-parchment font-mono focus:outline-none focus:border-coral"
-                    />
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <label className="text-xs font-semibold text-mist uppercase tracking-wider block mb-1">
-                      Due Date
-                    </label>
-                    <DateInput name="feeDueDate" value={feeDueDate} onChange={setFeeDueDate} />
-                  </div>
-
-                  <div>
-                    <label className="text-xs font-semibold text-mist uppercase tracking-wider block mb-1">
-                      Status
-                    </label>
-                    <select
-                      value={feeStatus}
-                      onChange={(e) => setFeeStatus(e.target.value as 'paid' | 'due' | 'upcoming')}
-                      className="w-full input-glass rounded-xl p-3 text-sm text-parchment focus:outline-none focus:border-coral"
-                    >
-                      <option value="due" className="bg-ink text-parchment">Due</option>
-                      <option value="paid" className="bg-ink text-parchment">Paid</option>
-                      <option value="upcoming" className="bg-ink text-parchment">Upcoming</option>
-                    </select>
-                  </div>
-                </div>
-
-                <div className="pt-4 flex justify-end gap-3 border-t border-hairline">
-                  <button
-                    type="button"
-                    onClick={() => setIsFeeModalOpen(false)}
-                    className="px-6 py-3 rounded-xl border border-hairline text-mist hover:text-parchment font-semibold text-sm transition-colors"
-                  >
-                    Cancel
-                  </button>
-                  <button
-                    type="submit"
-                    disabled={isPending}
-                    className="bg-coral text-ink px-8 py-3 rounded-xl font-bold text-sm hover:bg-[#E67E6B] transition-colors flex items-center gap-2 shadow-lg"
-                  >
-                    {isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Check className="w-4 h-4" />}
-                    {editingFeeId ? 'Update Fee' : 'Save Fee Deposit'}
-                  </button>
-                </div>
-              </form>
-            </motion.div>
-          </div>
+          <FeeRecordModal
+            key={selectedFee?.id || 'new'}
+            isOpen={isFeeModalOpen}
+            onClose={() => setIsFeeModalOpen(false)}
+            editingFee={selectedFee}
+            studentName={studentInfo.fullName}
+            studentId={studentInfo.studentId}
+            onSave={handleSaveFeeRecord}
+          />
         )}
       </AnimatePresence>
 
@@ -1426,6 +1292,208 @@ export default function StudentProfileClient({ data, classes }: StudentProfilePr
           </div>
         )}
       </AnimatePresence>
+    </div>
+  )
+}
+
+/* ══════════════════════════════════════════════════════════════
+   ISOLATED MODAL: RECORD / EDIT STUDENT FEE
+   Isolating form state prevents re-rendering the 1,400-line dashboard on every keystroke
+   ══════════════════════════════════════════════════════════════ */
+interface FeeRecordModalProps {
+  isOpen: boolean
+  onClose: () => void
+  editingFee: StudentProfileDataPayload['fees'][0] | null
+  studentName: string
+  studentId: string
+  onSave: (payload: {
+    feeName: string
+    amount: number
+    paidAmount: number
+    dueDate: string
+    status: 'paid' | 'due' | 'upcoming'
+  }) => Promise<{ success: boolean; error?: string }>
+}
+
+function FeeRecordModal({
+  isOpen,
+  onClose,
+  editingFee,
+  studentName,
+  studentId,
+  onSave,
+}: FeeRecordModalProps) {
+  const [feeName, setFeeName] = useState(editingFee ? editingFee.fee_name : '')
+  const [feeAmount, setFeeAmount] = useState<number | ''>(editingFee ? editingFee.amount : '')
+  const [feePaidAmount, setFeePaidAmount] = useState<number | ''>(
+    editingFee ? (editingFee.paid_amount || 0) : ''
+  )
+  const [feeDueDate, setFeeDueDate] = useState(
+    editingFee?.due_date ? editingFee.due_date.split('T')[0] : new Date().toISOString().split('T')[0]
+  )
+  const [feeStatus, setFeeStatus] = useState<'paid' | 'due' | 'upcoming'>(
+    (editingFee?.status as 'paid' | 'due' | 'upcoming') || 'due'
+  )
+  const [isSubmitting, setIsSubmitting] = useState(false)
+  const [modalError, setModalError] = useState('')
+
+  if (!isOpen) return null
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!feeName.trim() || feeAmount === '' || Number(feeAmount) <= 0) return
+    setModalError('')
+    setIsSubmitting(true)
+
+    const numAmount = Number(feeAmount)
+    let numPaid = Number(feePaidAmount) || 0
+    let targetStatus: 'paid' | 'due' | 'upcoming' = feeStatus
+
+    if (targetStatus === 'paid' && numPaid < numAmount) {
+      numPaid = numAmount
+    } else if (numPaid >= numAmount) {
+      targetStatus = 'paid'
+    }
+
+    const res = await onSave({
+      feeName: feeName.trim(),
+      amount: numAmount,
+      paidAmount: numPaid,
+      dueDate: feeDueDate,
+      status: targetStatus,
+    })
+
+    setIsSubmitting(false)
+    if (res.error) {
+      setModalError(res.error)
+    }
+  }
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-ink/80 backdrop-blur-sm">
+      <motion.div
+        initial={{ opacity: 0, scale: 0.95 }}
+        animate={{ opacity: 1, scale: 1 }}
+        exit={{ opacity: 0, scale: 0.95 }}
+        className="surface-card shadow-2xl rounded-3xl border border-hairline w-full max-w-lg overflow-hidden bg-ink text-parchment"
+      >
+        <div className="p-6 border-b border-hairline flex justify-between items-center bg-ink/90">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl bg-gold/10 text-gold flex items-center justify-center">
+              <IndianRupee className="w-5 h-5" />
+            </div>
+            <div>
+              <h2 className="font-display text-xl font-bold text-parchment">
+                {editingFee ? 'Edit Fee Record' : 'Record Fee Deposit'}
+              </h2>
+              <p className="text-xs text-mist">{studentName} · {studentId}</p>
+            </div>
+          </div>
+          <button
+            type="button"
+            onClick={onClose}
+            className="text-mist hover:text-coral transition-colors cursor-pointer"
+          >
+            <X className="w-5 h-5" />
+          </button>
+        </div>
+
+        <form onSubmit={handleSubmit} className="p-6 space-y-4">
+          {modalError && (
+            <div className="p-3 rounded-xl bg-red-500/10 border border-red-500/20 text-red-400 text-xs flex items-center gap-2">
+              <AlertCircle className="w-4 h-4 shrink-0" />
+              <span>{modalError}</span>
+            </div>
+          )}
+
+          <div>
+            <label className="text-xs font-semibold text-mist uppercase tracking-wider block mb-1">
+              Fee Title / Description
+            </label>
+            <input
+              type="text"
+              required
+              placeholder="e.g. Tuition Fee Q1, Annual Sports Fee"
+              value={feeName}
+              onChange={(e) => setFeeName(e.target.value)}
+              className="w-full input-glass rounded-xl p-3 text-sm text-parchment focus:outline-none focus:border-coral"
+            />
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="text-xs font-semibold text-mist uppercase tracking-wider block mb-1">
+                Total Amount (₹)
+              </label>
+              <input
+                type="number"
+                required
+                min="1"
+                placeholder="e.g. 5000"
+                value={feeAmount}
+                onChange={(e) => setFeeAmount(e.target.value === '' ? '' : Number(e.target.value))}
+                className="w-full input-glass rounded-xl p-3 text-sm text-parchment font-mono focus:outline-none focus:border-coral"
+              />
+            </div>
+
+            <div>
+              <label className="text-xs font-semibold text-mist uppercase tracking-wider block mb-1">
+                Amount Paid (₹)
+              </label>
+              <input
+                type="number"
+                min="0"
+                placeholder="e.g. 5000"
+                value={feePaidAmount}
+                onChange={(e) => setFeePaidAmount(e.target.value === '' ? '' : Number(e.target.value))}
+                className="w-full input-glass rounded-xl p-3 text-sm text-parchment font-mono focus:outline-none focus:border-coral"
+              />
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="text-xs font-semibold text-mist uppercase tracking-wider block mb-1">
+                Due Date
+              </label>
+              <DateInput name="feeDueDate" value={feeDueDate} onChange={setFeeDueDate} />
+            </div>
+
+            <div>
+              <label className="text-xs font-semibold text-mist uppercase tracking-wider block mb-1">
+                Status
+              </label>
+              <select
+                value={feeStatus}
+                onChange={(e) => setFeeStatus(e.target.value as 'paid' | 'due' | 'upcoming')}
+                className="w-full input-glass rounded-xl p-3 text-sm text-parchment focus:outline-none focus:border-coral cursor-pointer"
+              >
+                <option value="due" className="bg-ink text-parchment">Due</option>
+                <option value="paid" className="bg-ink text-parchment">Paid</option>
+                <option value="upcoming" className="bg-ink text-parchment">Upcoming</option>
+              </select>
+            </div>
+          </div>
+
+          <div className="pt-4 flex justify-end gap-3 border-t border-hairline">
+            <button
+              type="button"
+              onClick={onClose}
+              className="px-6 py-3 rounded-xl border border-hairline text-mist hover:text-parchment font-semibold text-sm transition-colors cursor-pointer"
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              disabled={isSubmitting}
+              className="bg-coral text-ink px-8 py-3 rounded-xl font-bold text-sm hover:bg-[#E67E6B] transition-colors flex items-center gap-2 shadow-lg cursor-pointer"
+            >
+              {isSubmitting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Check className="w-4 h-4" />}
+              {editingFee ? 'Update Fee' : 'Save Fee Deposit'}
+            </button>
+          </div>
+        </form>
+      </motion.div>
     </div>
   )
 }

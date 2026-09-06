@@ -88,11 +88,7 @@ export default function TeacherDetailClient({ teacher, classes: allAvailableClas
 
   // Payment Modal (Add / Edit)
   const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false)
-  const [editingPaymentId, setEditingPaymentId] = useState<string | null>(null)
-  const [paymentAmount, setPaymentAmount] = useState<number | ''>('')
-  const [paymentDate, setPaymentDate] = useState(new Date().toISOString().split('T')[0])
-  const [paymentStatus, setPaymentStatus] = useState<'paid' | 'pending'>('paid')
-  const [paymentRemarks, setPaymentRemarks] = useState('')
+  const [selectedPayment, setSelectedPayment] = useState<typeof payments[0] | null>(null)
 
   // Edit Attendance Status Modal
   const [editingAttendance, setEditingAttendance] = useState<typeof attendance[0] | null>(null)
@@ -166,84 +162,76 @@ export default function TeacherDetailClient({ teacher, classes: allAvailableClas
 
   // ── Payment Handlers ──
   const handleOpenAddPayment = () => {
-    setEditingPaymentId(null)
-    setPaymentAmount('')
-    setPaymentDate(new Date().toISOString().split('T')[0])
-    setPaymentStatus('paid')
-    setPaymentRemarks('')
+    setSelectedPayment(null)
     setIsPaymentModalOpen(true)
   }
 
   const handleOpenEditPayment = (p: typeof payments[0]) => {
-    setEditingPaymentId(p.id)
-    setPaymentAmount(p.amount)
-    setPaymentDate(p.payment_date ? p.payment_date.split('T')[0] : new Date().toISOString().split('T')[0])
-    setPaymentStatus((p.status as 'paid' | 'pending') || 'paid')
-    setPaymentRemarks(p.remarks || '')
+    setSelectedPayment(p)
     setIsPaymentModalOpen(true)
   }
 
-  const handleSavePayment = async (e: React.FormEvent) => {
-    e.preventDefault()
-    if (paymentAmount === '' || Number(paymentAmount) <= 0) return
+  const handleSavePaymentRecord = async (payload: {
+    amount: number
+    paymentDate: string
+    status: 'paid' | 'pending'
+    remarks: string
+  }): Promise<{ success: boolean; error?: string }> => {
     setErrorMsg('')
-
-    startTransition(async () => {
-      if (editingPaymentId) {
-        // Edit existing payment
-        const res = await editTeacherPayment(editingPaymentId, {
-          amount: Number(paymentAmount),
-          payment_date: paymentDate,
-          status: paymentStatus,
-          remarks: paymentRemarks,
-        })
-        if (res.error) {
-          setErrorMsg(res.error)
-        } else {
-          setPayments((prev) =>
-            prev.map((p) =>
-              p.id === editingPaymentId
-                ? {
-                    ...p,
-                    amount: Number(paymentAmount),
-                    payment_date: paymentDate,
-                    status: paymentStatus,
-                    remarks: paymentRemarks,
-                  }
-                : p
-            )
-          )
-          setIsPaymentModalOpen(false)
-          setSuccessMsg('Payment record updated.')
-          setTimeout(() => setSuccessMsg(''), 3000)
-        }
-      } else {
-        // Add new payment
-        const res = await recordTeacherPayment(teacher.id, {
-          amount: Number(paymentAmount),
-          payment_date: paymentDate,
-          status: paymentStatus,
-          remarks: paymentRemarks,
-        })
-        if (res.error) {
-          setErrorMsg(res.error)
-        } else {
-          setPayments([
-            {
-              id: `pay-${Date.now()}`,
-              amount: Number(paymentAmount),
-              payment_date: paymentDate,
-              status: paymentStatus,
-              remarks: paymentRemarks,
-            },
-            ...payments,
-          ])
-          setIsPaymentModalOpen(false)
-          setSuccessMsg('Payment recorded successfully.')
-          setTimeout(() => setSuccessMsg(''), 3000)
-        }
+    if (selectedPayment) {
+      // Edit existing payment
+      const res = await editTeacherPayment(selectedPayment.id, {
+        amount: payload.amount,
+        payment_date: payload.paymentDate,
+        status: payload.status,
+        remarks: payload.remarks,
+      })
+      if (res.error) {
+        return { success: false, error: res.error }
       }
-    })
+      setPayments((prev) =>
+        prev.map((p) =>
+          p.id === selectedPayment.id
+            ? {
+                ...p,
+                amount: payload.amount,
+                payment_date: payload.paymentDate,
+                status: payload.status,
+                remarks: payload.remarks,
+              }
+            : p
+        )
+      )
+      setIsPaymentModalOpen(false)
+      setSuccessMsg('Payment record updated.')
+      setTimeout(() => setSuccessMsg(''), 3000)
+      return { success: true }
+    } else {
+      // Add new payment
+      const res = await recordTeacherPayment(teacher.id, {
+        amount: payload.amount,
+        payment_date: payload.paymentDate,
+        status: payload.status,
+        remarks: payload.remarks,
+      })
+      if (res.error) {
+        return { success: false, error: res.error }
+      }
+      setPayments([
+        {
+          id: `pay-${Date.now()}`,
+          amount: payload.amount,
+          payment_date: payload.paymentDate,
+          status: payload.status,
+          remarks: payload.remarks,
+        },
+        ...payments,
+      ])
+      setIsPaymentModalOpen(false)
+      setSuccessMsg('Payment recorded successfully.')
+      setTimeout(() => setSuccessMsg(''), 3000)
+      return { success: true }
+    }
   }
 
   const handleDeletePayment = (id: string) => {
@@ -1040,105 +1028,14 @@ export default function TeacherDetailClient({ teacher, classes: allAvailableClas
       ───────────────────────────────────────────────────────────── */}
       <AnimatePresence>
         {isPaymentModalOpen && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-ink/80 backdrop-blur-sm">
-            <motion.div
-              initial={{ opacity: 0, scale: 0.95 }}
-              animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0, scale: 0.95 }}
-              className="surface-card shadow-2xl rounded-3xl border border-hairline w-full max-w-lg overflow-hidden bg-ink text-parchment"
-            >
-              <div className="p-6 border-b border-hairline flex justify-between items-center bg-ink/90">
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-xl bg-emerald-500/20 text-emerald-400 flex items-center justify-center">
-                    <IndianRupee className="w-5 h-5" />
-                  </div>
-                  <div>
-                    <h2 className="font-display text-xl font-bold text-parchment">
-                      {editingPaymentId ? 'Edit Payment Record' : 'Record Salary Payment'}
-                    </h2>
-                    <p className="text-xs text-mist">{profile.full_name}</p>
-                  </div>
-                </div>
-                <button
-                  type="button"
-                  onClick={() => setIsPaymentModalOpen(false)}
-                  className="text-mist hover:text-coral transition-colors"
-                >
-                  <X className="w-5 h-5" />
-                </button>
-              </div>
-
-              <form onSubmit={handleSavePayment} className="p-6 space-y-4">
-                <div>
-                  <label className="text-xs font-semibold text-mist uppercase tracking-wider block mb-1">
-                    Amount (₹)
-                  </label>
-                  <input
-                    type="number"
-                    required
-                    min="1"
-                    placeholder="e.g. 25000"
-                    value={paymentAmount}
-                    onChange={(e) => setPaymentAmount(e.target.value === '' ? '' : Number(e.target.value))}
-                    className="w-full input-glass rounded-xl p-3 text-sm text-parchment font-mono focus:outline-none focus:border-coral"
-                  />
-                </div>
-
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <label className="text-xs font-semibold text-mist uppercase tracking-wider block mb-1">
-                      Payment Date
-                    </label>
-                    <DateInput name="paymentDate" value={paymentDate} onChange={setPaymentDate} />
-                  </div>
-                  <div>
-                    <label className="text-xs font-semibold text-mist uppercase tracking-wider block mb-1">
-                      Status
-                    </label>
-                    <select
-                      value={paymentStatus}
-                      onChange={(e) => setPaymentStatus(e.target.value as 'paid' | 'pending')}
-                      className="w-full input-glass rounded-xl p-3 text-sm text-parchment focus:outline-none focus:border-coral"
-                    >
-                      <option value="paid" className="bg-ink text-parchment">Paid</option>
-                      <option value="pending" className="bg-ink text-parchment">Pending</option>
-                    </select>
-                  </div>
-                </div>
-
-                <div>
-                  <label className="text-xs font-semibold text-mist uppercase tracking-wider block mb-1">
-                    Remarks / Note
-                  </label>
-                  <input
-                    type="text"
-                    placeholder="e.g. August 2026 Salary via Bank Transfer"
-                    value={paymentRemarks}
-                    onChange={(e) => setPaymentRemarks(e.target.value)}
-                    className="w-full input-glass rounded-xl p-3 text-sm text-parchment focus:outline-none focus:border-coral"
-                  />
-                </div>
-
-                <div className="pt-4 flex justify-end gap-3 border-t border-hairline">
-                  <button
-                    type="button"
-                    onClick={() => setIsPaymentModalOpen(false)}
-                    className="px-6 py-3 rounded-xl border border-hairline text-mist hover:text-parchment font-semibold text-sm transition-colors"
-                  >
-                    Cancel
-                  </button>
-                  <button
-                    type="submit"
-                    disabled={isPending}
-                    className="bg-emerald-400 text-ink px-8 py-3 rounded-xl font-bold text-sm hover:bg-emerald-300 transition-colors flex items-center gap-2 shadow-lg"
-                  >
-                    {isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Check className="w-4 h-4" />}
-                    {editingPaymentId ? 'Update Payment' : 'Save Payment'}
-                  </button>
-                </div>
-              </form>
-            </motion.div>
-          </div>
+          <TeacherPaymentRecordModal
+            key={selectedPayment?.id || 'new'}
+            isOpen={isPaymentModalOpen}
+            onClose={() => setIsPaymentModalOpen(false)}
+            editingPayment={selectedPayment}
+            teacherFullName={profile.full_name}
+            onSave={handleSavePaymentRecord}
+          />
         )}
       </AnimatePresence>
 
@@ -1223,6 +1120,176 @@ export default function TeacherDetailClient({ teacher, classes: allAvailableClas
           </div>
         )}
       </AnimatePresence>
+    </div>
+  )
+}
+
+/* ══════════════════════════════════════════════════════════════
+   ISOLATED MODAL: RECORD / EDIT TEACHER PAYMENT
+   Isolating form state prevents re-rendering the 1,200-line dashboard on every keystroke
+   ══════════════════════════════════════════════════════════════ */
+interface TeacherPaymentRecordModalProps {
+  isOpen: boolean
+  onClose: () => void
+  editingPayment: TeacherDetailData['teacher_payments'][0] | null
+  teacherFullName: string
+  onSave: (payload: {
+    amount: number
+    paymentDate: string
+    status: 'paid' | 'pending'
+    remarks: string
+  }) => Promise<{ success: boolean; error?: string }>
+}
+
+function TeacherPaymentRecordModal({
+  isOpen,
+  onClose,
+  editingPayment,
+  teacherFullName,
+  onSave,
+}: TeacherPaymentRecordModalProps) {
+  const [paymentAmount, setPaymentAmount] = useState<number | ''>(
+    editingPayment ? editingPayment.amount : ''
+  )
+  const [paymentDate, setPaymentDate] = useState(
+    editingPayment?.payment_date
+      ? editingPayment.payment_date.split('T')[0]
+      : new Date().toISOString().split('T')[0]
+  )
+  const [paymentStatus, setPaymentStatus] = useState<'paid' | 'pending'>(
+    (editingPayment?.status as 'paid' | 'pending') || 'paid'
+  )
+  const [paymentRemarks, setPaymentRemarks] = useState(editingPayment?.remarks || '')
+  const [isSubmitting, setIsSubmitting] = useState(false)
+  const [modalError, setModalError] = useState('')
+
+  if (!isOpen) return null
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (paymentAmount === '' || Number(paymentAmount) <= 0) return
+    setModalError('')
+    setIsSubmitting(true)
+
+    const res = await onSave({
+      amount: Number(paymentAmount),
+      paymentDate,
+      status: paymentStatus,
+      remarks: paymentRemarks.trim(),
+    })
+
+    setIsSubmitting(false)
+    if (res.error) {
+      setModalError(res.error)
+    }
+  }
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-ink/80 backdrop-blur-sm">
+      <motion.div
+        initial={{ opacity: 0, scale: 0.95 }}
+        animate={{ opacity: 1, scale: 1 }}
+        exit={{ opacity: 0, scale: 0.95 }}
+        className="surface-card shadow-2xl rounded-3xl border border-hairline w-full max-w-lg overflow-hidden bg-ink text-parchment"
+      >
+        <div className="p-6 border-b border-hairline flex justify-between items-center bg-ink/90">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl bg-emerald-500/20 text-emerald-400 flex items-center justify-center">
+              <IndianRupee className="w-5 h-5" />
+            </div>
+            <div>
+              <h2 className="font-display text-xl font-bold text-parchment">
+                {editingPayment ? 'Edit Payment Record' : 'Record Salary Payment'}
+              </h2>
+              <p className="text-xs text-mist">{teacherFullName}</p>
+            </div>
+          </div>
+          <button
+            type="button"
+            onClick={onClose}
+            className="text-mist hover:text-coral transition-colors cursor-pointer"
+          >
+            <X className="w-5 h-5" />
+          </button>
+        </div>
+
+        <form onSubmit={handleSubmit} className="p-6 space-y-4">
+          {modalError && (
+            <div className="p-3 rounded-xl bg-red-500/10 border border-red-500/20 text-red-400 text-xs flex items-center gap-2">
+              <AlertCircle className="w-4 h-4 shrink-0" />
+              <span>{modalError}</span>
+            </div>
+          )}
+
+          <div>
+            <label className="text-xs font-semibold text-mist uppercase tracking-wider block mb-1">
+              Amount (₹)
+            </label>
+            <input
+              type="number"
+              required
+              min="1"
+              placeholder="e.g. 25000"
+              value={paymentAmount}
+              onChange={(e) => setPaymentAmount(e.target.value === '' ? '' : Number(e.target.value))}
+              className="w-full input-glass rounded-xl p-3 text-sm text-parchment font-mono focus:outline-none focus:border-coral"
+            />
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="text-xs font-semibold text-mist uppercase tracking-wider block mb-1">
+                Payment Date
+              </label>
+              <DateInput name="paymentDate" value={paymentDate} onChange={setPaymentDate} />
+            </div>
+            <div>
+              <label className="text-xs font-semibold text-mist uppercase tracking-wider block mb-1">
+                Status
+              </label>
+              <select
+                value={paymentStatus}
+                onChange={(e) => setPaymentStatus(e.target.value as 'paid' | 'pending')}
+                className="w-full input-glass rounded-xl p-3 text-sm text-parchment focus:outline-none focus:border-coral cursor-pointer"
+              >
+                <option value="paid" className="bg-ink text-parchment">Paid</option>
+                <option value="pending" className="bg-ink text-parchment">Pending</option>
+              </select>
+            </div>
+          </div>
+
+          <div>
+            <label className="text-xs font-semibold text-mist uppercase tracking-wider block mb-1">
+              Remarks / Note
+            </label>
+            <input
+              type="text"
+              placeholder="e.g. August 2026 Salary via Bank Transfer"
+              value={paymentRemarks}
+              onChange={(e) => setPaymentRemarks(e.target.value)}
+              className="w-full input-glass rounded-xl p-3 text-sm text-parchment focus:outline-none focus:border-coral"
+            />
+          </div>
+
+          <div className="pt-4 flex justify-end gap-3 border-t border-hairline">
+            <button
+              type="button"
+              onClick={onClose}
+              className="px-6 py-3 rounded-xl border border-hairline text-mist hover:text-parchment font-semibold text-sm transition-colors cursor-pointer"
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              disabled={isSubmitting}
+              className="bg-emerald-400 text-ink px-8 py-3 rounded-xl font-bold text-sm hover:bg-emerald-300 transition-colors flex items-center gap-2 shadow-lg cursor-pointer"
+            >
+              {isSubmitting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Check className="w-4 h-4" />}
+              {editingPayment ? 'Update Payment' : 'Save Payment'}
+            </button>
+          </div>
+        </form>
+      </motion.div>
     </div>
   )
 }

@@ -175,14 +175,18 @@ export async function recordTeacherPayment(
     if (error) return { success: false, error: error.message }
 
     // Dispatch teacher payment advice email (with PDF) & push notification
-    if (data?.id) {
-      dispatchTeacherPaymentAlert({
-        paymentId: data.id,
-        teacherId,
-        amount: payload.amount,
-        paymentDate: payload.payment_date,
-        remarks: payload.remarks,
-      }).catch((e) => console.warn('Background teacher payment dispatch error:', e))
+    if (data?.id && (payload.status === 'paid' || !payload.status)) {
+      try {
+        await dispatchTeacherPaymentAlert({
+          paymentId: data.id,
+          teacherId,
+          amount: payload.amount,
+          paymentDate: payload.payment_date,
+          remarks: payload.remarks,
+        })
+      } catch (alertErr) {
+        console.warn('Teacher payment dispatch error:', alertErr)
+      }
     }
 
     revalidatePath('/admin/teachers')
@@ -206,7 +210,7 @@ export async function editTeacherPayment(
     if (!auth.ok) return { success: false, error: auth.error }
 
     const supabase = await createClient()
-    const { error } = await supabase
+    const { data: updatedPayment, error } = await supabase
       .from('teacher_payments')
       .update({
         amount: payload.amount,
@@ -215,8 +219,25 @@ export async function editTeacherPayment(
         remarks: payload.remarks?.trim() || null,
       })
       .eq('id', id)
+      .select('teacher_id')
+      .maybeSingle()
 
     if (error) return { success: false, error: error.message }
+
+    // Dispatch teacher payment advice email (with PDF) if status is paid
+    if (payload.status === 'paid' && updatedPayment?.teacher_id) {
+      try {
+        await dispatchTeacherPaymentAlert({
+          paymentId: id,
+          teacherId: updatedPayment.teacher_id,
+          amount: payload.amount,
+          paymentDate: payload.payment_date,
+          remarks: payload.remarks,
+        })
+      } catch (alertErr) {
+        console.warn('Teacher payment edit dispatch error:', alertErr)
+      }
+    }
 
     revalidatePath('/admin/teachers')
     return { success: true }
@@ -307,14 +328,18 @@ export async function recordStudentFee(
 
     // If payment recorded, dispatch fee receipt email with PDF attachment
     if (data && (data.status === 'paid' || data.paid_amount > 0)) {
-      dispatchFeePaymentAlert({
-        feeId: data.id,
-        studentId: studentIdStr,
-        feeName: data.fee_name,
-        amount: data.amount,
-        paidAmount: data.paid_amount,
-        paymentDate: new Date().toISOString().split('T')[0],
-      }).catch((e) => console.warn('Background fee payment dispatch error:', e))
+      try {
+        await dispatchFeePaymentAlert({
+          feeId: data.id,
+          studentId: studentIdStr,
+          feeName: data.fee_name,
+          amount: data.amount,
+          paidAmount: data.paid_amount,
+          paymentDate: new Date().toISOString().split('T')[0],
+        })
+      } catch (alertErr) {
+        console.warn('Fee payment dispatch error:', alertErr)
+      }
     }
 
     revalidatePath('/admin/students')
@@ -364,14 +389,18 @@ export async function editStudentFee(
 
     // If paid, dispatch fee receipt PDF
     if (data && (validStatus === 'paid' || payload.paid_amount > 0)) {
-      dispatchFeePaymentAlert({
-        feeId: id,
-        studentId: data.student_id,
-        feeName: payload.fee_name,
-        amount: payload.amount,
-        paidAmount: payload.paid_amount,
-        paymentDate: new Date().toISOString().split('T')[0],
-      }).catch((e) => console.warn('Background edit fee payment dispatch error:', e))
+      try {
+        await dispatchFeePaymentAlert({
+          feeId: id,
+          studentId: data.student_id,
+          feeName: payload.fee_name,
+          amount: payload.amount,
+          paidAmount: payload.paid_amount,
+          paymentDate: new Date().toISOString().split('T')[0],
+        })
+      } catch (alertErr) {
+        console.warn('Fee payment edit dispatch error:', alertErr)
+      }
     }
 
     revalidatePath('/admin/students')

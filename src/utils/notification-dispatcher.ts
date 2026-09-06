@@ -360,19 +360,26 @@ export async function dispatchFeePaymentAlert(params: {
       paymentMode: 'School Accounts / Portal',
     })
 
-    // 2. Send Email with PDF
+    // 2. Send Email with PDF & Push Notification concurrently, but awaited
+    const tasks: Promise<unknown>[] = []
+
     if (contact.email) {
-      sendFeeReceiptEmail({
-        toEmail: contact.email,
-        parentName: contact.parentName,
-        studentName: contact.studentName,
-        className: contact.className,
-        feeName: params.feeName,
-        amountPaid: params.paidAmount,
-        receiptNo,
-        paymentDate: params.paymentDate,
-        pdfBuffer,
-      }).catch((e) => console.warn('Fee receipt email failed:', e))
+      console.log(`[NotificationDispatcher] Sending fee receipt email to: ${contact.email} (${receiptNo})`)
+      tasks.push(
+        sendFeeReceiptEmail({
+          toEmail: contact.email,
+          parentName: contact.parentName,
+          studentName: contact.studentName,
+          className: contact.className,
+          feeName: params.feeName,
+          amountPaid: params.paidAmount,
+          receiptNo,
+          paymentDate: params.paymentDate,
+          pdfBuffer,
+        }).catch((e) => console.warn('Fee receipt email failed:', e))
+      )
+    } else {
+      console.warn(`[NotificationDispatcher] No contact email found for student: ${contact.studentName} (${params.studentId})`)
     }
 
     // 3. Send Push Notification
@@ -381,15 +388,21 @@ export async function dispatchFeePaymentAlert(params: {
     )
 
     if (pushTargets.length > 0) {
-      sendPushNotification(pushTargets, {
-        title: 'Fee Payment Received',
-        body: `Payment of ₹${params.paidAmount.toFixed(2)} received for ${contact.studentName}. Receipt #${receiptNo} generated.`,
-        url: '/parent/fees',
-        tag: `fee-${params.feeId}`,
-      }).catch((e) => console.warn('Fee push failed:', e))
+      tasks.push(
+        sendPushNotification(pushTargets, {
+          title: 'Fee Payment Received',
+          body: `Payment of ₹${params.paidAmount.toFixed(2)} received for ${contact.studentName}. Receipt #${receiptNo} generated.`,
+          url: '/parent/fees',
+          tag: `fee-${params.feeId}`,
+        }).catch((e) => console.warn('Fee push failed:', e))
+      )
+    }
+
+    if (tasks.length > 0) {
+      await Promise.allSettled(tasks)
     }
   } catch (err) {
-    console.warn('dispatchFeePaymentAlert error:', err)
+    console.error('dispatchFeePaymentAlert error:', err)
   }
 }
 
@@ -423,30 +436,43 @@ export async function dispatchTeacherPaymentAlert(params: {
       remarks: params.remarks,
     })
 
-    // 2. Send Email with PDF
+    // 2. Send Email with PDF & Push Notification concurrently, but awaited
+    const tasks: Promise<unknown>[] = []
+
     if (contact.email) {
-      sendTeacherPaymentEmail({
-        toEmail: contact.email,
-        teacherName: contact.teacherName,
-        amount: params.amount,
-        paymentDate: params.paymentDate,
-        remarks: params.remarks,
-        voucherNo,
-        pdfBuffer,
-      }).catch((e) => console.warn('Teacher payment email failed:', e))
+      console.log(`[NotificationDispatcher] Sending teacher payment advice email to: ${contact.email} (${voucherNo})`)
+      tasks.push(
+        sendTeacherPaymentEmail({
+          toEmail: contact.email,
+          teacherName: contact.teacherName,
+          amount: params.amount,
+          paymentDate: params.paymentDate,
+          remarks: params.remarks,
+          voucherNo,
+          pdfBuffer,
+        }).catch((e) => console.warn('Teacher payment email failed:', e))
+      )
+    } else {
+      console.warn(`[NotificationDispatcher] No email found for teacher: ${contact.teacherName} (${params.teacherId})`)
     }
 
     // 3. Send Push Notification
     if (contact.teacherUserId) {
-      sendPushNotification([contact.teacherUserId], {
-        title: 'Payment Advice Issued',
-        body: `Salary / payment of ₹${params.amount.toFixed(2)} disbursed. Voucher #${voucherNo}.`,
-        url: '/teacher',
-        tag: `pay-${params.paymentId}`,
-      }).catch((e) => console.warn('Teacher payment push failed:', e))
+      tasks.push(
+        sendPushNotification([contact.teacherUserId], {
+          title: 'Payment Advice Issued',
+          body: `Salary / payment of ₹${params.amount.toFixed(2)} disbursed. Voucher #${voucherNo}.`,
+          url: '/teacher',
+          tag: `pay-${params.paymentId}`,
+        }).catch((e) => console.warn('Teacher payment push failed:', e))
+      )
+    }
+
+    if (tasks.length > 0) {
+      await Promise.allSettled(tasks)
     }
   } catch (err) {
-    console.warn('dispatchTeacherPaymentAlert error:', err)
+    console.error('dispatchTeacherPaymentAlert error:', err)
   }
 }
 
