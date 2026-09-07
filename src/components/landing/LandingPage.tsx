@@ -564,43 +564,26 @@ function Navbar({
   );
 }
 
-/* ─── SECTION 3: HERO SECTION (BALANCED SCHOOL NAME & SHAPING FUTURES) ─── */
+/* ─── SECTION 3: HERO SECTION (MOBILE-FIRST FLAGSHIP SHOWCASE) ─── */
 function Hero({ theme }: { theme: "light" | "dark" }) {
   const isLight = theme === "light";
 
   return (
     <section
-      className={`relative min-h-[90svh] sm:min-h-screen w-full flex flex-col justify-between pt-28 sm:pt-36 pb-12 sm:pb-16 px-4 sm:px-8 max-w-7xl mx-auto overflow-hidden transition-colors ${
+      className={`relative min-h-[90svh] sm:min-h-screen w-full flex flex-col justify-between pt-24 sm:pt-32 pb-12 sm:pb-16 px-4 sm:px-8 max-w-7xl mx-auto overflow-hidden transition-colors ${
         isLight ? "text-[#0B0B10]" : "text-white"
       }`}
     >
-      {/* High-Visibility Balanced Background Image Layer for Desktop */}
-      <div className="hidden lg:block absolute inset-0 z-0 overflow-hidden pointer-events-none">
-        <Image
-          src={LANDING_CONFIG.hero.posterImage}
-          alt="RMSPS Hero"
-          fill
-          priority
-          quality={95}
-          className={`object-cover object-right sm:object-center transition-opacity duration-700 ${
-            isLight ? "opacity-90" : "opacity-80"
-          }`}
-          sizes="100vw"
-        />
-        {/* Soft directional gradient: protects text contrast on the left while keeping the portrait bright & crisp on the right */}
+      {/* Ambient Atmospheric Glows */}
+      <div className="absolute inset-0 z-0 overflow-hidden pointer-events-none">
         <div
-          className={`absolute inset-0 ${
-            isLight
-              ? "bg-gradient-to-r from-[#F8F6F0]/95 via-[#F8F6F0]/65 sm:via-[#F8F6F0]/40 to-transparent"
-              : "bg-gradient-to-r from-[#0B0B10]/95 via-[#0B0B10]/70 sm:via-[#0B0B10]/45 to-transparent"
+          className={`absolute top-1/4 -right-20 w-[500px] h-[500px] rounded-full blur-3xl opacity-20 pointer-events-none ${
+            isLight ? "bg-[#F1917D]/30" : "bg-[#F1917D]/25"
           }`}
         />
-        {/* Gentle top & bottom vignette for seamless layout blending without dimming the portrait */}
         <div
-          className={`absolute inset-0 ${
-            isLight
-              ? "bg-gradient-to-t from-[#F8F6F0] via-transparent to-[#F8F6F0]/50"
-              : "bg-gradient-to-t from-[#0B0B10] via-transparent to-[#0B0B10]/60"
+          className={`absolute bottom-10 -left-20 w-[450px] h-[450px] rounded-full blur-3xl opacity-15 pointer-events-none ${
+            isLight ? "bg-[#D4AF6A]/25" : "bg-[#D4AF6A]/20"
           }`}
         />
       </div>
@@ -620,53 +603,73 @@ function Hero({ theme }: { theme: "light" | "dark" }) {
         </div>
       </div>
 
-      {/* Main Educational Hero Typography & Mobile-First Visual Showcase */}
-      <div className="relative z-10 py-6 sm:py-12 text-left space-y-4 sm:space-y-6">
-        <h1
-          className={`font-display font-black text-3xl sm:text-5xl md:text-6xl lg:text-[4.25rem] leading-[1.12] tracking-tight max-w-4xl ${
-            isLight ? "text-[#0B0B10]" : "text-white"
-          }`}
-        >
-          {LANDING_CONFIG.hero.schoolName}
-        </h1>
+      {/* Main Educational Hero Content & Mobile-First Visual Showcase */}
+      <div className="relative z-10 py-6 sm:py-10 grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-12 items-center">
+        {/* Primary Information Column */}
+        <div className="lg:col-span-7 space-y-4 sm:space-y-6 text-left">
+          <h1
+            className={`font-display font-black text-3xl sm:text-5xl md:text-6xl lg:text-[4rem] leading-[1.12] tracking-tight ${
+              isLight ? "text-[#0B0B10]" : "text-white"
+            }`}
+          >
+            {LANDING_CONFIG.hero.schoolName}
+          </h1>
 
-        {/* SHAPING FUTURES with matching Intro text style & gradient */}
-        <p className="font-display font-black text-2xl sm:text-4xl md:text-5xl uppercase tracking-tight bg-gradient-to-r from-[#F1917D] via-[#D4AF6A] to-[#F1917D] bg-clip-text text-transparent">
-          {LANDING_CONFIG.hero.taglineHeading}
-        </p>
+          {/* SHAPING FUTURES with matching gradient */}
+          <p className="font-display font-black text-2xl sm:text-4xl md:text-5xl uppercase tracking-tight bg-gradient-to-r from-[#F1917D] via-[#D4AF6A] to-[#F1917D] bg-clip-text text-transparent">
+            {LANDING_CONFIG.hero.taglineHeading}
+          </p>
 
-        {/* ── Mobile-First Hero Visual Card (Shows 100% of the image without crop or text blockage) ── */}
-        <div className="lg:hidden relative w-full aspect-[1024/661] rounded-2xl overflow-hidden border border-hairline shadow-2xl shadow-black/60 my-5 bg-surface group">
-          <Image
-            src={LANDING_CONFIG.hero.posterImage}
-            alt="RMSPS Leader"
-            fill
-            priority
-            quality={95}
-            className="object-cover object-center"
-            sizes="(max-width: 1024px) 100vw, 50vw"
-          />
-          <div className="absolute inset-0 ring-1 ring-inset ring-white/15 rounded-2xl pointer-events-none" />
-        </div>
+          {/* ── MOBILE-FIRST VISUAL SHOWCASE (First priority on phones: 100% full uncropped image) ── */}
+          <div className="block lg:hidden relative w-full aspect-[1024/661] rounded-2xl sm:rounded-3xl overflow-hidden border border-white/15 shadow-2xl shadow-black/80 my-5 bg-[#0B0B10]">
+            <Image
+              src={LANDING_CONFIG.hero.posterImage}
+              alt="RMSPS Leader"
+              fill
+              priority
+              quality={95}
+              className="object-contain sm:object-cover object-center"
+              sizes="(max-width: 1024px) 100vw, 50vw"
+            />
+            <div className="absolute inset-0 ring-1 ring-inset ring-white/15 rounded-2xl sm:rounded-3xl pointer-events-none" />
+          </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 pt-2 items-center">
           <p
-            className={`lg:col-span-7 text-sm sm:text-lg leading-relaxed font-light max-w-xl ${
+            className={`text-sm sm:text-lg leading-relaxed font-light max-w-xl ${
               isLight ? "text-[#4A453C]" : "text-white/85"
             }`}
           >
             {LANDING_CONFIG.hero.subheading}
           </p>
-          <div className="lg:col-span-5 flex flex-wrap gap-3 sm:gap-4 items-center lg:justify-end">
+
+          <div className="pt-2 flex flex-wrap gap-4 items-center">
             <Link
               href="/login"
-              className="btn-primary px-8 sm:px-10 py-4 rounded-2xl font-bold text-xs sm:text-sm uppercase tracking-widest hover:scale-105 transition-all flex items-center gap-3 shadow-xl shadow-[#F1917D]/25 cursor-pointer"
+              className="btn-primary w-full sm:w-auto px-8 sm:px-10 py-4 rounded-2xl font-bold text-xs sm:text-sm uppercase tracking-widest hover:scale-105 transition-all flex items-center justify-center gap-3 shadow-xl shadow-[#F1917D]/25 cursor-pointer"
             >
               <LogIn className="w-4 h-4 sm:w-5 sm:h-5" />
               <span>Portal Login</span>
               <ArrowRight className="w-4 h-4" />
             </Link>
           </div>
+        </div>
+
+        {/* Right Column: Desktop Showcase Card (100% uncropped, high-res with ambient aura) */}
+        <div className="hidden lg:block lg:col-span-5 relative">
+          <div className="relative w-full aspect-[1024/661] rounded-3xl overflow-hidden border border-white/15 shadow-2xl shadow-black/80 bg-[#0B0B10] group transition-transform duration-500 hover:scale-[1.02]">
+            <Image
+              src={LANDING_CONFIG.hero.posterImage}
+              alt="RMSPS Leader"
+              fill
+              priority
+              quality={95}
+              className="object-contain object-center"
+              sizes="50vw"
+            />
+            <div className="absolute inset-0 ring-1 ring-inset ring-white/15 rounded-3xl pointer-events-none" />
+          </div>
+          {/* Soft ambient aura behind desktop card */}
+          <div className="absolute -inset-4 bg-gradient-to-r from-[#F1917D]/20 via-[#D4AF6A]/15 to-transparent blur-2xl -z-10 rounded-3xl pointer-events-none" />
         </div>
       </div>
 
