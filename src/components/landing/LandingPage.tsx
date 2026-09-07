@@ -574,35 +574,33 @@ function Hero({ theme }: { theme: "light" | "dark" }) {
         isLight ? "text-[#0B0B10]" : "text-white"
       }`}
     >
-      {/* High-Visibility Background Video & Image Layer */}
+      {/* High-Visibility Balanced Background Image Layer */}
       <div className="absolute inset-0 z-0 overflow-hidden pointer-events-none">
         <Image
           src={LANDING_CONFIG.hero.posterImage}
-          alt="RMSPS Campus"
+          alt="RMSPS Hero"
           fill
           priority
-          className={`object-cover object-top ${isLight ? "opacity-30" : "opacity-40"}`}
+          quality={95}
+          className={`object-cover object-right sm:object-center transition-opacity duration-700 ${
+            isLight ? "opacity-90" : "opacity-80"
+          }`}
           sizes="100vw"
         />
-        {LANDING_CONFIG.hero.videoUrl && (
-          <video
-            autoPlay
-            muted
-            loop
-            playsInline
-            preload="metadata"
-            className={`absolute inset-0 w-full h-full object-cover ${
-              isLight ? "opacity-55" : "opacity-75"
-            }`}
-          >
-            <source src={LANDING_CONFIG.hero.videoUrl} type="video/webm" />
-          </video>
-        )}
+        {/* Soft directional gradient: protects text contrast on the left while keeping the portrait bright & crisp on the right */}
         <div
           className={`absolute inset-0 ${
             isLight
-              ? "bg-gradient-to-t from-[#F8F6F0] via-[#F8F6F0]/65 to-[#F8F6F0]/40"
-              : "bg-gradient-to-t from-[#0B0B10] via-[#0B0B10]/75 to-[#0B0B10]/50"
+              ? "bg-gradient-to-r from-[#F8F6F0]/95 via-[#F8F6F0]/65 sm:via-[#F8F6F0]/40 to-transparent"
+              : "bg-gradient-to-r from-[#0B0B10]/95 via-[#0B0B10]/70 sm:via-[#0B0B10]/45 to-transparent"
+          }`}
+        />
+        {/* Gentle top & bottom vignette for seamless layout blending without dimming the portrait */}
+        <div
+          className={`absolute inset-0 ${
+            isLight
+              ? "bg-gradient-to-t from-[#F8F6F0] via-transparent to-[#F8F6F0]/50"
+              : "bg-gradient-to-t from-[#0B0B10] via-transparent to-[#0B0B10]/60"
           }`}
         />
       </div>
