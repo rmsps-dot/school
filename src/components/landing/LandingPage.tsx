@@ -23,6 +23,7 @@ import {
 } from "lucide-react";
 
 import IntroPreloader from "@/components/landing/IntroPreloader";
+import dynamic from "next/dynamic";
 import {
   NavigationMenu,
   NavigationMenuList,
@@ -31,7 +32,22 @@ import {
   NavigationMenuContent,
   NavigationMenuLink,
 } from "@/components/ui/navigation-menu";
-import { BoundedParallaxSlider } from "@/components/ui/argent-loop-infinite-slider";
+
+// Code-split heavy interactive slider to eliminate unused JS on initial page load
+const BoundedParallaxSlider = dynamic(
+  () =>
+    import("@/components/ui/argent-loop-infinite-slider").then(
+      (mod) => mod.BoundedParallaxSlider
+    ),
+  {
+    ssr: false,
+    loading: () => (
+      <div className="w-full h-[480px] rounded-3xl bg-black/5 dark:bg-white/5 animate-pulse flex items-center justify-center text-xs font-mono uppercase tracking-widest text-muted-foreground">
+        Loading Campus Showcase...
+      </div>
+    ),
+  }
+);
 
 /* ══════════════════════════════════════════════════════════════════════
  * ─── CENTRALIZED ASSETS & CONTENT CONFIGURATION ───────────────────────
@@ -627,9 +643,10 @@ function Hero({ theme }: { theme: "light" | "dark" }) {
               alt="RMSPS Leader"
               fill
               priority
+              fetchPriority="high"
               quality={95}
               className="object-contain sm:object-cover object-center"
-              sizes="(max-width: 1024px) 100vw, 50vw"
+              sizes="(max-width: 640px) 100vw, (max-width: 1024px) 100vw, 50vw"
             />
             <div className="absolute inset-0 ring-1 ring-inset ring-white/15 rounded-2xl sm:rounded-3xl pointer-events-none" />
           </div>
@@ -662,9 +679,10 @@ function Hero({ theme }: { theme: "light" | "dark" }) {
               alt="RMSPS Leader"
               fill
               priority
+              fetchPriority="high"
               quality={95}
               className="object-contain object-center"
-              sizes="50vw"
+              sizes="(min-width: 1024px) 45vw, 100vw"
             />
             <div className="absolute inset-0 ring-1 ring-inset ring-white/15 rounded-3xl pointer-events-none" />
           </div>
@@ -1151,6 +1169,7 @@ function PreFooter({ theme }: { theme: "light" | "dark" }) {
           src="https://images.unsplash.com/photo-1580582932707-520aed937b7b?q=80&w=1600"
           alt="Campus View"
           fill
+          quality={75}
           className={`object-cover ${isLight ? "opacity-20" : "opacity-35"}`}
           sizes="100vw"
           loading="lazy"

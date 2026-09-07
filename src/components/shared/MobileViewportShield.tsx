@@ -22,35 +22,38 @@ export default function MobileViewportShield() {
     const root = document.documentElement
 
     const syncViewportMetrics = () => {
+      // Use window.innerWidth & window.innerHeight - these do NOT trigger forced reflow!
+      // (reading element.clientWidth forces the browser to synchronously recompute layout)
       const vh = window.innerHeight * 0.01
       const vw = window.innerWidth
-      const docWidth = root.clientWidth || vw
 
       root.style.setProperty('--vh', `${vh}px`)
       root.style.setProperty('--dvh', `${window.innerHeight}px`)
       root.style.setProperty('--vw', `${vw}px`)
-      root.style.setProperty('--viewport-width', `${docWidth}px`)
-
-      // Ensure body width never exceeds viewport width
-      if (document.body) {
-        document.body.style.maxWidth = `${docWidth}px`
-      }
+      root.style.setProperty('--viewport-width', `${vw}px`)
     }
 
-    syncViewportMetrics()
+    let rafId: number | null = null
+    const scheduleSync = () => {
+      if (rafId !== null) cancelAnimationFrame(rafId)
+      rafId = requestAnimationFrame(syncViewportMetrics)
+    }
 
-    window.addEventListener('resize', syncViewportMetrics, { passive: true })
-    window.addEventListener('orientationchange', syncViewportMetrics, { passive: true })
+    scheduleSync()
+
+    window.addEventListener('resize', scheduleSync, { passive: true })
+    window.addEventListener('orientationchange', scheduleSync, { passive: true })
 
     if (window.visualViewport) {
-      window.visualViewport.addEventListener('resize', syncViewportMetrics, { passive: true })
+      window.visualViewport.addEventListener('resize', scheduleSync, { passive: true })
     }
 
     return () => {
-      window.removeEventListener('resize', syncViewportMetrics)
-      window.removeEventListener('orientationchange', syncViewportMetrics)
+      if (rafId !== null) cancelAnimationFrame(rafId)
+      window.removeEventListener('resize', scheduleSync)
+      window.removeEventListener('orientationchange', scheduleSync)
       if (window.visualViewport) {
-        window.visualViewport.removeEventListener('resize', syncViewportMetrics)
+        window.visualViewport.removeEventListener('resize', scheduleSync)
       }
     }
   }, [])
