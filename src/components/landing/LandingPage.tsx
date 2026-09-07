@@ -574,8 +574,8 @@ function Hero({ theme }: { theme: "light" | "dark" }) {
         isLight ? "text-[#0B0B10]" : "text-white"
       }`}
     >
-      {/* High-Visibility Balanced Background Image Layer */}
-      <div className="absolute inset-0 z-0 overflow-hidden pointer-events-none">
+      {/* High-Visibility Balanced Background Image Layer for Desktop */}
+      <div className="hidden lg:block absolute inset-0 z-0 overflow-hidden pointer-events-none">
         <Image
           src={LANDING_CONFIG.hero.posterImage}
           alt="RMSPS Hero"
@@ -620,7 +620,7 @@ function Hero({ theme }: { theme: "light" | "dark" }) {
         </div>
       </div>
 
-      {/* Main Educational Hero Typography */}
+      {/* Main Educational Hero Typography & Mobile-First Visual Showcase */}
       <div className="relative z-10 py-6 sm:py-12 text-left space-y-4 sm:space-y-6">
         <h1
           className={`font-display font-black text-3xl sm:text-5xl md:text-6xl lg:text-[4.25rem] leading-[1.12] tracking-tight max-w-4xl ${
@@ -634,6 +634,20 @@ function Hero({ theme }: { theme: "light" | "dark" }) {
         <p className="font-display font-black text-2xl sm:text-4xl md:text-5xl uppercase tracking-tight bg-gradient-to-r from-[#F1917D] via-[#D4AF6A] to-[#F1917D] bg-clip-text text-transparent">
           {LANDING_CONFIG.hero.taglineHeading}
         </p>
+
+        {/* ── Mobile-First Hero Visual Card (Shows 100% of the image without crop or text blockage) ── */}
+        <div className="lg:hidden relative w-full aspect-[1024/661] rounded-2xl overflow-hidden border border-hairline shadow-2xl shadow-black/60 my-5 bg-surface group">
+          <Image
+            src={LANDING_CONFIG.hero.posterImage}
+            alt="RMSPS Leader"
+            fill
+            priority
+            quality={95}
+            className="object-cover object-center"
+            sizes="(max-width: 1024px) 100vw, 50vw"
+          />
+          <div className="absolute inset-0 ring-1 ring-inset ring-white/15 rounded-2xl pointer-events-none" />
+        </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 pt-2 items-center">
           <p
