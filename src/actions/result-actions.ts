@@ -2,7 +2,6 @@
 
 import { revalidatePath } from 'next/cache'
 import { createClient } from '@/utils/supabase/server'
-import { supabaseAdmin } from '@/utils/supabase/admin'
 
 /* ── Types ─────────────────────────────────────────────────── */
 
@@ -32,7 +31,6 @@ export interface ResultActionResult {
   updated?: number
 }
 
-import { requireTeacher, requireAuth } from '@/utils/auth-helpers'
 
 /* ── Helper: verify caller is a teacher or admin, return their info ── */
 async function getRoleAndContext() {
@@ -185,6 +183,10 @@ export async function uploadResults(payload: {
       }
     }
 
+    if (!payload.marks || payload.marks.length === 0) {
+      return { success: false, error: 'No marks provided to upload.' }
+    }
+
     // Guard 2: Basic marks validation
     for (const m of payload.marks) {
       if (m.marksObtained < 0 || m.totalMarks <= 0) {
@@ -193,6 +195,18 @@ export async function uploadResults(payload: {
       if (m.marksObtained > m.totalMarks) {
         return { success: false, error: 'Marks obtained cannot exceed total marks.' }
       }
+    }
+
+    // Guard 3: Verify all student IDs strictly belong to the given classId
+    const studentIds = payload.marks.map((m) => m.studentRowId)
+    const { data: validStudents, error: validErr } = await supabase
+      .from('students')
+      .select('id')
+      .eq('class_id', payload.classId)
+      .in('id', studentIds)
+
+    if (validErr || !validStudents || validStudents.length !== studentIds.length) {
+      return { success: false, error: 'Access denied: one or more students do not belong to the selected class.' }
     }
 
     // Build upsert payload

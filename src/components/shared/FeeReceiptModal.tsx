@@ -33,13 +33,13 @@ export default function FeeReceiptModal({ data, onClose }: Props) {
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-start justify-center p-4 overflow-y-auto bg-ink/80 backdrop-blur-sm"
+      className="fixed inset-0 z-50 flex items-start justify-center p-2 sm:p-4 overflow-y-auto bg-ink/80 backdrop-blur-sm"
       onClick={(e) => {
         if (e.target === e.currentTarget) onClose()
       }}
     >
       <div
-        className="relative w-full max-w-5xl my-4 sm:my-6 bg-surface border border-hairline rounded-2xl sm:rounded-3xl flex flex-col shadow-2xl overflow-hidden"
+        className="relative w-full max-w-5xl my-2 sm:my-6 bg-surface border border-hairline rounded-2xl sm:rounded-3xl flex flex-col shadow-2xl overflow-hidden"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Modal Header */}
@@ -93,7 +93,7 @@ export default function FeeReceiptModal({ data, onClose }: Props) {
         )}
 
         {/* Scrollable Preview Container with Result Preview Style Sliding */}
-        <div className="p-3 sm:p-6 overflow-y-auto max-h-[calc(100vh-180px)] bg-ink/50 flex-1">
+        <div className="p-3 sm:p-6 overflow-y-auto max-h-[calc(100dvh-170px)] sm:max-h-[calc(100vh-180px)] bg-ink/50 flex-1">
           {/* Mobile swipe hint */}
           <div className="sm:hidden flex items-center justify-center gap-1.5 text-[11px] font-mono text-mist mb-3 bg-ink/70 py-1 px-3 rounded-lg border border-hairline w-max mx-auto">
             <span className="text-gold">⇄</span> Slide horizontally to view full receipt

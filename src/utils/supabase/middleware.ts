@@ -51,9 +51,8 @@ export async function updateSession(request: NextRequest) {
     '/twitter-image',
   ]
   
-  // Exclude the cron route exactly — do not use startsWith to avoid accidentally
-  // bypassing auth for any future /api/cron-* routes.
-  if (pathname === '/api/cron/cleanup-attendance') {
+  // Exclude authorized cron routes — both routes validate Bearer CRON_SECRET internally
+  if (pathname === '/api/cron/cleanup-attendance' || pathname === '/api/cron/fee-reminders') {
     return supabaseResponse
   }
 

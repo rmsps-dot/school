@@ -60,14 +60,16 @@ function PctArc({ pct }: { pct: number }) {
 }
 
 interface Props {
-  children: ChildInfo[]
+  children?: ChildInfo[]
+  childrenData?: ChildInfo[]
   defaultId?: string
 }
 
-export default function ProgressClient({ children, defaultId }: Props) {
-  const firstId = defaultId && children.find(c => c.studentRowId === defaultId)
+export default function ProgressClient({ children, childrenData, defaultId }: Props) {
+  const childList = childrenData ?? children ?? []
+  const firstId = defaultId && childList.find(c => c.studentRowId === defaultId)
     ? defaultId
-    : children[0]?.studentRowId ?? ''
+    : childList[0]?.studentRowId ?? ''
 
   const [selectedId, setSelectedId] = useState(firstId)
   const [tab, setTab] = useState<TabType>('results')
@@ -79,7 +81,7 @@ export default function ProgressClient({ children, defaultId }: Props) {
   
   const [previewSheet, setPreviewSheet] = useState<StudentMarksheet | null>(null)
   const [isDownloading, setIsDownloading] = useState(false)
-  const selectedChild = children.find(c => c.studentRowId === selectedId)
+  const selectedChild = childList.find(c => c.studentRowId === selectedId)
 
   async function handleDownloadPDF(idx: number) {
     const sheet = buildMarksheet(idx)
@@ -181,7 +183,7 @@ export default function ProgressClient({ children, defaultId }: Props) {
               onChange={(e) => { setSelectedId(e.target.value); setTab('results') }}
               className="w-full bg-surface border border-hairline rounded-xl px-4 py-3 text-sm font-bold text-parchment appearance-none focus:outline-none focus:border-gold transition-colors cursor-pointer shadow-inner"
             >
-              {children.map((c) => (
+              {childList.map((c) => (
                 <option key={c.studentRowId} value={c.studentRowId} className="bg-ink text-parchment">
                   {c.fullName} — {c.className} Sec {c.section}
                 </option>

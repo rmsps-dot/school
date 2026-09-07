@@ -1,22 +1,25 @@
 import webpush from 'web-push'
 import { supabaseAdmin } from '@/utils/supabase/admin'
 
-export const VAPID_PUBLIC_KEY =
-  process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY ||
-  'BMxLA-Gj-tphlU3s8P-hlW_x8Uvvewp_Keilq7eFEzBnzP62dLKe0bXjCidrWEb6dNpL184kINt8FWR-7JBufj4'
+export const VAPID_PUBLIC_KEY = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY || ''
 
-const VAPID_PRIVATE_KEY =
-  process.env.VAPID_PRIVATE_KEY ||
-  '98SS72TFANbksVXPVHgiFbmhllvvRpPRFPCO1pqKC8k'
+const VAPID_PRIVATE_KEY = process.env.VAPID_PRIVATE_KEY || ''
 
-const VAPID_SUBJECT =
-  process.env.VAPID_SUBJECT || 'mailto:admin@rmsps.edu'
+const VAPID_SUBJECT = process.env.VAPID_SUBJECT || 'mailto:admin@rmsps.edu'
 
-// Initialize VAPID details
-try {
-  webpush.setVapidDetails(VAPID_SUBJECT, VAPID_PUBLIC_KEY, VAPID_PRIVATE_KEY)
-} catch (err) {
-  console.warn('Failed to configure web-push VAPID:', err)
+export const isWebPushConfigured = Boolean(VAPID_PUBLIC_KEY && VAPID_PRIVATE_KEY)
+
+// Initialize VAPID details only when valid keys are provided
+if (isWebPushConfigured) {
+  try {
+    webpush.setVapidDetails(VAPID_SUBJECT, VAPID_PUBLIC_KEY, VAPID_PRIVATE_KEY)
+  } catch (err) {
+    console.warn('Failed to configure web-push VAPID:', err)
+  }
+} else {
+  if (process.env.NODE_ENV !== 'production') {
+    console.warn('[web-push] NEXT_PUBLIC_VAPID_PUBLIC_KEY or VAPID_PRIVATE_KEY is not configured in env.')
+  }
 }
 
 export interface PushPayload {
@@ -183,6 +186,10 @@ export async function sendPushNotification(
   payload: PushPayload
 ): Promise<{ success: boolean; sentCount: number }> {
   try {
+    if (!isWebPushConfigured) {
+      return { success: true, sentCount: 0 }
+    }
+
     const subscriptions = await getSubscriptionsForUsers(userIds)
     if (subscriptions.length === 0) {
       return { success: true, sentCount: 0 }

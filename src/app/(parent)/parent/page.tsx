@@ -65,7 +65,7 @@ export default async function ParentDashboard() {
       {children && children.length > 0 && (
         <ParentProfileCard
           parentProfile={profile}
-          children={children}
+          childrenData={children}
           initialPendingRequest={pendingRequest}
         />
       )}

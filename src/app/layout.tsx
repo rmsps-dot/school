@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { Syne, DM_Sans, JetBrains_Mono } from "next/font/google";
 import "./globals.css";
+import MobileViewportShield from "@/components/shared/MobileViewportShield";
 
 const syne = Syne({
   subsets: ["latin"],
@@ -84,7 +85,10 @@ export default function RootLayout({
           dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
         />
       </head>
-      <body className="min-h-full flex flex-col antialiased font-body">{children}</body>
+      <body className="min-h-full flex flex-col antialiased font-body">
+        <MobileViewportShield />
+        {children}
+      </body>
     </html>
   );
 }

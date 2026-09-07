@@ -44,7 +44,7 @@ export default async function ParentFeesPage() {
       )}
 
       {children.length > 0 && (
-        <ParentFeesClient children={children} />
+        <ParentFeesClient childrenData={children} />
       )}
     </div>
   )

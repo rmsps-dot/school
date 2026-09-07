@@ -2,7 +2,7 @@
 
 import { createClient } from '@/utils/supabase/server'
 import { revalidatePath } from 'next/cache'
-import { requireTeacher, requireAuth, requireAdmin } from '@/utils/auth-helpers'
+import { requireAdmin } from '@/utils/auth-helpers'
 import { dispatchNoticeAlert } from '@/utils/notification-dispatcher'
 
 /* ════════════════════════════════════════════════════════════

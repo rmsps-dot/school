@@ -49,7 +49,7 @@ export default async function ParentProgressPage({ searchParams }: Props) {
       )}
 
       {children.length > 0 && (
-        <ProgressClient children={children} defaultId={params.id} />
+        <ProgressClient childrenData={children} defaultId={params.id} />
       )}
     </div>
   )

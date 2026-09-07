@@ -13,8 +13,14 @@ interface Props {
 }
 
 export default function ParentHomeworkClient({ childrenData, homeworkData, defaultId }: Props) {
+  const defaultChild = childrenData && childrenData.length > 0
+    ? (childrenData.find(c => c.studentRowId === defaultId) || childrenData[0])
+    : null
+
+  const [activeChild, setActiveChild] = useState<ChildInfo | null>(defaultChild)
+
   // Explicitly guard against empty children array
-  if (!childrenData || childrenData.length === 0) {
+  if (!childrenData || childrenData.length === 0 || !activeChild) {
     return (
       <div className="text-center text-mist py-12">
         <BookOpen className="w-12 h-12 mx-auto mb-4 opacity-50" />
@@ -22,11 +28,6 @@ export default function ParentHomeworkClient({ childrenData, homeworkData, defau
       </div>
     )
   }
-
-  const defaultChild = childrenData.find(c => c.studentRowId === defaultId) || childrenData[0]
-  const [activeChild, setActiveChild] = useState<ChildInfo>(defaultChild)
-
-  if (!activeChild) return null
 
   // Filter homework for the currently selected child's class
   const childHomework = homeworkData.filter((hw) => 
@@ -58,7 +59,7 @@ export default function ParentHomeworkClient({ childrenData, homeworkData, defau
       {/* ── Active Child Info Header ── */}
       <div className="surface-card border-hairline rounded-2xl p-6 flex flex-wrap items-center gap-5 justify-between border-l-[6px] border-l-gold shadow-lg">
         <div>
-          <h2 className="font-display text-2xl font-bold text-parchment">{activeChild.fullName}'s Homework</h2>
+          <h2 className="font-display text-2xl font-bold text-parchment">{activeChild.fullName}&apos;s Homework</h2>
           <p className="text-[10px] font-mono text-mist uppercase tracking-widest mt-1">Class {activeChild.className} — Sec {activeChild.section}</p>
         </div>
       </div>

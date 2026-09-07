@@ -21,14 +21,20 @@ import { downloadFeeReceiptPDF } from '@/utils/download-receipt-pdf'
 import { numberToWords } from '@/utils/number-to-words'
 import type { FeeReceiptData } from '@/components/pdf/FeeReceiptPdf'
 
-export default function ParentFeesClient({ children }: { children: ChildInfo[] }) {
-  const [activeChildId, setActiveChildId] = useState(children[0]?.studentRowId)
+interface ParentFeesClientProps {
+  children?: ChildInfo[]
+  childrenData?: ChildInfo[]
+}
+
+export default function ParentFeesClient({ children, childrenData }: ParentFeesClientProps) {
+  const childList = childrenData ?? children ?? []
+  const [activeChildId, setActiveChildId] = useState(childList[0]?.studentRowId)
   const [fees, setFees] = useState<FeeRecord[]>([])
   const [loading, setLoading] = useState(false)
   const [selectedReceipt, setSelectedReceipt] = useState<FeeReceiptData | null>(null)
   const [downloadingFeeId, setDownloadingFeeId] = useState<string | null>(null)
 
-  const activeChild = children.find((c) => c.studentRowId === activeChildId)
+  const activeChild = childList.find((c) => c.studentRowId === activeChildId)
 
   useEffect(() => {
     if (activeChild?.studentRowId) {
@@ -86,9 +92,9 @@ export default function ParentFeesClient({ children }: { children: ChildInfo[] }
   return (
     <div className="space-y-8">
       {/* ── Children Tabs ── */}
-      {children.length > 1 && (
+      {childList.length > 1 && (
         <div className="flex flex-wrap gap-3">
-          {children.map((child) => (
+          {childList.map((child) => (
             <button
               key={child.studentRowId}
               onClick={() => setActiveChildId(child.studentRowId)}

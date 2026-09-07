@@ -182,7 +182,7 @@ export default function ManageTeachersClient({
 
         setTeachers((prev) =>
           prev.map((t) =>
-            t.id === assigningTeacher.id ? { ...t, teacher_classes: updatedClasses as any } : t
+            t.id === assigningTeacher.id ? { ...t, teacher_classes: updatedClasses as unknown as TeacherRecord['teacher_classes'] } : t
           )
         )
         setAssigningTeacher(null)

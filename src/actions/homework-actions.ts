@@ -89,13 +89,39 @@ export async function createHomework(
   due_date: string
 ): Promise<{ success: boolean; error?: string }> {
   try {
-    const auth = await requireTeacher(); if (!auth.ok) throw new Error(auth.error); const profileId = auth.profile.id
+    const auth = await requireTeacher()
+    if (!auth.ok) throw new Error(auth.error)
+    const profileId = auth.profile.id
 
     if (!class_id || !subject.trim() || !title.trim() || !description.trim() || !due_date) {
       throw new Error('All fields are required.')
     }
 
     const client = await createClient()
+
+    // Enforce class assignment authorization
+    if (auth.profile.role === 'teacher') {
+      const { data: teacherRecord } = await client
+        .from('teachers')
+        .select('id')
+        .eq('profile_id', profileId)
+        .maybeSingle()
+
+      if (!teacherRecord) {
+        return { success: false, error: 'Teacher record not found.' }
+      }
+
+      const { data: assignment } = await client
+        .from('teacher_classes')
+        .select('id')
+        .eq('teacher_id', teacherRecord.id)
+        .eq('class_id', class_id)
+        .maybeSingle()
+
+      if (!assignment) {
+        return { success: false, error: 'Access denied: You are not assigned to this class.' }
+      }
+    }
     const { error } = await client
       .from('homework')
       .insert({

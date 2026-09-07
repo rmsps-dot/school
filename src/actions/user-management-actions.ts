@@ -190,7 +190,6 @@ export async function updateStudent(formData: FormData) {
 export async function deleteStudent(profileId: string) {
   const auth = await requireAdmin()
   if (!auth.ok) return { error: auth.error }
-  const supabase = await createClient()
 
   const adminAuthClient = getAdminAuthClient()
   const { error } = await adminAuthClient.auth.admin.deleteUser(profileId)
@@ -443,7 +442,6 @@ export async function updateTeacherProfile(
 export async function deleteTeacher(profileId: string) {
   const auth = await requireAdmin()
   if (!auth.ok) return { error: auth.error }
-  const supabase = await createClient()
 
   const adminAuthClient = getAdminAuthClient()
   const { error } = await adminAuthClient.auth.admin.deleteUser(profileId)
@@ -519,7 +517,6 @@ export async function updateParentProfile(profileId: string, data: {
 export async function deleteParent(profileId: string) {
   const auth = await requireAdmin()
   if (!auth.ok) return { error: auth.error }
-  const supabase = await createClient()
 
   const adminAuthClient = getAdminAuthClient()
   const { error } = await adminAuthClient.auth.admin.deleteUser(profileId)
@@ -542,8 +539,9 @@ export async function sendPasswordResetLink(profileId: string) {
   const email = userData.user.email
   if (!email) return { error: 'User does not have an email address' }
 
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || process.env.NEXT_PUBLIC_APP_URL || 'https://rmsps.vercel.app'
   const { error } = await adminAuthClient.auth.resetPasswordForEmail(email, {
-    redirectTo: `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/reset-password`,
+    redirectTo: `${siteUrl}/reset-password`,
   })
   
   if (error) return { error: error.message }

@@ -33,15 +33,18 @@ interface Props {
     dob: string | null
     profile_photo_url?: string | null
   } | null
-  children: ChildInfo[]
+  children?: ChildInfo[]
+  childrenData?: ChildInfo[]
   initialPendingRequest: ProfileChangeRequestItem | null
 }
 
 export default function ParentProfileCard({
   parentProfile,
   children,
+  childrenData,
   initialPendingRequest,
 }: Props) {
+  const childList = childrenData ?? children ?? []
   const router = useRouter()
   const [pendingReq, setPendingReq] = useState<ProfileChangeRequestItem | null>(initialPendingRequest)
   const [isModalOpen, setIsModalOpen] = useState(false)
@@ -82,7 +85,7 @@ export default function ParentProfileCard({
       dob: dob || null,
     }
 
-    const primaryChildClassId = children[0]?.classId || null
+    const primaryChildClassId = childList[0]?.classId || null
 
     startTransition(async () => {
       const res = await submitProfileChangeRequest({
@@ -194,7 +197,7 @@ export default function ParentProfileCard({
       <div>
         <h2 className="font-display text-2xl font-bold text-parchment mb-6">Registered Students</h2>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          {children.map((child) => (
+          {childList.map((child) => (
             <div
               key={child.studentRowId}
               className="surface-card rounded-[2rem] p-8 flex flex-col justify-between group relative overflow-hidden border border-hairline hover:border-gold/40 transition-all"
