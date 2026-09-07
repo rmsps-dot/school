@@ -39,8 +39,8 @@ import { BoundedParallaxSlider } from "@/components/ui/argent-loop-infinite-slid
  * ══════════════════════════════════════════════════════════════════════ */
 export const LANDING_CONFIG = {
   hero: {
-    videoUrl: "https://assets.pebblelife.com/2_I3_A0499_2_7_b9915cc716.webm",
-    posterImage: "https://images.unsplash.com/photo-1580582932707-520aed937b7b?q=80&w=1920",
+    videoUrl: null,
+    posterImage: "/hero-bg.jpg",
     badge: "Reg No. PSS217/19 • UDISE CODE: 10060603629",
     schoolName: "Residential Maa Saraswati Public School",
     taglineHeading: "SHAPING FUTURES.",
@@ -581,7 +581,7 @@ function Hero({ theme }: { theme: "light" | "dark" }) {
           alt="RMSPS Campus"
           fill
           priority
-          className={`object-cover ${isLight ? "opacity-35" : "opacity-40"}`}
+          className={`object-cover object-top ${isLight ? "opacity-30" : "opacity-40"}`}
           sizes="100vw"
         />
         {LANDING_CONFIG.hero.videoUrl && (
