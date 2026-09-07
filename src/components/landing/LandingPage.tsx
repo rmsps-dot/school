@@ -40,7 +40,7 @@ import { BoundedParallaxSlider } from "@/components/ui/argent-loop-infinite-slid
 export const LANDING_CONFIG = {
   hero: {
     videoUrl: null,
-    posterImage: "/hero-bg.jpg",
+    posterImage: "/hero-portrait.jpg",
     badge: "Reg No. PSS217/19 • UDISE CODE: 10060603629",
     schoolName: "Residential Maa Saraswati Public School",
     taglineHeading: "SHAPING FUTURES.",

@@ -14,12 +14,7 @@ export default function IntroPreloader({
   role = "public",
   onComplete,
 }: IntroPreloaderProps) {
-  const [isDone, setIsDone] = useState(() => {
-    if (typeof window !== "undefined" && role === "public") {
-      return sessionStorage.getItem("rmsps_intro_shown") === "1";
-    }
-    return false;
-  });
+  const [isDone, setIsDone] = useState(false);
   const [isExpanded, setIsExpanded] = useState(false);
   const [isExiting, setIsExiting] = useState(false);
 
@@ -108,6 +103,16 @@ export default function IntroPreloader({
   const currentRole = roleConfig[role] || roleConfig.public;
 
   useEffect(() => {
+    // Check if intro has already been shown in this session (client-only check after hydration)
+    if (role === "public" && typeof window !== "undefined") {
+      try {
+        if (sessionStorage.getItem("rmsps_intro_shown") === "1") {
+          setIsDone(true);
+          return;
+        }
+      } catch {}
+    }
+
     if (isDone) return;
 
     // If loaded from back-forward cache (user clicking browser Back button), don't trap
