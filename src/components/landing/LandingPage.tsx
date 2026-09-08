@@ -1346,7 +1346,8 @@ export default function LandingPage({
   useEffect(() => {
     const saved = localStorage.getItem("rmsps_theme") as "light" | "dark" | null;
     if (saved && (saved === "light" || saved === "dark")) {
-      setTheme(saved);
+      const timer = setTimeout(() => setTheme(saved), 0);
+      return () => clearTimeout(timer);
     }
   }, []);
 

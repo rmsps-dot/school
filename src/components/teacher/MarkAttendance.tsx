@@ -191,16 +191,19 @@ export default function MarkAttendance({ alreadyMarked, record, teacherProfileId
 
   /* Auto-update phase if already marked, unconfigured, or time changes */
   useEffect(() => {
-    if (alreadyMarked) {
-      setPhase("already-marked");
-    } else if (!isGeofenceConfigured) {
-      setPhase("unconfigured");
-    } else {
-      const { allowed } = checkTimeAllowed();
-      if (!allowed) {
-        setPhase("time-closed");
+    const timer = setTimeout(() => {
+      if (alreadyMarked) {
+        setPhase("already-marked");
+      } else if (!isGeofenceConfigured) {
+        setPhase("unconfigured");
+      } else {
+        const { allowed } = checkTimeAllowed();
+        if (!allowed) {
+          setPhase("time-closed");
+        }
       }
-    }
+    }, 0);
+    return () => clearTimeout(timer);
   }, [alreadyMarked, isGeofenceConfigured, checkTimeAllowed]);
 
   /* ── STEP 1: Verify location ── */
@@ -665,7 +668,6 @@ export default function MarkAttendance({ alreadyMarked, record, teacherProfileId
               <span className="text-[10px] font-mono text-mist uppercase tracking-widest font-bold">Photo Preview</span>
             </div>
 
-            {/* eslint-disable-next-line @next/next/no-img-element */}
             <div className="relative bg-black aspect-[3/4] overflow-hidden">
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img src={capturedImage} alt="Captured"

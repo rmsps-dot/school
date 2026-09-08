@@ -49,7 +49,7 @@ export function BoundedParallaxSlider({
     targetY: 0,
     isSnapping: false,
     snapStart: { time: 0, y: 0, target: 0 },
-    lastScrollTime: Date.now(),
+    lastScrollTime: 0,
     projectHeight: 520,
   });
 
@@ -58,57 +58,7 @@ export function BoundedParallaxSlider({
 
   const totalItems = items.length;
 
-  const updateParallax = (
-    img: HTMLElement | null,
-    scroll: number,
-    index: number,
-    height: number
-  ) => {
-    if (!img) return;
-    if (!img.dataset.parallaxCurrent) {
-      img.dataset.parallaxCurrent = "0";
-    }
-
-    let current = parseFloat(img.dataset.parallaxCurrent);
-    const target = (-scroll - index * height) * 0.22;
-    current = lerp(current, target, 0.1);
-
-    if (Math.abs(current - target) > 0.01) {
-      img.style.transform = `translate3d(0, ${current}px, 0) scale(1.12)`;
-      img.dataset.parallaxCurrent = current.toString();
-    }
-  };
-
-  const updateSnap = () => {
-    const s = state.current;
-    const progress = Math.min(
-      (Date.now() - s.snapStart.time) / CONFIG.SNAP_DURATION,
-      1
-    );
-    // Smooth cubic ease-out
-    const eased = 1 - Math.pow(1 - progress, 3);
-    s.targetY =
-      s.snapStart.y + (s.snapStart.target - s.snapStart.y) * eased;
-    if (progress >= 1) s.isSnapping = false;
-  };
-
-  const snapToProject = () => {
-    const s = state.current;
-    const h = s.projectHeight || 1;
-    const current = Math.max(
-      0,
-      Math.min(totalItems - 1, Math.round(-s.targetY / h))
-    );
-    const target = -current * h;
-    s.isSnapping = true;
-    s.snapStart = {
-      time: Date.now(),
-      y: s.targetY,
-      target: target,
-    };
-  };
-
-  const jumpToSlide = (index: number) => {
+  const jumpToSlide = React.useCallback((index: number) => {
     const s = state.current;
     const h = s.projectHeight || 1;
     const safeIdx = Math.max(0, Math.min(totalItems - 1, index));
@@ -121,58 +71,112 @@ export function BoundedParallaxSlider({
     };
     setActiveIndex(safeIdx);
     activeIndexRef.current = safeIdx;
-  };
-
-  const updatePositions = () => {
-    const s = state.current;
-    const h = s.projectHeight || 1;
-
-    // Update main cards
-    projectsRef.current.forEach((el, index) => {
-      const y = index * h + s.currentY;
-      el.style.transform = `translate3d(0, ${y}px, 0)`;
-      const img = el.querySelector("img");
-      if (img) {
-        updateParallax(img, s.currentY, index, h);
-      }
-    });
-
-    // Sync active index for UI dots
-    const curIdx = Math.max(0, Math.min(totalItems - 1, Math.round(-s.currentY / h)));
-    if (curIdx !== activeIndexRef.current) {
-      activeIndexRef.current = curIdx;
-      setActiveIndex(curIdx);
-    }
-  };
-
-  const animate = () => {
-    const s = state.current;
-    const now = Date.now();
-    const h = s.projectHeight || 1;
-    const maxBound = -(totalItems - 1) * h;
-
-    // Clamp target within bounds
-    s.targetY = Math.max(maxBound, Math.min(0, s.targetY));
-
-    if (!s.isSnapping && now - s.lastScrollTime > 140) {
-      const snapPoint =
-        -Math.max(0, Math.min(totalItems - 1, Math.round(-s.targetY / h))) * h;
-      if (Math.abs(s.targetY - snapPoint) > 1) snapToProject();
-    }
-
-    if (s.isSnapping) updateSnap();
-    s.currentY += (s.targetY - s.currentY) * CONFIG.LERP_FACTOR;
-
-    updatePositions();
-  };
-
-  const animationLoop = () => {
-    animate();
-    requestRef.current = requestAnimationFrame(animationLoop);
-  };
+  }, [totalItems]);
 
   React.useEffect(() => {
     const el = containerRef.current;
+    if (!el) return;
+
+    state.current.projectHeight = el.offsetHeight || 520;
+    state.current.lastScrollTime = Date.now();
+
+    const updateParallax = (
+      img: HTMLElement | null,
+      scroll: number,
+      index: number,
+      height: number
+    ) => {
+      if (!img) return;
+      if (!img.dataset.parallaxCurrent) {
+        img.dataset.parallaxCurrent = "0";
+      }
+
+      let current = parseFloat(img.dataset.parallaxCurrent);
+      const target = (-scroll - index * height) * 0.22;
+      current = lerp(current, target, 0.1);
+
+      if (Math.abs(current - target) > 0.01) {
+        img.style.transform = `translate3d(0, ${current}px, 0) scale(1.12)`;
+        img.dataset.parallaxCurrent = current.toString();
+      }
+    };
+
+    const updateSnap = () => {
+      const s = state.current;
+      const progress = Math.min(
+        (Date.now() - s.snapStart.time) / CONFIG.SNAP_DURATION,
+        1
+      );
+      // Smooth cubic ease-out
+      const eased = 1 - Math.pow(1 - progress, 3);
+      s.targetY =
+        s.snapStart.y + (s.snapStart.target - s.snapStart.y) * eased;
+      if (progress >= 1) s.isSnapping = false;
+    };
+
+    const snapToProject = () => {
+      const s = state.current;
+      const h = s.projectHeight || 1;
+      const current = Math.max(
+        0,
+        Math.min(totalItems - 1, Math.round(-s.targetY / h))
+      );
+      const target = -current * h;
+      s.isSnapping = true;
+      s.snapStart = {
+        time: Date.now(),
+        y: s.targetY,
+        target: target,
+      };
+    };
+
+    const updatePositions = () => {
+      const s = state.current;
+      const h = s.projectHeight || 1;
+
+      // Update main cards
+      projectsRef.current.forEach((projectEl, index) => {
+        const y = index * h + s.currentY;
+        projectEl.style.transform = `translate3d(0, ${y}px, 0)`;
+        const img = projectEl.querySelector("img");
+        if (img) {
+          updateParallax(img, s.currentY, index, h);
+        }
+      });
+
+      // Sync active index for UI dots
+      const curIdx = Math.max(0, Math.min(totalItems - 1, Math.round(-s.currentY / h)));
+      if (curIdx !== activeIndexRef.current) {
+        activeIndexRef.current = curIdx;
+        setActiveIndex(curIdx);
+      }
+    };
+
+    const animate = () => {
+      const s = state.current;
+      const now = Date.now();
+      const h = s.projectHeight || 1;
+      const maxBound = -(totalItems - 1) * h;
+
+      // Clamp target within bounds
+      s.targetY = Math.max(maxBound, Math.min(0, s.targetY));
+
+      if (!s.isSnapping && now - s.lastScrollTime > 140) {
+        const snapPoint =
+          -Math.max(0, Math.min(totalItems - 1, Math.round(-s.targetY / h))) * h;
+        if (Math.abs(s.targetY - snapPoint) > 1) snapToProject();
+      }
+
+      if (s.isSnapping) updateSnap();
+      s.currentY += (s.targetY - s.currentY) * CONFIG.LERP_FACTOR;
+
+      updatePositions();
+    };
+
+    const animationLoop = () => {
+      animate();
+      requestRef.current = requestAnimationFrame(animationLoop);
+    };
     if (!el) return;
 
     state.current.projectHeight = el.offsetHeight || 520;

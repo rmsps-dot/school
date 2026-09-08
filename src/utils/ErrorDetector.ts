@@ -32,14 +32,6 @@ export async function logErrorToSystem(err: unknown, context: string = 'Unknown 
   const humanReadableMessage = parseError(err)
   
   const errorObj = (typeof err === 'object' && err !== null) ? err as { code?: string, stack?: string } : {};
-  
-  const logData = {
-    timestamp,
-    context,
-    userMessage: humanReadableMessage,
-    rawError: err,
-    stack: errorObj.stack || 'No stack trace available'
-  }
 
   // 1. Log beautifully to Terminal
   console.error('\n==================== [ RMSPS ERROR DETECTOR ] ====================')
@@ -47,6 +39,7 @@ export async function logErrorToSystem(err: unknown, context: string = 'Unknown 
   console.error(`[CONTEXT]: ${context}`)
   console.error(`[MESSAGE]: ${humanReadableMessage}`)
   if (errorObj.code) console.error(`[DB CODE]: ${errorObj.code}`)
+  if (errorObj.stack) console.error(`[STACK]:   ${errorObj.stack}`)
   console.error('==================================================================\n')
 
   // 2. Append to physical log file for the AI/Developer to inspect

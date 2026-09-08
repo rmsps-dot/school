@@ -31,16 +31,21 @@ export default function ChatWindow({ currentUserId, recipient, isAdmin = false, 
     setTimeout(() => inputRef.current?.focus(), 50)
   }
 
+  // Adjust state when recipient changes
+  const [prevRecipientId, setPrevRecipientId] = useState(recipient?.id)
+  if (prevRecipientId !== recipient?.id) {
+    setPrevRecipientId(recipient?.id)
+    setMessages([])
+    if (recipient) {
+      setIsLoading(true)
+    }
+  }
+
   // Load History
   useEffect(() => {
-    if (!recipient) {
-      setMessages([])
-      return
-    }
+    if (!recipient) return
 
     let isMounted = true
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    setIsLoading(true)
 
     getMessageHistory(recipient.id).then(({ data, error }) => {
       if (!isMounted) return

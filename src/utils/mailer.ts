@@ -10,6 +10,17 @@ const transporter = nodemailer.createTransport({
   },
 })
 
+function escapeHtml(str: string): string {
+  if (!str) return ''
+  return String(str).replace(/[&<>"']/g, (m) => ({
+    '&': '&amp;',
+    '<': '&lt;',
+    '>': '&gt;',
+    '"': '&quot;',
+    "'": '&#039;',
+  }[m] || m))
+}
+
 function getSchoolHeaderHtml(title: string, subtitle?: string): string {
   const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://rmsps.vercel.app'
   return `
@@ -21,9 +32,9 @@ function getSchoolHeaderHtml(title: string, subtitle?: string): string {
         Residential Maa Saraswati Public School
       </h1>
       <div style="display: inline-block; background-color: #D4AF6A; color: #0B0B10; padding: 4px 14px; border-radius: 9999px; font-size: 11px; font-weight: bold; letter-spacing: 0.6px; text-transform: uppercase; margin-bottom: 4px;">
-        ${title}
+        ${escapeHtml(title)}
       </div>
-      ${subtitle ? `<p style="color: #E2E8F0; margin: 6px 0 0 0; font-size: 12px; opacity: 0.95;">${subtitle}</p>` : ''}
+      ${subtitle ? `<p style="color: #E2E8F0; margin: 6px 0 0 0; font-size: 12px; opacity: 0.95;">${escapeHtml(subtitle)}</p>` : ''}
     </div>
   `
 }

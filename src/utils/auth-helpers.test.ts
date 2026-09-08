@@ -45,6 +45,42 @@ describe('Auth Helpers RBAC', () => {
     if (!res2.ok) expect(res2.error).toContain('Forbidden')
   })
 
+  it('requireTeacher allows teacher and blocks others', async () => {
+    mockGetUser.mockResolvedValue({ data: { user: { id: 'teacher-123' } } })
+    mockSingle.mockResolvedValue({ data: { role: 'teacher', id: 'teacher-123' } })
+
+    const res = await requireTeacher()
+    expect(res.ok).toBe(true)
+
+    mockSingle.mockResolvedValue({ data: { role: 'student', id: 'student-123' } })
+    const res2 = await requireTeacher()
+    expect(res2.ok).toBe(false)
+  })
+
+  it('requireStudent allows student and blocks others', async () => {
+    mockGetUser.mockResolvedValue({ data: { user: { id: 'student-123' } } })
+    mockSingle.mockResolvedValue({ data: { role: 'student', id: 'student-123' } })
+
+    const res = await requireStudent()
+    expect(res.ok).toBe(true)
+
+    mockSingle.mockResolvedValue({ data: { role: 'parent', id: 'parent-123' } })
+    const res2 = await requireStudent()
+    expect(res2.ok).toBe(false)
+  })
+
+  it('requireParent allows parent and blocks others', async () => {
+    mockGetUser.mockResolvedValue({ data: { user: { id: 'parent-123' } } })
+    mockSingle.mockResolvedValue({ data: { role: 'parent', id: 'parent-123' } })
+
+    const res = await requireParent()
+    expect(res.ok).toBe(true)
+
+    mockSingle.mockResolvedValue({ data: { role: 'admin', id: 'admin-123' } })
+    const res2 = await requireParent()
+    expect(res2.ok).toBe(false)
+  })
+
   it('requireTeacherForClass allows assigned teacher', async () => {
     mockGetUser.mockResolvedValue({ data: { user: { id: 't-123' } } })
     

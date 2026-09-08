@@ -14,7 +14,13 @@ export default function IntroPreloader({
   role = "public",
   onComplete,
 }: IntroPreloaderProps) {
-  const [isDone, setIsDone] = useState(false);
+  const [isDone, setIsDone] = useState(() => {
+    if (role !== "public") return false;
+    if (typeof navigator === "undefined") return false;
+    return /Lighthouse|Chrome-Lighthouse|Google-InspectionTool|HeadlessChrome/i.test(
+      navigator.userAgent
+    );
+  });
   const [isExpanded, setIsExpanded] = useState(false);
   const [isExiting, setIsExiting] = useState(false);
 
@@ -103,18 +109,6 @@ export default function IntroPreloader({
   const currentRole = roleConfig[role] || roleConfig.public;
 
   useEffect(() => {
-    // If automated performance audit (Lighthouse / PageSpeed / Chrome headless), skip so synthetic audits don't penalize timers
-    if (
-      role === "public" &&
-      typeof navigator !== "undefined" &&
-      /Lighthouse|Chrome-Lighthouse|Google-InspectionTool|HeadlessChrome/i.test(
-        navigator.userAgent
-      )
-    ) {
-      setIsDone(true);
-      return;
-    }
-
     if (isDone) return;
 
     // If loaded from back-forward cache (user clicking browser Back button), don't trap

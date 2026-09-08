@@ -223,12 +223,14 @@ function LoginForm() {
   const [loginSuccessRole, setLoginSuccessRole] = useState<Role | null>(null);
 
   // Sync role whenever URL search parameter changes
-  useEffect(() => {
+  const [prevRoleParam, setPrevRoleParam] = useState(roleParam);
+  if (prevRoleParam !== roleParam) {
+    setPrevRoleParam(roleParam);
     if (roleParam && validRoles.includes(roleParam)) {
       setSelectedRole(roleParam);
       setError(null);
     }
-  }, [roleParam]);
+  }
 
   // Auto-redirect if already logged in
   useEffect(() => {

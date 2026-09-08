@@ -168,12 +168,13 @@ export default function LocationMapPicker({
       script.onerror = () => setMapError('Failed to load interactive map engine.')
       document.body.appendChild(script)
     } else {
-      setMapLoaded(true)
+      const timer = setTimeout(() => setMapLoaded(true), 0)
+      return () => clearTimeout(timer)
     }
   }, [])
 
   // Create custom marker icon
-  const createMarkerIcon = (L: any) => {
+  const createMarkerIcon = (L: { divIcon: (options: { className?: string; html?: string; iconSize?: [number, number]; iconAnchor?: [number, number] }) => unknown }) => {
     return L.divIcon({
       className: 'custom-map-pin',
       html: `

@@ -1,13 +1,12 @@
 'use client'
 
-import React, { useState, useRef, useEffect, useTransition } from 'react'
+import React, { useState, useRef, useTransition, useSyncExternalStore } from 'react'
 import { createPortal } from 'react-dom'
 import Image from 'next/image'
 import Cropper from 'react-easy-crop'
-import { motion, AnimatePresence } from 'framer-motion'
+import { motion } from 'framer-motion'
 import {
   Upload,
-  Plus,
   Trash2,
   Image as ImageIcon,
   Loader2,
@@ -19,7 +18,6 @@ import {
   Eye,
   Calendar,
   AlertCircle,
-  Maximize2,
   Sparkles,
 } from 'lucide-react'
 import { deleteGalleryItem, type GalleryItem, type GalleryCategory } from '@/actions/gallery-actions'
@@ -108,12 +106,7 @@ export default function AdminGalleryClient({ initialItems }: Props) {
   const [zoom, setZoom] = useState(1)
   const [aspectRatio, setAspectRatio] = useState<number | undefined>(16 / 9)
   const [croppedAreaPixels, setCroppedAreaPixels] = useState<{ width: number; height: number; x: number; y: number } | null>(null)
-  const [mounted, setMounted] = useState(() => typeof window !== 'undefined')
-
-  // eslint-disable-next-line react-hooks/set-state-in-effect
-  useEffect(() => {
-    setMounted(true)
-  }, [])
+  const mounted = useSyncExternalStore(() => () => {}, () => true, () => false)
 
   // Handle file select
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {

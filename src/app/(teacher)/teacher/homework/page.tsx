@@ -19,7 +19,7 @@ export default async function TeacherHomeworkPage() {
           <BookOpen className="w-8 h-8 text-violet-400" /> Daily Homework
         </h1>
         <p className="text-mist mt-2 text-sm max-w-xl">
-          Assign homework to your classes and track what you've assigned over the past 7 days.
+          Assign homework to your classes and track what you&apos;ve assigned over the past 7 days.
         </p>
       </div>
 

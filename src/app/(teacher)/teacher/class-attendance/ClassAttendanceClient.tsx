@@ -44,18 +44,20 @@ export default function ClassAttendanceClient({ classes, timeWindow }: Props) {
   const canEdit = isToday() && isTimeAllowed()
 
   useEffect(() => {
+    let isMounted = true
+
     if (selectedDate && selectedClass) {
-      const updateStates = () => {
+      const timer = setTimeout(() => {
         setErrorMsg('')
         setSuccessMsg('')
         setLoadingData(true)
-      }
-      updateStates()
+      }, 0)
       
       Promise.all([
         getStudentsByClass(selectedClass),
         getStudentAttendance(selectedClass, selectedDate)
       ]).then(([studentsRes, attRes]) => {
+        if (!isMounted) return
         setLoadingData(false)
         if (studentsRes.data) setStudents(studentsRes.data)
         
@@ -69,9 +71,20 @@ export default function ClassAttendanceClient({ classes, timeWindow }: Props) {
           setAttendance({})
         }
       })
+
+      return () => {
+        isMounted = false
+        clearTimeout(timer)
+      }
     } else {
-      setStudents([])
-      setAttendance({})
+      const timer = setTimeout(() => {
+        setStudents([])
+        setAttendance({})
+      }, 0)
+      return () => {
+        isMounted = false
+        clearTimeout(timer)
+      }
     }
   }, [selectedClass, selectedDate])
 
