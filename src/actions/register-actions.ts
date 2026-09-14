@@ -41,20 +41,42 @@ export async function submitRegistration(data: RegistrationPayload): Promise<{ s
     }
 
     // 4. Check if this email already has an approved/pending registration
-    const { data: existing } = await supabaseAdmin
+    const { data: existingList } = await supabaseAdmin
       .from('pending_registrations')
       .select('id, status')
       .eq('student_email', data.studentEmail.toLowerCase())
       .in('status', ['pending', 'approved'])
-      .maybeSingle()
 
-    if (existing) {
-      return {
-        success: false,
-        error: existing.status === 'approved'
-          ? 'This email already has an approved account. Please login instead.'
-          : 'A pending application already exists for this email.'
+    if (existingList && existingList.length > 0) {
+      // Check if there is an actual active student enrolled with this account
+      const { data: activeStudent } = await supabaseAdmin
+        .from('students')
+        .select('id')
+        .eq('profile_id', user.id)
+        .maybeSingle()
+
+      if (activeStudent) {
+        return {
+          success: false,
+          error: 'This email already has an approved account. Please login instead.'
+        }
       }
+
+      // If there is an active 'pending' application waiting for review:
+      const pendingApp = existingList.find(r => r.status === 'pending')
+      if (pendingApp) {
+        return {
+          success: false,
+          error: 'A pending application already exists for this email.'
+        }
+      }
+
+      // If status was 'approved' but NO active student exists in 'students' table,
+      // it means the student was deleted previously. Clear stale historical records!
+      await supabaseAdmin
+        .from('pending_registrations')
+        .delete()
+        .eq('student_email', data.studentEmail.toLowerCase())
     }
 
     // 5. Insert into pending_registrations
