@@ -21,77 +21,85 @@ export default function ResetPasswordPage() {
 
   useEffect(() => {
     let mounted = true
+    let isTerminalError = false
 
     const verifyRecoverySession = async () => {
       try {
-        // 1. Check URL parameters for PKCE code or recovery hash
         if (typeof window !== 'undefined') {
-          const urlParams = new URLSearchParams(window.location.search)
-          const code = urlParams.get('code')
-          const errorParam = urlParams.get('error_description') || urlParams.get('error')
+          const searchParams = new URLSearchParams(window.location.search)
+          const hashString = window.location.hash.startsWith('#')
+            ? window.location.hash.substring(1)
+            : window.location.hash
+          const hashParams = new URLSearchParams(hashString)
 
-          if (errorParam) {
+          // 1. Check for errors in search params or URL hash
+          const errorDescription = searchParams.get('error_description') || hashParams.get('error_description')
+          const errorCode = searchParams.get('error_code') || hashParams.get('error_code')
+          const errorParam = searchParams.get('error') || hashParams.get('error')
+
+          if (errorDescription || errorCode || errorParam) {
+            isTerminalError = true
+            const rawMsg = errorDescription || errorParam || ''
+            const decoded = rawMsg ? decodeURIComponent(rawMsg.replace(/\+/g, ' ')) : ''
+            const finalMsg = errorCode === 'otp_expired'
+              ? 'This password reset link has expired or has already been used. Please request a new one.'
+              : decoded || 'Invalid or expired reset link. Please request a new one.'
+
             if (mounted) {
-              setError(decodeURIComponent(errorParam))
+              setError(finalMsg)
+              setTargetEmail(null)
               setIsVerifying(false)
             }
             return
           }
 
-          // If PKCE code exists in search params, exchange it for a fresh session
+          // 2. PKCE flow: code in search params
+          const code = searchParams.get('code')
           if (code) {
             const { data: exchangeData, error: exchangeError } = await supabase.auth.exchangeCodeForSession(code)
             if (exchangeError) {
+              isTerminalError = true
               if (mounted) {
                 setError(exchangeError.message || 'Invalid or expired reset link. Please request a new one.')
+                setTargetEmail(null)
                 setIsVerifying(false)
               }
               return
             }
             if (exchangeData?.user?.email && mounted) {
               setTargetEmail(exchangeData.user.email)
+              setError('')
               setIsVerifying(false)
               return
             }
           }
 
-          // Check hash for error (some Supabase setups pass errors in hash)
-          const hash = window.location.hash
-          if (hash && hash.includes('error_description=')) {
-            const hashParams = new URLSearchParams(hash.substring(1))
-            const hashError = hashParams.get('error_description')
-            if (hashError && mounted) {
-              setError(decodeURIComponent(hashError.replace(/\+/g, ' ')))
-              setIsVerifying(false)
-              return
-            }
+          // 3. Implicit flow: check if hash explicitly specifies recovery type
+          const hashType = hashParams.get('type')
+          const accessToken = hashParams.get('access_token')
+          if (accessToken && hashType === 'recovery') {
+            // Supabase JS parses hash automatically and fires onAuthStateChange with PASSWORD_RECOVERY
+            // Let the auth listener handle it
+          } else if (!code) {
+            // Neither PKCE code nor recovery hash present
+            // Give a short grace period for Supabase hash parser, then verify if recovery occurred
+            setTimeout(async () => {
+              if (!mounted || isTerminalError) return
+              // DO NOT blindly take ambient logged-in user session if there was no recovery
+              if (!targetEmail) {
+                setError('No active password reset request found. Please open the link sent to your email or request a new one.')
+                setTargetEmail(null)
+                setIsVerifying(false)
+              }
+            }, 1200)
+            return
           }
-        }
-
-        // 2. Check current active recovery session
-        const { data: { session } } = await supabase.auth.getSession()
-
-        if (session?.user?.email) {
-          if (mounted) {
-            setTargetEmail(session.user.email)
-            setIsVerifying(false)
-          }
-        } else {
-          // Give Supabase hash parser a moment (for implicit grant #access_token=)
-          setTimeout(async () => {
-            if (!mounted) return
-            const { data: { session: delayedSession } } = await supabase.auth.getSession()
-            if (delayedSession?.user?.email) {
-              setTargetEmail(delayedSession.user.email)
-            } else {
-              setError('Invalid or expired reset link. Please request a new one.')
-            }
-            setIsVerifying(false)
-          }, 1200)
         }
       } catch (err) {
         if (mounted) {
+          isTerminalError = true
           setError(err instanceof Error ? err.message : 'Failed to verify reset session.')
+          setTargetEmail(null)
           setIsVerifying(false)
         }
       }
@@ -99,10 +107,12 @@ export default function ResetPasswordPage() {
 
     verifyRecoverySession()
 
-    // Listen for auth state change (e.g. PASSWORD_RECOVERY event)
+    // Listen STRICTLY for PASSWORD_RECOVERY auth event
+    // Never allow ambient INITIAL_SESSION / SIGNED_IN of an existing user (e.g. Admin) to hijack targetEmail
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
-      if (!mounted) return
-      if (session?.user?.email) {
+      if (!mounted || isTerminalError) return
+
+      if (event === 'PASSWORD_RECOVERY' && session?.user?.email) {
         setTargetEmail(session.user.email)
         setError('')
         setIsVerifying(false)
@@ -113,7 +123,7 @@ export default function ResetPasswordPage() {
       mounted = false
       subscription.unsubscribe()
     }
-  }, [])
+  }, [targetEmail])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -189,7 +199,7 @@ export default function ResetPasswordPage() {
           </div>
 
           {/* 1. Transparent Account Target Badge */}
-          {targetEmail && !success && (
+          {targetEmail && !success && !error && !isVerifying && (
             <div className="mb-6 p-3 rounded-2xl bg-white/[0.03] border border-hairline flex items-center gap-3">
               <div className="w-8 h-8 rounded-xl bg-gold/10 border border-gold/20 flex items-center justify-center shrink-0">
                 <Mail className="w-4 h-4 text-gold" />

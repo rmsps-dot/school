@@ -4,6 +4,8 @@ import { createClient } from '@/utils/supabase/server'
 import { supabaseAdmin as adminClient } from '@/utils/supabase/admin'
 import { revalidatePath } from 'next/cache'
 import { requireAdmin } from '@/utils/auth-helpers'
+import { randomBytes } from 'crypto'
+import { sendParentCredentials } from '@/utils/mailer'
 
 function getAdminAuthClient() {
   return adminClient
@@ -189,12 +191,70 @@ export async function deleteStudent(profileId: string) {
   if (!auth.ok) return { error: auth.error }
 
   const adminAuthClient = getAdminAuthClient()
-  const { error } = await adminAuthClient.auth.admin.deleteUser(profileId)
-  
-  if (error) return { error: error.message }
 
-  revalidatePath('/admin/students')
-  return { success: true }
+  try {
+    // 1. Fetch user's email from Auth to clean up pending_registrations
+    const { data: userData } = await adminAuthClient.auth.admin.getUserById(profileId)
+    const email = userData?.user?.email
+
+    // 2. Find student record in 'students' table
+    const { data: sRow } = await adminAuthClient
+      .from('students')
+      .select('id, student_id')
+      .eq('profile_id', profileId)
+      .maybeSingle()
+
+    if (sRow?.id) {
+      await adminAuthClient.from('parent_students').delete().eq('student_id', sRow.id)
+      await adminAuthClient.from('student_attendance').delete().eq('student_id', sRow.id)
+      await adminAuthClient.from('results').delete().eq('student_id', sRow.id)
+      if (sRow.student_id) {
+        await adminAuthClient.from('student_fees').delete().eq('student_id', sRow.student_id)
+      }
+      await adminAuthClient.from('students').delete().eq('id', sRow.id)
+    }
+
+    // 3. Clean up pending_registrations for this email or mobile so student can re-register
+    if (email) {
+      await adminAuthClient
+        .from('pending_registrations')
+        .delete()
+        .ilike('student_email', email.trim())
+    } else {
+      const { data: prof } = await adminAuthClient
+        .from('profiles')
+        .select('mobile')
+        .eq('id', profileId)
+        .maybeSingle()
+      if (prof?.mobile) {
+        await adminAuthClient
+          .from('pending_registrations')
+          .delete()
+          .eq('student_mobile', prof.mobile)
+      }
+    }
+
+    // 4. Clean up other user relations
+    await adminAuthClient.from('profile_change_requests').delete().eq('user_id', profileId)
+    await adminAuthClient.from('messages').delete().or(`sender_id.eq.${profileId},receiver_id.eq.${profileId}`)
+
+    // 5. Delete profile record
+    await adminAuthClient.from('profiles').delete().eq('id', profileId)
+
+    // 6. Delete from Supabase Auth (ignore if already deleted manually)
+    const { error: authErr } = await adminAuthClient.auth.admin.deleteUser(profileId)
+    if (authErr && !authErr.message.toLowerCase().includes('not found')) {
+      return { error: authErr.message }
+    }
+
+    revalidatePath('/admin/students')
+    revalidatePath('/admin/requests')
+    revalidatePath('/admin')
+    return { success: true }
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : 'Failed to delete student'
+    return { error: msg }
+  }
 }
 
 // --------------------------------------------------------------------------------
@@ -441,12 +501,35 @@ export async function deleteTeacher(profileId: string) {
   if (!auth.ok) return { error: auth.error }
 
   const adminAuthClient = getAdminAuthClient()
-  const { error } = await adminAuthClient.auth.admin.deleteUser(profileId)
-  
-  if (error) return { error: error.message }
 
-  revalidatePath('/admin/teachers')
-  return { success: true }
+  try {
+    const { data: tRow } = await adminAuthClient
+      .from('teachers')
+      .select('id')
+      .eq('profile_id', profileId)
+      .maybeSingle()
+
+    if (tRow?.id) {
+      await adminAuthClient.from('teacher_classes').delete().eq('teacher_id', tRow.id)
+      await adminAuthClient.from('teacher_attendance').delete().eq('teacher_id', tRow.id)
+      await adminAuthClient.from('teachers').delete().eq('id', tRow.id)
+    }
+
+    await adminAuthClient.from('profile_change_requests').delete().eq('user_id', profileId)
+    await adminAuthClient.from('messages').delete().or(`sender_id.eq.${profileId},receiver_id.eq.${profileId}`)
+    await adminAuthClient.from('profiles').delete().eq('id', profileId)
+
+    const { error: authErr } = await adminAuthClient.auth.admin.deleteUser(profileId)
+    if (authErr && !authErr.message.toLowerCase().includes('not found')) {
+      return { error: authErr.message }
+    }
+
+    revalidatePath('/admin/teachers')
+    return { success: true }
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : 'Failed to delete teacher'
+    return { error: msg }
+  }
 }
 
 // --------------------------------------------------------------------------------
@@ -516,12 +599,34 @@ export async function deleteParent(profileId: string) {
   if (!auth.ok) return { error: auth.error }
 
   const adminAuthClient = getAdminAuthClient()
-  const { error } = await adminAuthClient.auth.admin.deleteUser(profileId)
-  
-  if (error) return { error: error.message }
 
-  revalidatePath('/admin/parents')
-  return { success: true }
+  try {
+    const { data: pRow } = await adminAuthClient
+      .from('parents')
+      .select('id')
+      .eq('profile_id', profileId)
+      .maybeSingle()
+
+    if (pRow?.id) {
+      await adminAuthClient.from('parent_students').delete().eq('parent_id', pRow.id)
+      await adminAuthClient.from('parents').delete().eq('id', pRow.id)
+    }
+
+    await adminAuthClient.from('profile_change_requests').delete().eq('user_id', profileId)
+    await adminAuthClient.from('messages').delete().or(`sender_id.eq.${profileId},receiver_id.eq.${profileId}`)
+    await adminAuthClient.from('profiles').delete().eq('id', profileId)
+
+    const { error: authErr } = await adminAuthClient.auth.admin.deleteUser(profileId)
+    if (authErr && !authErr.message.toLowerCase().includes('not found')) {
+      return { error: authErr.message }
+    }
+
+    revalidatePath('/admin/parents')
+    return { success: true }
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : 'Failed to delete parent'
+    return { error: msg }
+  }
 }
 
 export async function sendPasswordResetLink(profileId: string) {
@@ -563,3 +668,102 @@ export async function linkStudentToParent(parentTableId: string, studentProfileI
   revalidatePath('/admin/parents')
   return { success: true }
 }
+
+interface LinkedStudentProfileItem {
+  students: {
+    profiles: { full_name: string | null }[] | { full_name: string | null } | null
+  } | null
+}
+
+export async function sendParentDirectCredentials(
+  profileId: string,
+  customPassword?: string
+): Promise<{
+  success?: boolean
+  error?: string
+  email?: string
+  password?: string
+  emailSent?: boolean
+  emailError?: string
+}> {
+  const auth = await requireAdmin()
+  if (!auth.ok) return { error: auth.error }
+  const adminAuthClient = getAdminAuthClient()
+
+  // 1. Get user from Supabase Auth
+  const { data: userData, error: userError } = await adminAuthClient.auth.admin.getUserById(profileId)
+  if (userError || !userData?.user?.email) {
+    return { error: userError?.message || 'Parent user account not found in Auth system' }
+  }
+
+  const email = userData.user.email
+
+  // 2. Generate password or use custom password
+  const newPassword =
+    customPassword && customPassword.trim().length >= 6
+      ? customPassword.trim()
+      : `RMSPS@${randomBytes(4).toString('hex')}!`
+
+  // 3. Update password directly in Supabase Auth
+  const { error: updateError } = await adminAuthClient.auth.admin.updateUserById(profileId, {
+    password: newPassword,
+  })
+
+  if (updateError) {
+    return { error: `Failed to set parent password: ${updateError.message}` }
+  }
+
+  // 4. Get parent profile name and linked student name(s)
+  const { data: profile } = await adminAuthClient
+    .from('profiles')
+    .select('full_name')
+    .eq('id', profileId)
+    .maybeSingle()
+
+  const { data: parentRow } = await adminAuthClient
+    .from('parents')
+    .select('id')
+    .eq('profile_id', profileId)
+    .maybeSingle()
+
+  let studentNames = 'your child'
+  if (parentRow?.id) {
+    const { data: linked } = await adminAuthClient
+      .from('parent_students')
+      .select('students (profiles (full_name))')
+      .eq('parent_id', parentRow.id)
+
+    if (linked && linked.length > 0) {
+      const names = (linked as unknown as LinkedStudentProfileItem[])
+        ?.map((item) => {
+          const prof = item?.students?.profiles
+          if (Array.isArray(prof)) return prof[0]?.full_name
+          return prof?.full_name
+        })
+        .filter((n): n is string => typeof n === 'string' && n.length > 0)
+
+      if (names && names.length > 0) {
+        studentNames = names.join(', ')
+      }
+    }
+  }
+
+  // 5. Send credentials via email using our verified Gmail SMTP
+  const emailRes = await sendParentCredentials(
+    email,
+    profile?.full_name || 'Parent',
+    studentNames,
+    newPassword
+  )
+
+  revalidatePath('/admin/parents')
+
+  return {
+    success: true,
+    email,
+    password: newPassword,
+    emailSent: emailRes.success,
+    emailError: emailRes.error,
+  }
+}
+

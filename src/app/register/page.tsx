@@ -138,16 +138,20 @@ function OtpVerifyScreen({ email, onSuccess }: { email: string; onSuccess: () =>
     if (otp.trim().length < 6) { setError("Please enter the complete OTP."); setSuccessMsg(""); return; }
     setLoading(true); setError(""); setSuccessMsg("");
     
-    // First, check if already verified (handles double-clicks and state sync issues)
-    const { data: { session } } = await supabase.auth.getSession();
-    
-    if (!session || session.user.email?.toLowerCase() !== email.toLowerCase()) {
-      const { error: err } = await supabase.auth.verifyOtp({ email, token: otp.trim(), type: "signup" });
-      if (err) { setLoading(false); setError(err.message); return; }
-      
-      // Give the browser client a moment to flush cookies before server action is called
-      await new Promise(r => setTimeout(r, 800));
+    const { error: err } = await supabase.auth.verifyOtp({
+      email: email.trim().toLowerCase(),
+      token: otp.trim(),
+      type: "signup"
+    });
+
+    if (err) {
+      setLoading(false);
+      setError(err.message);
+      return;
     }
+    
+    // Give the browser client a moment to flush cookies before server action is called
+    await new Promise(r => setTimeout(r, 800));
     
     // Call server action
     let res = await onSuccess();
@@ -229,23 +233,17 @@ function OtpVerifyScreen({ email, onSuccess }: { email: string; onSuccess: () =>
             onClick={async () => { 
                 setError("");
                 setSuccessMsg("");
-                
-                // If user is already verified, proceed instead of throwing token error
-                const { data: { session } } = await supabase.auth.getSession();
-                if (session && session.user.email?.toLowerCase() === email.toLowerCase()) {
-                   setLoading(true);
-                   const res = await onSuccess();
-                   setLoading(false);
-                   if (res && !res.success) {
-                     setError(res.error || "Verification failed");
-                   }
-                   return;
-                }
-                
                 setOtpCooldown(60); 
-                const { error: resendErr } = await supabase.auth.resend({ type: "signup", email }); 
+                
+                const { error: resendErr } = await supabase.auth.resend({ 
+                  type: "signup", 
+                  email: email.trim().toLowerCase() 
+                }); 
                 if (resendErr) {
-                  setError(resendErr.message);
+                  const msg = (!resendErr.message || resendErr.message === '{}')
+                    ? 'Failed to resend verification email. Please try again later.'
+                    : resendErr.message;
+                  setError(msg);
                   setOtpCooldown(0);
                 } else {
                   setSuccessMsg("OTP resent successfully!");
@@ -314,6 +312,8 @@ export default function RegisterPage() {
     const err = validateStep2();
     if (err) { setError(err); return; }
     setError(""); setLoading(true);
+    // Clear any stale local auth session before initiating signup
+    await supabase.auth.signOut();
 
     const { error: otpErr } = await supabase.auth.signUp({
       email: form.studentEmail.trim(),
@@ -322,7 +322,13 @@ export default function RegisterPage() {
     });
 
     setLoading(false);
-    if (otpErr) { setError(otpErr.message); return; }
+    if (otpErr) {
+      const msg = (!otpErr.message || otpErr.message === '{}')
+        ? 'Failed to send verification email. The email service might be temporarily unavailable. Please try again or contact administration.'
+        : otpErr.message;
+      setError(msg);
+      return;
+    }
     setOtpSent(true);
     setStep(3);
   }

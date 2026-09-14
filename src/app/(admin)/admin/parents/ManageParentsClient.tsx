@@ -3,9 +3,9 @@
 import { useState, useTransition } from 'react'
 import Image from 'next/image'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Search, Users, Trash2, Loader2, UserX, AlertCircle, Link as LinkIcon, Mail, Plus, UserCircle, Pencil } from 'lucide-react'
+import { Search, Users, Trash2, Loader2, UserX, AlertCircle, Link as LinkIcon, Mail, Plus, UserCircle, Pencil, Key, Copy, Check, RefreshCw, ShieldCheck, Eye, EyeOff } from 'lucide-react'
 import Link from 'next/link'
-import { deleteParent, sendPasswordResetLink, linkStudentToParent } from '@/actions/user-management-actions'
+import { deleteParent, sendPasswordResetLink, linkStudentToParent, sendParentDirectCredentials } from '@/actions/user-management-actions'
 
 export interface ParentRecord {
   id: string
@@ -50,8 +50,80 @@ export default function ManageParentsClient({ parents: initialParents, students 
   const [isEditModalOpen, setIsEditModalOpen] = useState(false)
   const [selectedParentForEdit, setSelectedParentForEdit] = useState<ParentRecord | null>(null)
 
+  // Direct Credentials Modal State
+  const [credentialsModal, setCredentialsModal] = useState<{
+    parent: ParentRecord
+    generatedPassword?: string
+    emailSent?: boolean
+    emailError?: string
+    isComplete?: boolean
+  } | null>(null)
+  const [customPasswordInput, setCustomPasswordInput] = useState('')
+  const [showPasswordText, setShowPasswordText] = useState(false)
+  const [credError, setCredError] = useState('')
+  const [isCopied, setIsCopied] = useState(false)
+
   // Image Error State
   const [imageErrors, setImageErrors] = useState<Record<string, boolean>>({})
+
+  const generateRandomPassword = () => {
+    const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnpqrstuvwxyz23456789'
+    let rand = ''
+    for (let i = 0; i < 6; i++) {
+      rand += chars.charAt(Math.floor(Math.random() * chars.length))
+    }
+    return `RMSPS@${rand}!`
+  }
+
+  const openCredentialsModal = (p: ParentRecord) => {
+    const defaultPw = generateRandomPassword()
+    setCustomPasswordInput(defaultPw)
+    setCredError('')
+    setIsCopied(false)
+    setShowPasswordText(false)
+    setCredentialsModal({ parent: p, isComplete: false })
+  }
+
+  const handleSendDirectCredentials = async () => {
+    if (!credentialsModal?.parent) return
+    const pw = customPasswordInput.trim()
+    if (!pw || pw.length < 6) {
+      setCredError('Password must be at least 6 characters long.')
+      return
+    }
+    setCredError('')
+    startTransition(async () => {
+      const res = await sendParentDirectCredentials(credentialsModal.parent.id, pw)
+      if (res.error) {
+        setCredError(res.error)
+      } else {
+        setCredentialsModal((prev) =>
+          prev
+            ? {
+                ...prev,
+                generatedPassword: res.password,
+                emailSent: res.emailSent,
+                emailError: res.emailError,
+                isComplete: true,
+              }
+            : null
+        )
+      }
+    })
+  }
+
+  const handleCopyCredentials = () => {
+    if (!credentialsModal?.parent) return
+    const email = credentialsModal.parent.email || ''
+    const pw = credentialsModal.generatedPassword || customPasswordInput
+    const siteUrl = typeof window !== 'undefined' ? window.location.origin : 'https://rmsps.vercel.app'
+    const text = `Residential Maa Saraswati Public School (RMSPS)\nParent Portal Login Credentials:\n\nEmail: ${email}\nPassword: ${pw}\nLogin URL: ${siteUrl}/login?role=parent\n\nPlease log in and update your password after first login.`
+
+    navigator.clipboard.writeText(text).then(() => {
+      setIsCopied(true)
+      setTimeout(() => setIsCopied(false), 2500)
+    })
+  }
 
   const filteredParents = parents.filter(p => 
     p.full_name?.toLowerCase().includes(search.toLowerCase()) ||
@@ -149,11 +221,19 @@ export default function ManageParentsClient({ parents: initialParents, students 
                   <p className="text-xs text-mist">Parent Profile</p>
                 </div>
               </Link>
-              <div className="flex gap-2">
+              <div className="flex items-center gap-1.5">
+                <button
+                  onClick={() => openCredentialsModal(p)}
+                  className="p-2 text-gold hover:bg-gold/15 rounded-lg transition-colors border border-gold/20 hover:border-gold/40 flex items-center gap-1 text-xs font-medium"
+                  title="Direct Login Credentials (Set & Send)"
+                >
+                  <Key className="w-4 h-4" />
+                  <span className="hidden sm:inline">Credentials</span>
+                </button>
                 <button
                   onClick={() => handlePasswordReset(p.id)}
                   className="p-2 text-coral hover:bg-coral/10 rounded-lg transition-colors"
-                  title="Send Password Reset"
+                  title="Send Password Reset Link via Email"
                 >
                   <Mail className="w-4 h-4" />
                 </button>
@@ -280,6 +360,178 @@ export default function ManageParentsClient({ parents: initialParents, students 
                   </button>
                 </div>
               </form>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      {/* DIRECT CREDENTIALS MODAL */}
+      <AnimatePresence>
+        {credentialsModal && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-ink/80 backdrop-blur-sm">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.95 }}
+              className="glass-strong rounded-2xl border border-hairline w-full max-w-md overflow-hidden shadow-2xl bg-[#0E0E14]"
+            >
+              {/* Header */}
+              <div className="p-6 border-b border-hairline flex justify-between items-center bg-white/[0.02]">
+                <div className="flex items-center gap-2.5">
+                  <div className="w-9 h-9 rounded-xl bg-gold/15 border border-gold/30 flex items-center justify-center text-gold">
+                    <Key className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <h2 className="text-lg font-bold text-white">Parent Login Credentials</h2>
+                    <p className="text-xs text-mist">Set password &amp; send directly to Gmail</p>
+                  </div>
+                </div>
+                <button
+                  onClick={() => setCredentialsModal(null)}
+                  className="text-mist hover:text-white p-1 rounded-lg transition-colors"
+                >
+                  ✕
+                </button>
+              </div>
+
+              <div className="p-6 space-y-5">
+                {/* Parent Info summary */}
+                <div className="p-3.5 rounded-xl bg-ink/60 border border-hairline space-y-1">
+                  <p className="text-[11px] font-bold uppercase tracking-wider text-mist">Parent Account</p>
+                  <p className="text-sm font-semibold text-parchment">{credentialsModal.parent.full_name || 'Parent'}</p>
+                  <p className="text-xs font-mono text-coral">{credentialsModal.parent.email || 'No email associated'}</p>
+                </div>
+
+                {/* Error Banner */}
+                {credError && (
+                  <div className="p-3 rounded-xl bg-red-500/10 border border-red-500/30 flex items-start gap-2 text-red-400 text-xs">
+                    <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
+                    <p>{credError}</p>
+                  </div>
+                )}
+
+                {!credentialsModal.isComplete ? (
+                  <div className="space-y-4">
+                    <div className="space-y-1.5">
+                      <div className="flex items-center justify-between">
+                        <label className="text-xs font-semibold text-mist uppercase tracking-wider">
+                          Temporary Password
+                        </label>
+                        <button
+                          type="button"
+                          onClick={() => setCustomPasswordInput(generateRandomPassword())}
+                          className="text-[11px] text-gold hover:underline flex items-center gap-1 font-medium"
+                        >
+                          <RefreshCw className="w-3 h-3" /> Auto-Generate New
+                        </button>
+                      </div>
+
+                      <div className="relative">
+                        <input
+                          type={showPasswordText ? 'text' : 'password'}
+                          value={customPasswordInput}
+                          onChange={(e) => setCustomPasswordInput(e.target.value)}
+                          placeholder="Min 6 characters"
+                          className="w-full bg-ink/60 border border-hairline rounded-xl px-4 py-2.5 pr-20 text-sm font-mono text-white focus:outline-none focus:ring-2 focus:ring-gold/50"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => setShowPasswordText(!showPasswordText)}
+                          className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-mist hover:text-white"
+                        >
+                          {showPasswordText ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                        </button>
+                      </div>
+                      <p className="text-[11px] text-mist/70">
+                        This password will be updated in the parent&apos;s account and emailed to them.
+                      </p>
+                    </div>
+
+                    <div className="pt-2 flex gap-3">
+                      <button
+                        type="button"
+                        onClick={() => setCredentialsModal(null)}
+                        className="flex-1 px-4 py-2.5 rounded-xl font-semibold text-xs surface-card text-white hover:bg-surface transition-colors"
+                      >
+                        Cancel
+                      </button>
+                      <button
+                        type="button"
+                        disabled={isPending || !credentialsModal.parent.email}
+                        onClick={handleSendDirectCredentials}
+                        className="flex-1 py-2.5 rounded-xl font-bold text-xs bg-gold hover:bg-gold/90 text-ink transition-all flex items-center justify-center gap-2 shadow-lg shadow-gold/15 disabled:opacity-50"
+                      >
+                        {isPending ? (
+                          <>
+                            <Loader2 className="w-4 h-4 animate-spin" />
+                            <span>Setting &amp; Sending...</span>
+                          </>
+                        ) : (
+                          <>
+                            <Mail className="w-4 h-4" />
+                            <span>Set &amp; Send to Gmail</span>
+                          </>
+                        )}
+                      </button>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="space-y-4">
+                    {/* Success Alert */}
+                    <div className="p-4 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 space-y-1.5">
+                      <div className="flex items-center gap-2 font-bold text-sm">
+                        <ShieldCheck className="w-5 h-5" /> Password Set Successfully!
+                      </div>
+                      <p className="text-xs text-emerald-300/90 leading-relaxed">
+                        {credentialsModal.emailSent
+                          ? `Official credentials email has been dispatched to ${credentialsModal.parent.email}.`
+                          : `Password was updated in database, but email delivery note: ${credentialsModal.emailError || 'Check SMTP configuration'}`}
+                      </p>
+                    </div>
+
+                    {/* Credentials Preview Box */}
+                    <div className="p-4 rounded-xl bg-black/40 border border-hairline font-mono text-xs space-y-2">
+                      <div className="flex justify-between items-center text-mist">
+                        <span>Email:</span>
+                        <span className="text-white font-bold">{credentialsModal.parent.email}</span>
+                      </div>
+                      <div className="flex justify-between items-center text-mist">
+                        <span>Password:</span>
+                        <span className="text-gold font-bold bg-gold/10 px-2 py-0.5 rounded border border-gold/20">
+                          {credentialsModal.generatedPassword || customPasswordInput}
+                        </span>
+                      </div>
+                    </div>
+
+                    {/* Copy Button */}
+                    <button
+                      type="button"
+                      onClick={handleCopyCredentials}
+                      className="w-full py-3 rounded-xl font-bold text-xs border border-white/20 hover:border-gold text-white hover:text-gold bg-white/[0.04] hover:bg-gold/10 transition-all flex items-center justify-center gap-2"
+                    >
+                      {isCopied ? (
+                        <>
+                          <Check className="w-4 h-4 text-emerald-400" />
+                          <span className="text-emerald-400">Copied to Clipboard!</span>
+                        </>
+                      ) : (
+                        <>
+                          <Copy className="w-4 h-4" />
+                          <span>Copy Credentials (for WhatsApp / SMS)</span>
+                        </>
+                      )}
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => setCredentialsModal(null)}
+                      className="w-full py-2.5 rounded-xl font-semibold text-xs surface-card text-white hover:bg-surface transition-colors"
+                    >
+                      Done / Close
+                    </button>
+                  </div>
+                )}
+              </div>
             </motion.div>
           </div>
         )}
