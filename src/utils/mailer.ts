@@ -81,7 +81,7 @@ export async function sendParentCredentials(
     to: toEmail,
     subject: `Your Parent Account Credentials for RMSPS`,
     html: `
-      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; border: 1px solid #e2e8f0; border-radius: 12px; overflow: hidden; background-color: #ffffff;">
+      <div style="font-family: Arial, sans-serif; max-width: 600px; width: 100%; box-sizing: border-box; word-break: break-word; margin: 0 auto; border: 1px solid #e2e8f0; border-radius: 12px; overflow: hidden; background-color: #ffffff;">
         ${getSchoolHeaderHtml('Welcome to the RMSPS Parent Community', 'Account Access Information')}
         <div style="padding: 32px; background-color: #ffffff;">
           <p style="font-size: 16px; color: #334155;">Dear <strong>${parentName}</strong>,</p>
@@ -155,7 +155,7 @@ export async function sendAttendanceAlertEmail({
     to: toEmail,
     subject: `Attendance Alert: ${studentName} marked ${statusLabel} on ${date} - RMSPS`,
     html: `
-      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; border: 1px solid #E2E8F0; border-radius: 12px; overflow: hidden; background-color: #ffffff;">
+      <div style="font-family: Arial, sans-serif; max-width: 600px; width: 100%; box-sizing: border-box; word-break: break-word; margin: 0 auto; border: 1px solid #E2E8F0; border-radius: 12px; overflow: hidden; background-color: #ffffff;">
         ${getSchoolHeaderHtml('Daily Student Attendance Notification')}
         <div style="padding: 32px; background-color: #ffffff;">
           <p style="font-size: 15px; color: #334155; margin-top: 0;">Dear <strong>${parentName || 'Parent / Guardian'}</strong>,</p>
@@ -247,7 +247,7 @@ export async function sendFeeReminderEmail({
     to: toEmail,
     subject: `Fee Reminder: ${feeName} for ${studentName} - RMSPS`,
     html: `
-      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; border: 1px solid #E2E8F0; border-radius: 12px; overflow: hidden; background-color: #ffffff;">
+      <div style="font-family: Arial, sans-serif; max-width: 600px; width: 100%; box-sizing: border-box; word-break: break-word; margin: 0 auto; border: 1px solid #E2E8F0; border-radius: 12px; overflow: hidden; background-color: #ffffff;">
         ${getSchoolHeaderHtml('Monthly School Fee Reminder')}
         <div style="padding: 32px; background-color: #ffffff;">
           <p style="font-size: 15px; color: #334155; margin-top: 0;">Dear <strong>${parentName || 'Parent / Guardian'}</strong>,</p>
@@ -341,7 +341,7 @@ export async function sendFeeReceiptEmail({
     to: toEmail,
     subject: `Fee Payment Receipt #${receiptNo} - ${studentName} - RMSPS`,
     html: `
-      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; border: 1px solid #E2E8F0; border-radius: 12px; overflow: hidden; background-color: #ffffff;">
+      <div style="font-family: Arial, sans-serif; max-width: 600px; width: 100%; box-sizing: border-box; word-break: break-word; margin: 0 auto; border: 1px solid #E2E8F0; border-radius: 12px; overflow: hidden; background-color: #ffffff;">
         ${getSchoolHeaderHtml('Official Fee Payment Receipt', 'Payment Confirmation')}
         <div style="padding: 32px; background-color: #ffffff;">
           <p style="font-size: 15px; color: #334155; margin-top: 0;">Dear <strong>${parentName || 'Parent / Guardian'}</strong>,</p>
@@ -434,7 +434,7 @@ export async function sendTeacherPaymentEmail({
     to: toEmail,
     subject: `Payment Advice #${voucherNo} - RMSPS`,
     html: `
-      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; border: 1px solid #E2E8F0; border-radius: 12px; overflow: hidden; background-color: #ffffff;">
+      <div style="font-family: Arial, sans-serif; max-width: 600px; width: 100%; box-sizing: border-box; word-break: break-word; margin: 0 auto; border: 1px solid #E2E8F0; border-radius: 12px; overflow: hidden; background-color: #ffffff;">
         ${getSchoolHeaderHtml('Salary & Compensation Advice', 'RMSPS Finance & Accounts')}
         <div style="padding: 32px; background-color: #ffffff;">
           <p style="font-size: 15px; color: #334155; margin-top: 0;">Dear <strong>${teacherName}</strong>,</p>
@@ -521,7 +521,7 @@ export async function sendTeacherAbsentAlertEmail({
     to: toEmail,
     subject: `Attendance Notice: Absence Recorded on ${date} - RMSPS`,
     html: `
-      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; border: 1px solid #E2E8F0; border-radius: 12px; overflow: hidden; background-color: #ffffff;">
+      <div style="font-family: Arial, sans-serif; max-width: 600px; width: 100%; box-sizing: border-box; word-break: break-word; margin: 0 auto; border: 1px solid #E2E8F0; border-radius: 12px; overflow: hidden; background-color: #ffffff;">
         ${getSchoolHeaderHtml('Teacher Attendance Notification', 'Faculty Operations')}
         <div style="padding: 32px; background-color: #ffffff;">
           <p style="font-size: 15px; color: #334155; margin-top: 0;">Dear <strong>${teacherName}</strong>,</p>
@@ -582,7 +582,7 @@ export async function sendPasswordChangedAlertEmail({
     to: toEmail,
     subject: `Security Alert: Your RMSPS Account Password Was Changed`,
     html: `
-      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; border: 1px solid #E2E8F0; border-radius: 12px; overflow: hidden; background-color: #ffffff;">
+      <div style="font-family: Arial, sans-serif; max-width: 600px; width: 100%; box-sizing: border-box; word-break: break-word; margin: 0 auto; border: 1px solid #E2E8F0; border-radius: 12px; overflow: hidden; background-color: #ffffff;">
         ${getSchoolHeaderHtml('Account Security Alert', 'RMSPS User Protection')}
         <div style="padding: 32px; background-color: #ffffff;">
           <p style="font-size: 15px; color: #334155; margin-top: 0;">Hello <strong>${userName}</strong>,</p>
@@ -664,7 +664,7 @@ export async function sendNoticeAlertEmail({
     bcc: validEmails,
     subject: `[RMSPS Official Notice] ${title}`,
     html: `
-      <div style="font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; max-width: 620px; margin: 0 auto; border: 1px solid #E2E8F0; border-radius: 16px; overflow: hidden; background-color: #ffffff; box-shadow: 0 4px 20px rgba(0,0,0,0.06);">
+      <div style="font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; max-width: 620px; width: 100%; box-sizing: border-box; word-break: break-word; margin: 0 auto; border: 1px solid #E2E8F0; border-radius: 16px; overflow: hidden; background-color: #ffffff; box-shadow: 0 4px 20px rgba(0,0,0,0.06);">
         ${getSchoolHeaderHtml('Official Institutional Circular', `Circular Target: ${audienceLabel}`)}
         <div style="padding: 32px 28px; background-color: #ffffff;">
           

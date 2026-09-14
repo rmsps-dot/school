@@ -1,6 +1,7 @@
 'use server'
 
 import { createClient } from '@/utils/supabase/server'
+import { supabaseAdmin } from '@/utils/supabase/admin'
 
 interface RegistrationPayload {
   studentName: string
@@ -40,7 +41,7 @@ export async function submitRegistration(data: RegistrationPayload): Promise<{ s
     }
 
     // 4. Check if this email already has an approved/pending registration
-    const { data: existing } = await supabase
+    const { data: existing } = await supabaseAdmin
       .from('pending_registrations')
       .select('id, status')
       .eq('student_email', data.studentEmail.toLowerCase())
@@ -57,7 +58,7 @@ export async function submitRegistration(data: RegistrationPayload): Promise<{ s
     }
 
     // 5. Insert into pending_registrations
-    const { error: dbErr } = await supabase
+    const { error: dbErr } = await supabaseAdmin
       .from('pending_registrations')
       .insert({
         student_name:   data.studentName.trim(),

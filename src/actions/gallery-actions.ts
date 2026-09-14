@@ -13,7 +13,7 @@ export type GalleryCategory = Database['public']['Enums']['gallery_category']
 export type GalleryMediaType = Database['public']['Enums']['gallery_media_type']
 export type GalleryItem = Database['public']['Tables']['gallery']['Row']
 
-import { requireAdmin } from '@/utils/auth-helpers'
+import { requireAdmin, requireAuth } from '@/utils/auth-helpers'
 
 /* ════════════════════════════════════════════════════════════
    ACTIONS
@@ -24,6 +24,9 @@ import { requireAdmin } from '@/utils/auth-helpers'
  */
 export async function fetchGalleryItems(): Promise<{ data: GalleryItem[]; error?: string }> {
   try {
+    const auth = await requireAuth()
+    if (!auth.ok) throw new Error(auth.error)
+
     const client = await createClient()
     const { data, error } = await client
       .from('gallery')

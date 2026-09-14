@@ -121,10 +121,11 @@ function Field({
 }
 
 /* ─── OTP VERIFY SCREEN ─── */
-function OtpVerifyScreen({ email, onSuccess }: { email: string; onSuccess: () => void }) {
+function OtpVerifyScreen({ email, onSuccess }: { email: string; onSuccess: () => Promise<{ success: boolean; error?: string }> }) {
   const [otp, setOtp] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [successMsg, setSuccessMsg] = useState("");
   const [otpCooldown, setOtpCooldown] = useState(60);
 
   useEffect(() => {
@@ -134,12 +135,33 @@ function OtpVerifyScreen({ email, onSuccess }: { email: string; onSuccess: () =>
   }, [otpCooldown]);
 
   async function handleVerify() {
-    if (otp.trim().length < 6) { setError("Please enter the complete OTP."); return; }
-    setLoading(true); setError("");
-    const { error: err } = await supabase.auth.verifyOtp({ email, token: otp.trim(), type: "signup" });
+    if (otp.trim().length < 6) { setError("Please enter the complete OTP."); setSuccessMsg(""); return; }
+    setLoading(true); setError(""); setSuccessMsg("");
+    
+    // First, check if already verified (handles double-clicks and state sync issues)
+    const { data: { session } } = await supabase.auth.getSession();
+    
+    if (!session || session.user.email?.toLowerCase() !== email.toLowerCase()) {
+      const { error: err } = await supabase.auth.verifyOtp({ email, token: otp.trim(), type: "signup" });
+      if (err) { setLoading(false); setError(err.message); return; }
+      
+      // Give the browser client a moment to flush cookies before server action is called
+      await new Promise(r => setTimeout(r, 800));
+    }
+    
+    // Call server action
+    let res = await onSuccess();
+    
+    // If the server action complains about session not found, retry once after a short delay
+    if (res && !res.success && res.error?.includes('Session not found')) {
+      await new Promise(r => setTimeout(r, 1000));
+      res = await onSuccess();
+    }
+    
     setLoading(false);
-    if (err) { setError(err.message); return; }
-    onSuccess();
+    if (res && !res.success) {
+      setError(res.error || "Verification failed");
+    }
   }
 
   return (
@@ -180,6 +202,11 @@ function OtpVerifyScreen({ email, onSuccess }: { email: string; onSuccess: () =>
           <AlertCircle className="w-4 h-4 flex-shrink-0" /> {error}
         </div>
       )}
+      {successMsg && !error && (
+        <div className="flex items-center gap-2 text-emerald-400 text-sm bg-emerald-500/10 border border-emerald-500/20 rounded-xl px-4 py-3">
+          <CheckCircle className="w-4 h-4 flex-shrink-0" /> {successMsg}
+        </div>
+      )}
 
       <button
         id="verify-otp-btn"
@@ -199,7 +226,31 @@ function OtpVerifyScreen({ email, onSuccess }: { email: string; onSuccess: () =>
           <button
             type="button"
             className="text-coral hover:underline transition-all"
-            onClick={async () => { setOtpCooldown(60); await supabase.auth.resend({ type: "signup", email }); }}
+            onClick={async () => { 
+                setError("");
+                setSuccessMsg("");
+                
+                // If user is already verified, proceed instead of throwing token error
+                const { data: { session } } = await supabase.auth.getSession();
+                if (session && session.user.email?.toLowerCase() === email.toLowerCase()) {
+                   setLoading(true);
+                   const res = await onSuccess();
+                   setLoading(false);
+                   if (res && !res.success) {
+                     setError(res.error || "Verification failed");
+                   }
+                   return;
+                }
+                
+                setOtpCooldown(60); 
+                const { error: resendErr } = await supabase.auth.resend({ type: "signup", email }); 
+                if (resendErr) {
+                  setError(resendErr.message);
+                  setOtpCooldown(0);
+                } else {
+                  setSuccessMsg("OTP resent successfully!");
+                }
+            }}
           >
             resend OTP
           </button>
@@ -277,7 +328,6 @@ export default function RegisterPage() {
   }
 
   async function handleSubmitAfterVerify() {
-    setLoading(true); setError("");
     const result = await submitRegistration({
       studentName:    form.studentName.trim(),
       studentDob:     form.studentDob,
@@ -289,9 +339,9 @@ export default function RegisterPage() {
       parentMobile:   form.parentMobile.trim(),
       parentEmail:    form.parentEmail.trim(),
     });
-    setLoading(false);
-    if (!result.success) { setError(result.error || "Submission failed."); return; }
+    if (!result.success) { return { success: false, error: result.error || "Submission failed." }; }
     setSubmitted(true);
+    return { success: true };
   }
 
   const stepLabels = ["Student Info", "Parent Info", "Verify Email"];
@@ -394,7 +444,7 @@ export default function RegisterPage() {
               ) : step === 3 && otpSent ? (
                 <OtpVerifyScreen
                   email={form.studentEmail.trim()}
-                  onSuccess={async () => { await handleSubmitAfterVerify(); }}
+                  onSuccess={handleSubmitAfterVerify}
                 />
               ) : (
                 <motion.div

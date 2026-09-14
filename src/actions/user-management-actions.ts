@@ -50,11 +50,8 @@ export async function addStudent(formData: FormData) {
   let studentId = customStudentId?.trim()
   if (!studentId) {
     const year = new Date().getFullYear()
-    const { count } = await supabase
-      .from('students')
-      .select('id', { count: 'exact', head: true })
-      .then((r) => ({ count: r.count ?? 0 }))
-    studentId = `STU-${year}-${String(count + 1).padStart(4, '0')}`
+    const timestampSuffix = Date.now().toString().slice(-4)
+    studentId = `STU-${year}-${timestampSuffix}`
   }
 
   // Parent credentials

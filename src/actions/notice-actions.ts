@@ -2,7 +2,7 @@
 
 import { createClient } from '@/utils/supabase/server'
 import { revalidatePath } from 'next/cache'
-import { requireAdmin } from '@/utils/auth-helpers'
+import { requireAdmin, requireAuth } from '@/utils/auth-helpers'
 import { dispatchNoticeAlert } from '@/utils/notification-dispatcher'
 
 /* ════════════════════════════════════════════════════════════
@@ -24,6 +24,9 @@ export type Notice = Database['public']['Tables']['notices']['Row']
  */
 export async function fetchNotices(): Promise<{ data: Notice[]; error?: string }> {
   try {
+    const auth = await requireAuth()
+    if (!auth.ok) throw new Error(auth.error)
+
     const client = await createClient()
     const { data, error } = await client
       .from('notices')

@@ -40,6 +40,9 @@ export async function getTeacherAttendanceSetting(): Promise<{
   error: string | null
 }> {
   try {
+    const auth = await requireAuth()
+    if (!auth.ok) return { data: null, error: auth.error }
+
     const supabase = await createClient()
     const { data, error } = await supabase
       .from('settings')
