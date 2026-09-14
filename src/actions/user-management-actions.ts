@@ -551,13 +551,18 @@ export async function getAllParents() {
 
   if (error) return { data: null, error: error.message }
   
+  // Fetch emails from auth.users using admin client
+  const adminAuthClient = getAdminAuthClient()
+  const { data: authUsers } = await adminAuthClient.auth.admin.listUsers({ perPage: 1000 })
+  const emailMap = new Map(authUsers?.users?.map(u => [u.id, u.email]) || [])
+
   // Flatten data to match the UI expectation
   const formattedData = data.map(p => ({
     id: p.profile_id,
     parent_id: p.id,
     full_name: p.profiles?.full_name,
     avatar_url: p.profiles?.profile_photo_url,
-    email: p.profiles?.email,
+    email: emailMap.get(p.profile_id) || p.profiles?.email || null,
     mobile: p.profiles?.mobile,
     address: p.profiles?.address,
     dob: p.profiles?.dob,
@@ -677,7 +682,8 @@ interface LinkedStudentProfileItem {
 
 export async function sendParentDirectCredentials(
   profileId: string,
-  customPassword?: string
+  customPassword?: string,
+  customEmail?: string
 ): Promise<{
   success?: boolean
   error?: string
@@ -692,11 +698,11 @@ export async function sendParentDirectCredentials(
 
   // 1. Get user from Supabase Auth
   const { data: userData, error: userError } = await adminAuthClient.auth.admin.getUserById(profileId)
-  if (userError || !userData?.user?.email) {
-    return { error: userError?.message || 'Parent user account not found in Auth system' }
-  }
+  const email = customEmail?.trim() || userData?.user?.email
 
-  const email = userData.user.email
+  if (!email) {
+    return { error: userError?.message || 'Parent user account not found or has no email' }
+  }
 
   // 2. Generate password or use custom password
   const newPassword =
@@ -704,10 +710,15 @@ export async function sendParentDirectCredentials(
       ? customPassword.trim()
       : `RMSPS@${randomBytes(4).toString('hex')}!`
 
-  // 3. Update password directly in Supabase Auth
-  const { error: updateError } = await adminAuthClient.auth.admin.updateUserById(profileId, {
+  // 3. Update password directly in Supabase Auth (and email if customEmail provided)
+  const updatePayload: { password: string; email?: string } = {
     password: newPassword,
-  })
+  }
+  if (customEmail && userData?.user?.email?.toLowerCase() !== customEmail.trim().toLowerCase()) {
+    updatePayload.email = customEmail.trim().toLowerCase()
+  }
+
+  const { error: updateError } = await adminAuthClient.auth.admin.updateUserById(profileId, updatePayload)
 
   if (updateError) {
     return { error: `Failed to set parent password: ${updateError.message}` }

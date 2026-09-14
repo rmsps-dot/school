@@ -59,6 +59,7 @@ export default function ManageParentsClient({ parents: initialParents, students 
     isComplete?: boolean
   } | null>(null)
   const [customPasswordInput, setCustomPasswordInput] = useState('')
+  const [targetEmailInput, setTargetEmailInput] = useState('')
   const [showPasswordText, setShowPasswordText] = useState(false)
   const [credError, setCredError] = useState('')
   const [isCopied, setIsCopied] = useState(false)
@@ -78,6 +79,7 @@ export default function ManageParentsClient({ parents: initialParents, students 
   const openCredentialsModal = (p: ParentRecord) => {
     const defaultPw = generateRandomPassword()
     setCustomPasswordInput(defaultPw)
+    setTargetEmailInput(p.email || '')
     setCredError('')
     setIsCopied(false)
     setShowPasswordText(false)
@@ -87,13 +89,18 @@ export default function ManageParentsClient({ parents: initialParents, students 
   const handleSendDirectCredentials = async () => {
     if (!credentialsModal?.parent) return
     const pw = customPasswordInput.trim()
+    const email = targetEmailInput.trim()
+    if (!email) {
+      setCredError('Please enter a valid email address for the parent.')
+      return
+    }
     if (!pw || pw.length < 6) {
       setCredError('Password must be at least 6 characters long.')
       return
     }
     setCredError('')
     startTransition(async () => {
-      const res = await sendParentDirectCredentials(credentialsModal.parent.id, pw)
+      const res = await sendParentDirectCredentials(credentialsModal.parent.id, pw, email)
       if (res.error) {
         setCredError(res.error)
       } else {
@@ -101,6 +108,7 @@ export default function ManageParentsClient({ parents: initialParents, students 
           prev
             ? {
                 ...prev,
+                parent: { ...prev.parent, email: res.email || email },
                 generatedPassword: res.password,
                 emailSent: res.emailSent,
                 emailError: res.emailError,
@@ -114,7 +122,7 @@ export default function ManageParentsClient({ parents: initialParents, students 
 
   const handleCopyCredentials = () => {
     if (!credentialsModal?.parent) return
-    const email = credentialsModal.parent.email || ''
+    const email = credentialsModal.parent.email || targetEmailInput || ''
     const pw = credentialsModal.generatedPassword || customPasswordInput
     const siteUrl = typeof window !== 'undefined' ? window.location.origin : 'https://rmsps.vercel.app'
     const text = `Residential Maa Saraswati Public School (RMSPS)\nParent Portal Login Credentials:\n\nEmail: ${email}\nPassword: ${pw}\nLogin URL: ${siteUrl}/login?role=parent\n\nPlease log in and update your password after first login.`
@@ -395,11 +403,33 @@ export default function ManageParentsClient({ parents: initialParents, students 
               </div>
 
               <div className="p-6 space-y-5">
-                {/* Parent Info summary */}
-                <div className="p-3.5 rounded-xl bg-ink/60 border border-hairline space-y-1">
-                  <p className="text-[11px] font-bold uppercase tracking-wider text-mist">Parent Account</p>
-                  <p className="text-sm font-semibold text-parchment">{credentialsModal.parent.full_name || 'Parent'}</p>
-                  <p className="text-xs font-mono text-coral">{credentialsModal.parent.email || 'No email associated'}</p>
+                {/* Parent Info summary & Email address */}
+                <div className="space-y-3">
+                  <div className="p-3 rounded-xl bg-ink/60 border border-hairline flex items-center justify-between">
+                    <div>
+                      <p className="text-[10px] font-bold uppercase tracking-wider text-mist">Parent Account</p>
+                      <p className="text-sm font-semibold text-parchment">{credentialsModal.parent.full_name || 'Parent'}</p>
+                    </div>
+                    <span className="text-[11px] px-2 py-0.5 rounded-full bg-gold/10 text-gold border border-gold/20 font-medium">
+                      Direct Set
+                    </span>
+                  </div>
+
+                  <div className="space-y-1.5">
+                    <label className="text-xs font-semibold text-mist uppercase tracking-wider">
+                      Parent Email Address <span className="text-coral">*</span>
+                    </label>
+                    <input
+                      type="email"
+                      value={targetEmailInput}
+                      onChange={(e) => setTargetEmailInput(e.target.value)}
+                      placeholder="parent@gmail.com"
+                      className="w-full bg-ink/60 border border-hairline rounded-xl px-4 py-2.5 text-sm font-mono text-white focus:outline-none focus:ring-2 focus:ring-gold/50"
+                    />
+                    <p className="text-[11px] text-mist/70">
+                      Login credentials will be dispatched to this email address.
+                    </p>
+                  </div>
                 </div>
 
                 {/* Error Banner */}
@@ -457,7 +487,7 @@ export default function ManageParentsClient({ parents: initialParents, students 
                       </button>
                       <button
                         type="button"
-                        disabled={isPending || !credentialsModal.parent.email}
+                        disabled={isPending || !targetEmailInput.trim()}
                         onClick={handleSendDirectCredentials}
                         className="flex-1 py-2.5 rounded-xl font-bold text-xs bg-gold hover:bg-gold/90 text-ink transition-all flex items-center justify-center gap-2 shadow-lg shadow-gold/15 disabled:opacity-50"
                       >
