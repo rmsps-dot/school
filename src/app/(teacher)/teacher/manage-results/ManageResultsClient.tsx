@@ -9,6 +9,7 @@ import MarksheetModal from '@/components/admin/MarksheetModal'
 import type { StudentMarksheet } from '@/actions/admin-result-actions'
 import type { Database } from '@/types/supabase'
 import { downloadMarksheetPDF } from '@/utils/download-marksheet-pdf'
+import { calcGrade } from '@/utils/helpers'
 
 export interface TeacherResultRecord {
   id: string
@@ -73,15 +74,7 @@ export default function ManageResultsClient({ initialResults }: Props) {
     const grandTotal = group.grandTotal
     const percentage = grandTotal > 0 ? (totalObtained / grandTotal) * 100 : 0
     
-    // Calculate grade
-    let grade = 'F'
-    if (percentage >= 91) grade = 'A1'
-    else if (percentage >= 81) grade = 'A2'
-    else if (percentage >= 71) grade = 'B1'
-    else if (percentage >= 61) grade = 'B2'
-    else if (percentage >= 51) grade = 'C1'
-    else if (percentage >= 41) grade = 'C2'
-    else if (percentage >= 33) grade = 'D'
+    const grade = calcGrade(percentage)
 
     return {
       studentRowId: group.student_id,

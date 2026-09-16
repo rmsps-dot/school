@@ -50,14 +50,14 @@ export async function registerPushSubscription(): Promise<{ success: boolean; er
   if (!window.isSecureContext) {
     return {
       success: false,
-      error: 'Web Push ke liye HTTPS connection ya localhost zaroori hai. Kripya secure domain se access karein.',
+      error: 'Web Push requires an HTTPS connection or localhost. Please access via a secure domain.',
     }
   }
 
   if (!('serviceWorker' in navigator) || !('PushManager' in window)) {
     return {
       success: false,
-      error: 'Aapke current browser me Web Push support nahi mila. Kripya Google Chrome ka upyog karein.',
+      error: 'Web Push is not supported in your current browser. Please use Google Chrome.',
     }
   }
 
@@ -65,7 +65,7 @@ export async function registerPushSubscription(): Promise<{ success: boolean; er
   if (perm !== 'granted') {
     return {
       success: false,
-      error: 'Notification permission allow nahi hui. Browser settings ya URL bar ke Lock 🔒 icon se allow karein.',
+      error: 'Notification permission was denied. Please allow it from your browser settings or the Lock 🔒 icon in the URL bar.',
     }
   }
 
@@ -117,12 +117,12 @@ export async function registerPushSubscription(): Promise<{ success: boolean; er
       return {
         success: false,
         error:
-          'Brave Browser me push enable karne ke liye URL bar me brave://settings/privacy kholein aur "Use Google services for push messaging" toggle ko ON karein.',
+          'To enable push notifications in Brave Browser, open brave://settings/privacy and toggle "Use Google services for push messaging" to ON.',
       }
     }
     return {
       success: false,
-      error: errMsg || 'Push subscription register nahi ho saki. Kripya Google Chrome me try karein.',
+      error: errMsg || 'Failed to register push subscription. Please try again in Google Chrome.',
     }
   }
 }

@@ -88,7 +88,7 @@ function AlreadyMarkedCard({ record }: { record?: AlreadyMarkedRecord }) {
           Attendance Marked
         </h2>
         <p className="text-mist text-xs mt-2 font-mono uppercase tracking-widest">
-          Aapki attendance aaj ke liye pehle hi register ho chuki hai.
+          Your attendance has already been registered for today.
         </p>
       </div>
 
@@ -225,7 +225,7 @@ export default function MarkAttendance({ alreadyMarked, record, teacherProfileId
 
     if (!navigator.geolocation) {
       setPhase("error");
-      setErrorMsg("Aapka browser Geolocation support nahi karta.");
+      setErrorMsg("Your browser does not support Geolocation.");
       return;
     }
 
@@ -239,7 +239,7 @@ export default function MarkAttendance({ alreadyMarked, record, teacherProfileId
         if (distance > maxDistanceM) {
           setPhase("outside-range");
           setErrorMsg(
-            `Aap school premises ke bahar hain (${Math.round(distance)} meter door, allowed: ${maxDistanceM}m). Attendance mark nahi ho sakti.`
+            `You are outside the school premises (${Math.round(distance)} meters away, allowed: ${maxDistanceM}m). Attendance cannot be marked.`
           );
         } else {
           setPhase("ready");
@@ -249,7 +249,7 @@ export default function MarkAttendance({ alreadyMarked, record, teacherProfileId
         if (err.code === err.PERMISSION_DENIED) {
           setPhase("location-denied");
           setErrorMsg(
-            "Location permission denied. Browser settings mein location allow karein."
+            "Location permission denied. Please allow location access in your browser settings."
           );
         } else {
           setPhase("error");
@@ -364,7 +364,7 @@ export default function MarkAttendance({ alreadyMarked, record, teacherProfileId
                 Attendance Location Not Configured
               </h2>
               <p className="text-mist text-xs mt-3 leading-relaxed max-w-sm mx-auto font-sans">
-                Admin ne abhi tak school ka attendance location aur radius range set nahi kiya hai. Kripya school administrator se contact karein taaki wo System Settings me jakar location configure kar sakein.
+                The admin has not yet configured the school's location and attendance radius. Please contact the administrator to set this up in System Settings.
               </p>
             </div>
 
@@ -396,7 +396,7 @@ export default function MarkAttendance({ alreadyMarked, record, teacherProfileId
                 Attendance Window Closed
               </h2>
               <p className="text-mist text-xs mt-3 leading-relaxed max-w-sm mx-auto font-sans">
-                Teacher attendance sirf set kiye gaye time window ke dauran hi mark ki ja sakti hai.
+                Teacher attendance can only be marked during the configured time window.
               </p>
             </div>
 
@@ -452,7 +452,7 @@ export default function MarkAttendance({ alreadyMarked, record, teacherProfileId
             <div>
               <h2 className="font-display text-3xl font-bold text-parchment">Attendance Marked!</h2>
               <p className="text-mist text-sm mt-2 font-mono uppercase tracking-widest">
-                Aapki attendance aaj ke liye register ho gayi hai.
+                Your attendance has been successfully registered for today.
               </p>
             </div>
             {capturedImage && (
@@ -614,7 +614,7 @@ export default function MarkAttendance({ alreadyMarked, record, teacherProfileId
                 onUserMediaError={() => {
                   setPhase("camera-denied");
                   setErrorMsg(
-                    "Camera access denied. Browser settings mein camera allow karein."
+                    "Camera access denied. Please allow camera access in your browser settings."
                   );
                 }}
               />

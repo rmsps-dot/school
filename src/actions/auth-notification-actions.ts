@@ -2,6 +2,7 @@
 
 import { createClient } from '@/utils/supabase/server'
 import { supabaseAdmin } from '@/utils/supabase/admin'
+import { getAuthUserIdByEmail } from '@/utils/auth-helpers'
 import { dispatchPasswordChangedAlert } from '@/utils/notification-dispatcher'
 
 /**
@@ -31,14 +32,10 @@ export async function notifyPasswordChanged(
 
     // Try to resolve user ID and name if only email was provided
     if (!userId) {
-      const { data: userData } = await supabaseAdmin.auth.admin.listUsers({
-        page: 1,
-        perPage: 1000,
-      })
-      const matched = userData?.users.find((u) => u.email?.toLowerCase() === email?.toLowerCase())
-      if (matched) {
-        userId = matched.id
-        userName = (matched.user_metadata?.full_name as string) || userName
+      const resolvedId = await getAuthUserIdByEmail(email)
+      if (resolvedId) {
+        userId = resolvedId
+        // Name won't be resolved unless we fetch profile, but fallback is 'User'
       }
     }
 

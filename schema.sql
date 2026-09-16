@@ -91,6 +91,7 @@ create table if not exists public.classes (
   id          uuid      primary key default uuid_generate_v4(),
   class_name  text      not null,                -- e.g. "Class 10"
   section     text      not null,                -- e.g. "A"
+  monthly_fee numeric   not null default 0,      -- Monthly tuition fee for this class
   created_at  timestamptz not null default now(),
   updated_at  timestamptz not null default now(),
   unique (class_name, section)
@@ -110,6 +111,7 @@ create table if not exists public.teachers (
   teacher_id     text       not null unique,       -- custom format e.g. "TCH-2024-001"
   joining_date   date       not null default current_date,
   qualification  text,
+  base_salary    numeric    not null default 0,    -- Monthly base salary
   created_at     timestamptz not null default now(),
   updated_at     timestamptz not null default now()
 );

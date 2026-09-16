@@ -5,8 +5,7 @@ import { revalidatePath } from 'next/cache'
 import { supabaseAdmin } from '@/utils/supabase/admin'
 import { createClient } from '@/utils/supabase/server'
 import { sendParentCredentials } from '@/utils/mailer'
-import { requireAdmin } from '@/utils/auth-helpers'
-
+import { requireAdmin, getAuthUserIdByEmail } from '@/utils/auth-helpers'
 /* ── Types ──────────────────────────────────────────── */
 export interface ActionResult {
   success: boolean
@@ -39,23 +38,7 @@ async function generateStudentId(): Promise<string> {
    8. Link student ↔ parent in junction table
    9. Mark registration 'approved'
 ───────────────────────────────────────────────────── */
-async function getAuthUserIdByEmail(email: string): Promise<string | null> {
-  try {
-    let page = 1
-    let hasMore = true
-    while (hasMore) {
-      const { data, error } = await supabaseAdmin.auth.admin.listUsers({ page, perPage: 1000 })
-      if (error || !data.users || data.users.length === 0) break
-      const user = data.users.find(u => u.email === email)
-      if (user) return user.id
-      if (data.users.length < 1000) hasMore = false
-      page++
-    }
-  } catch (err) {
-    console.error('Error finding user by email:', err)
-  }
-  return null
-}
+
 
 /* ─────────────────────────────────────────────────────
    UPDATE REGISTRATION

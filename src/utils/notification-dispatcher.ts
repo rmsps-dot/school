@@ -1,4 +1,5 @@
 import { supabaseAdmin } from '@/utils/supabase/admin'
+import { getAuthUserEmailMap } from '@/utils/auth-helpers'
 import {
   sendAttendanceAlertEmail,
   sendFeeReceiptEmail,
@@ -256,14 +257,11 @@ export async function resolveTargetRoleContacts(
     const userIds = profiles.map((p) => p.id)
 
     // Fetch auth users
-    const { data: authUsersData } =
-      await supabaseAdmin.auth.admin.listUsers({ page: 1, perPage: 1000 })
-    const allAuthUsers = authUsersData?.users || []
-
-    const userSet = new Set(userIds)
-    const emails = allAuthUsers
-      .filter((u) => userSet.has(u.id) && u.email)
-      .map((u) => u.email as string)
+    const emailMap = await getAuthUserEmailMap()
+    
+    const emails = userIds
+      .map(id => emailMap.get(id))
+      .filter((email): email is string => !!email)
 
     return { emails, userIds }
   } catch (err) {

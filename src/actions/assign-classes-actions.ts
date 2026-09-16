@@ -1,6 +1,7 @@
 'use server'
 
 import { supabaseAdmin } from '@/utils/supabase/admin'
+import { getAuthUserEmailMap } from '@/utils/auth-helpers'
 import { revalidatePath } from 'next/cache'
 import { requireAdmin } from '@/utils/auth-helpers'
 
@@ -21,11 +22,8 @@ export async function getAssignClassesData() {
 
   if (teachersError) return { error: teachersError.message }
 
-  // Fetch all users to get their emails (requires admin client for auth.users)
-  const { data: authUsers, error: authError } = await supabaseAdmin.auth.admin.listUsers()
-  if (authError) return { error: authError.message }
-  
-  const emailMap = new Map(authUsers.users.map(u => [u.id, u.email]))
+  // Fetch all users to get their emails mapping
+  const emailMap = await getAuthUserEmailMap()
 
   // Fetch all classes
   const { data: classes, error: classesError } = await supabaseAdmin

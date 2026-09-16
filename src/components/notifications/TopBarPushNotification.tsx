@@ -88,7 +88,7 @@ export function TopBarPushNotification({ variant = 'desktop' }: TopBarPushNotifi
     // Check secure context
     if (typeof window !== 'undefined' && !window.isSecureContext) {
       setErrorMsg(
-        'Push notifications ke liye HTTPS (secure link) zaroori hai. Agar aap phone me test kar rahe hain, to production https:// link se open karein.'
+        'Push notifications require HTTPS (secure link). If testing on a phone, please use the production https:// link.'
       )
       setMenuOpen(true)
       return
@@ -97,7 +97,7 @@ export function TopBarPushNotification({ variant = 'desktop' }: TopBarPushNotifi
     // Check browser support
     if (!isSupported) {
       setErrorMsg(
-        'Aapke current browser me Web Push support nahi mila. Kripya Google Chrome ka upyog karein.'
+        'Web Push is not supported in your current browser. Please use Google Chrome.'
       )
       setMenuOpen(true)
       return
@@ -106,7 +106,7 @@ export function TopBarPushNotification({ variant = 'desktop' }: TopBarPushNotifi
     // Check if user blocked in browser
     if (typeof window !== 'undefined' && 'Notification' in window && Notification.permission === 'denied') {
       setErrorMsg(
-        'Browser me notification block hai. Address bar ke left side me Lock/Settings 🔒 icon per tap karein aur Notifications ko "Allow" karein.'
+        'Notifications are blocked in your browser. Tap the Lock/Settings 🔒 icon on the left side of the address bar and set Notifications to "Allow".'
       )
       setMenuOpen(true)
       return
@@ -236,7 +236,7 @@ export function TopBarPushNotification({ variant = 'desktop' }: TopBarPushNotifi
                 <div className="flex items-start gap-2.5 p-2.5 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-xs text-emerald-300 leading-relaxed">
                   <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0 mt-0.5" />
                   <p>
-                    Yeh device successfully registered hai. Attendance, fee receipts aur school notices real-time me deliver honge.
+                    This device is successfully registered. Attendance, fee receipts, and school notices will be delivered in real-time.
                   </p>
                 </div>
 
@@ -275,7 +275,7 @@ export function TopBarPushNotification({ variant = 'desktop' }: TopBarPushNotifi
               /* Inactive / Error Guide Status */
               <div className="space-y-3">
                 <p className="text-xs text-mist leading-relaxed">
-                  Real-time alerts pane ke liye is device per notifications enable karein.
+                  Enable notifications on this device to receive real-time alerts.
                 </p>
 
                 {errorMsg && (

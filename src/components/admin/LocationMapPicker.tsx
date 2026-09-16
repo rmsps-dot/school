@@ -732,7 +732,7 @@ export default function LocationMapPicker({
                   <span>Pin Location</span>
                 </div>
                 <p className="text-mist leading-relaxed">
-                  Map ko drag karein ya school gate par tap karke pin place karein. Circle school ka allowed radius area show kar raha hai.
+                  Drag the map or tap on the school gate to place the pin. The circle shows the allowed radius.
                 </p>
               </div>
 

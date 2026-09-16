@@ -3,13 +3,11 @@
 import { createClient } from '@/utils/supabase/server'
 import { supabaseAdmin as adminClient } from '@/utils/supabase/admin'
 import { revalidatePath } from 'next/cache'
-import { requireAdmin } from '@/utils/auth-helpers'
+import { requireAdmin, getAuthUserEmailMap } from '@/utils/auth-helpers'
 import { randomBytes } from 'crypto'
 import { sendParentCredentials } from '@/utils/mailer'
 
-function getAdminAuthClient() {
-  return adminClient
-}
+
 
 // --------------------------------------------------------------------------------
 // STUDENTS
@@ -61,7 +59,7 @@ export async function addStudent(formData: FormData) {
   const parentEmail = formData.get('parentEmail') as string
   const parentPassword = formData.get('parentPassword') as string
 
-  const adminAuthClient = getAdminAuthClient()
+  const adminAuthClient = adminClient
 
   // 1. Create Student Auth User
   const { data: authData, error: authError } = await adminAuthClient.auth.admin.createUser({
@@ -190,7 +188,7 @@ export async function deleteStudent(profileId: string) {
   const auth = await requireAdmin()
   if (!auth.ok) return { error: auth.error }
 
-  const adminAuthClient = getAdminAuthClient()
+  const adminAuthClient = adminClient
 
   try {
     // 1. Fetch user's email from Auth to clean up pending_registrations
@@ -396,7 +394,7 @@ export async function addTeacher(formData: FormData) {
      }
   }
 
-  const adminAuthClient = getAdminAuthClient()
+  const adminAuthClient = adminClient
 
   // 1. Create Auth User
   const { data: authData, error: authError } = await adminAuthClient.auth.admin.createUser({
@@ -500,7 +498,7 @@ export async function deleteTeacher(profileId: string) {
   const auth = await requireAdmin()
   if (!auth.ok) return { error: auth.error }
 
-  const adminAuthClient = getAdminAuthClient()
+  const adminAuthClient = adminClient
 
   try {
     const { data: tRow } = await adminAuthClient
@@ -552,9 +550,8 @@ export async function getAllParents() {
   if (error) return { data: null, error: error.message }
   
   // Fetch emails from auth.users using admin client
-  const adminAuthClient = getAdminAuthClient()
-  const { data: authUsers } = await adminAuthClient.auth.admin.listUsers({ perPage: 1000 })
-  const emailMap = new Map(authUsers?.users?.map(u => [u.id, u.email]) || [])
+  const adminAuthClient = adminClient
+  const emailMap = await getAuthUserEmailMap()
 
   // Flatten data to match the UI expectation
   const formattedData = data.map(p => ({
@@ -603,7 +600,7 @@ export async function deleteParent(profileId: string) {
   const auth = await requireAdmin()
   if (!auth.ok) return { error: auth.error }
 
-  const adminAuthClient = getAdminAuthClient()
+  const adminAuthClient = adminClient
 
   try {
     const { data: pRow } = await adminAuthClient
@@ -637,7 +634,7 @@ export async function deleteParent(profileId: string) {
 export async function sendPasswordResetLink(profileId: string) {
   const auth = await requireAdmin()
   if (!auth.ok) return { error: auth.error }
-  const adminAuthClient = getAdminAuthClient()
+  const adminAuthClient = adminClient
   
   // Get user's email from Auth
   const { data: userData, error: userError } = await adminAuthClient.auth.admin.getUserById(profileId)
@@ -694,7 +691,7 @@ export async function sendParentDirectCredentials(
 }> {
   const auth = await requireAdmin()
   if (!auth.ok) return { error: auth.error }
-  const adminAuthClient = getAdminAuthClient()
+  const adminAuthClient = adminClient
 
   // 1. Get user from Supabase Auth
   const { data: userData, error: userError } = await adminAuthClient.auth.admin.getUserById(profileId)

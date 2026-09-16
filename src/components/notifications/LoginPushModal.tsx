@@ -129,7 +129,7 @@ export function LoginPushModal() {
               </h4>
               <p className="text-xs text-mist leading-relaxed mt-1">
                 {success
-                  ? 'Real-time attendance, fee receipts aur notices is device per aayenge.'
+                  ? 'Real-time attendance, fee receipts, and notices will be delivered to this device.'
                   : 'Receive instant student attendance, fee receipts & school notices on this device.'}
               </p>
             </div>

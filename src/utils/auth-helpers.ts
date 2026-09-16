@@ -1,4 +1,5 @@
 import { createClient } from './supabase/server'
+import { supabaseAdmin } from './supabase/admin'
 import { redirect } from 'next/navigation'
 
 export type AuthResult<T = unknown> = 
@@ -178,4 +179,55 @@ export async function requireSelfOrGuardianOf(
   }
 
   return { ok: false, error: 'Forbidden: Access denied' }
+}
+
+/**
+ * Safely fetches an auth user's ID by email, handling pagination limits.
+ */
+export async function getAuthUserIdByEmail(email: string): Promise<string | null> {
+  try {
+    const targetEmail = email.toLowerCase().trim()
+    let page = 1
+    let hasMore = true
+    while (hasMore) {
+      const { data, error } = await supabaseAdmin.auth.admin.listUsers({ page, perPage: 1000 })
+      if (error || !data.users || data.users.length === 0) break
+      
+      const user = data.users.find((u) => u.email?.toLowerCase() === targetEmail)
+      if (user) return user.id
+      
+      if (data.users.length < 1000) hasMore = false
+      page++
+    }
+  } catch (err) {
+    console.error('[getAuthUserIdByEmail] Error:', err)
+  }
+  return null
+}
+
+/**
+ * Safely fetches a mapping of all user IDs to emails, handling pagination limits.
+ */
+export async function getAuthUserEmailMap(): Promise<Map<string, string>> {
+  const map = new Map<string, string>()
+  try {
+    let page = 1
+    let hasMore = true
+    while (hasMore) {
+      const { data, error } = await supabaseAdmin.auth.admin.listUsers({ page, perPage: 1000 })
+      if (error || !data.users || data.users.length === 0) break
+      
+      for (const u of data.users) {
+        if (u.id && u.email) {
+          map.set(u.id, u.email)
+        }
+      }
+      
+      if (data.users.length < 1000) hasMore = false
+      page++
+    }
+  } catch (err) {
+    console.error('[getAuthUserEmailMap] Error:', err)
+  }
+  return map
 }

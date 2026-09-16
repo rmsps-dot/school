@@ -178,7 +178,7 @@ export async function markTeacherAttendance(payload: {
     if (dist > maxDist) {
       return {
         success: false,
-        error: `Aap school premises ke bahar hain (${Math.round(dist)} m door, allowed radius: ${maxDist} m). Attendance mark nahi ho sakti.`,
+        error: `You are outside the school premises (${Math.round(dist)} m away, allowed radius: ${maxDist} m). Attendance cannot be marked.`,
       }
     }
 
