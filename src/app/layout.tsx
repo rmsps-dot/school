@@ -32,6 +32,7 @@ export const viewport: Viewport = {
 export const metadata: Metadata = {
   metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL || "https://rmsps.vercel.app"),
   title: "RMSPS — Residential Maa Saraswati Public School",
+  applicationName: "RMSPS",
   description:
     "Residential Maa Saraswati Public School (RMSPS) is a premier BSEB-affiliated residential institution in Bihar, delivering holistic education and leadership.",
   keywords: "RMSPS, Maa Saraswati, school, residential school, education, admission, BSEB Bihar, RMS Public School",
@@ -50,27 +51,46 @@ export const metadata: Metadata = {
 
 const jsonLd = {
   "@context": "https://schema.org",
-  "@type": "School",
-  "name": "Residential Maa Saraswati Public School",
-  "alternateName": "RMSPS",
-  "url": "https://rmsps.vercel.app",
-  "logo": "https://rmsps.vercel.app/icon-192.png",
-  "image": "https://rmsps.vercel.app/opengraph-image",
-  "description":
-    "Residential Maa Saraswati Public School (RMSPS) is a premier BSEB-affiliated residential institution in Bihar, delivering holistic education and leadership.",
-  "address": {
-    "@type": "PostalAddress",
-    "streetAddress": "Kating Chowk, Maheshpur road",
-    "addressLocality": "Pipra",
-    "addressRegion": "Bihar",
-    "postalCode": "852109",
-    "addressCountry": "IN",
-  },
-  "telephone": "+919546536279",
-  "email": "srzsurazzrajput@gmail.com",
-  "sameAs": [
-    "https://rmsps.vercel.app",
-  ],
+  "@graph": [
+    {
+      "@type": "WebSite",
+      "@id": "https://rmsps.vercel.app/#website",
+      "url": "https://rmsps.vercel.app/",
+      "name": "RMSPS",
+      "alternateName": [
+        "Residential Maa Saraswati Public School",
+        "RMSPS Kating",
+        "RMSPS Pipra"
+      ],
+      "publisher": {
+        "@id": "https://rmsps.vercel.app/#school"
+      }
+    },
+    {
+      "@type": "School",
+      "@id": "https://rmsps.vercel.app/#school",
+      "name": "Residential Maa Saraswati Public School",
+      "alternateName": "RMSPS",
+      "url": "https://rmsps.vercel.app",
+      "logo": "https://rmsps.vercel.app/icon-192.png",
+      "image": "https://rmsps.vercel.app/opengraph-image",
+      "description":
+        "Residential Maa Saraswati Public School (RMSPS) is a premier BSEB-affiliated residential institution in Bihar, delivering holistic education and leadership.",
+      "address": {
+        "@type": "PostalAddress",
+        "streetAddress": "Kating Chowk, Maheshpur road",
+        "addressLocality": "Pipra",
+        "addressRegion": "Bihar",
+        "postalCode": "852109",
+        "addressCountry": "IN",
+      },
+      "telephone": "+919546536279",
+      "email": "srzsurazzrajput@gmail.com",
+      "sameAs": [
+        "https://rmsps.vercel.app",
+      ],
+    }
+  ]
 };
 
 export default function RootLayout({
