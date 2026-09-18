@@ -71,6 +71,14 @@ export async function registerPushSubscription(): Promise<{ success: boolean; er
 
   try {
     const { publicKey } = await getVapidPublicKey()
+    if (!publicKey || publicKey.trim().length === 0) {
+      return {
+        success: false,
+        error:
+          'Push notification keys missing hain. Vercel Dashboard me NEXT_PUBLIC_VAPID_PUBLIC_KEY aur VAPID_PRIVATE_KEY environment variables add karke redeploy karein.',
+      }
+    }
+
     const reg = await navigator.serviceWorker.register('/sw.js', { scope: '/' })
     await navigator.serviceWorker.ready
 
@@ -85,6 +93,13 @@ export async function registerPushSubscription(): Promise<{ success: boolean; er
     }
 
     const applicationServerKey = urlBase64ToUint8Array(publicKey)
+    if (applicationServerKey.length === 0) {
+      return {
+        success: false,
+        error: 'Invalid VAPID key format. Please check NEXT_PUBLIC_VAPID_PUBLIC_KEY.',
+      }
+    }
+
     const sub = await reg.pushManager.subscribe({
       userVisibleOnly: true,
       applicationServerKey: applicationServerKey as BufferSource,
