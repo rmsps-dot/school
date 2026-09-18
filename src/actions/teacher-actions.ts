@@ -12,6 +12,7 @@ export interface AttendanceResult {
 }
 
 import { requireTeacher } from '@/utils/auth-helpers'
+import { enforceAttendanceRules } from '@/utils/attendance-enforcement'
 
 /* ── Helper: verify caller is a teacher, return their teacher row ── */
 async function getTeacherId() {
@@ -23,10 +24,10 @@ async function getTeacherId() {
     .from('teachers')
     .select('id')
     .eq('profile_id', auth.profile.id)
-    .maybeSingle()
+    .single()
 
   if (!teacher) {
-    throw new Error('Your teacher profile is incomplete. No associated teacher record found. Please contact the administrator.')
+    throw new Error('Teacher profile not found')
   }
 
   return { user: auth.profile, teacher }
@@ -47,10 +48,20 @@ export async function getTodayAttendance(): Promise<{
     location_lng: number | null
   }
   error?: string
+  alreadyMarked?: boolean
 }> {
   try {
     const { teacher } = await getTeacherId()
-    const today = new Date().toISOString().split('T')[0]
+    const now = new Date()
+    const today = new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Kolkata' }).format(now)
+
+    // Automatically enforce attendance if window has passed
+    try {
+      await enforceAttendanceRules()
+    } catch (e) {
+      console.warn('[getTodayAttendance] Auto-enforcement error:', e)
+    }
+
     const supabase = await createClient()
 
     const { data } = await supabase

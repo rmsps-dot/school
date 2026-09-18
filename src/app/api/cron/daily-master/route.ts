@@ -1,5 +1,6 @@
 import { type NextRequest } from 'next/server'
 import { supabaseAdmin } from '@/utils/supabase/admin'
+import { enforceAttendanceRules } from '@/utils/attendance-enforcement'
 
 export const dynamic = 'force-dynamic'
 
@@ -7,96 +8,42 @@ export const dynamic = 'force-dynamic'
  * GET /api/cron/daily-master
  *
  * Daily Master Cron Job.
- * Runs every night at midnight (0 0 * * *)
  *
  * Tasks:
- * 1. Attendance Enforcement: Marks unmarked students and teachers as ABSENT for the previous day.
+ * 1. Attendance Enforcement: Automatically marks unmarked students and teachers as ABSENT
+ *    once their respective attendance windows have passed for today, and sweeps previous unclosed days.
  * 2. Homework Reminders: Sends notifications for homework due tomorrow.
  * 3. Storage Cleanup: Removes teacher attendance photos older than 24 hours.
  */
 export async function GET(request: NextRequest) {
   const cronSecret = process.env.CRON_SECRET
-  if (!cronSecret) {
-    console.error('[daily-master] CRON_SECRET env var is not set! Route is disabled.')
-    return Response.json({ error: 'Cron route not configured.' }, { status: 503 })
-  }
-
   const authHeader = request.headers.get('authorization')
-  if (authHeader !== `Bearer ${cronSecret}`) {
+  const userAgent = request.headers.get('user-agent') || ''
+  const isVercelCron = request.headers.get('x-vercel-cron') === '1' || userAgent.includes('vercel-cron')
+
+  // If CRON_SECRET is explicitly configured, verify it unless invoked directly by Vercel's cron agent
+  if (cronSecret && !isVercelCron && authHeader !== `Bearer ${cronSecret}`) {
     return Response.json({ error: 'Unauthorized.' }, { status: 401 })
   }
 
-  const results: any = {}
+  const results: {
+    attendanceEnforcement?: Record<string, unknown>
+    homeworkRemindersSent?: number
+    photosCleaned?: number
+    homeworkError?: string
+    cleanupError?: string
+  } = {}
 
   // ============================================================================
-  // TASK 1: Attendance Enforcement (Mark unmarked as ABSENT)
+  // TASK 1: Dynamic Attendance Enforcement (Mark unmarked as ABSENT)
   // ============================================================================
   try {
-    // We run at midnight, so "today" for attendance purposes is yesterday.
-    const yesterday = new Date()
-    yesterday.setDate(yesterday.getDate() - 1)
-    const targetDate = yesterday.toISOString().split('T')[0] // YYYY-MM-DD
-
-    // 1.a Teacher Attendance Enforcement
-    const { data: allTeachers } = await supabaseAdmin.from('teachers').select('id, profile_id')
-    const { data: markedTeachers } = await supabaseAdmin
-      .from('teacher_attendance')
-      .select('teacher_id')
-      .eq('date', targetDate)
-
-    if (allTeachers && markedTeachers) {
-      const markedTeacherIds = new Set(markedTeachers.map((t) => t.teacher_id))
-      const unmarkedTeachers = allTeachers.filter((t) => !markedTeacherIds.has(t.id))
-
-      if (unmarkedTeachers.length > 0) {
-        const absentRecords = unmarkedTeachers.map((t) => ({
-          teacher_id: t.id,
-          date: targetDate,
-          status: 'absent',
-          photo_url: null,
-          location_lat: null,
-          location_lng: null,
-        }))
-
-        const { error: tError } = await supabaseAdmin.from('teacher_attendance').insert(absentRecords)
-        if (tError) console.error('[daily-master] Teacher attendance enforcement error:', tError.message)
-        else results.teacherAttendanceEnforced = unmarkedTeachers.length
-      } else {
-        results.teacherAttendanceEnforced = 0
-      }
-    }
-
-    // 1.b Student Attendance Enforcement
-    const { data: allClasses } = await supabaseAdmin.from('classes').select('id')
-    const { data: allStudents } = await supabaseAdmin.from('students').select('id, class_id')
-    const { data: markedStudents } = await supabaseAdmin
-      .from('student_attendance')
-      .select('student_id')
-      .eq('date', targetDate)
-
-    if (allClasses && allStudents && markedStudents) {
-      const markedStudentIds = new Set(markedStudents.map((s) => s.student_id))
-      const unmarkedStudents = allStudents.filter((s) => !markedStudentIds.has(s.id))
-
-      if (unmarkedStudents.length > 0) {
-        const absentRecords = unmarkedStudents.map((s) => ({
-          student_id: s.id,
-          class_id: s.class_id,
-          date: targetDate,
-          status: 'absent',
-          marked_by: null, // System marked
-        }))
-
-        const { error: sError } = await supabaseAdmin.from('student_attendance').insert(absentRecords)
-        if (sError) console.error('[daily-master] Student attendance enforcement error:', sError.message)
-        else results.studentAttendanceEnforced = unmarkedStudents.length
-      } else {
-        results.studentAttendanceEnforced = 0
-      }
-    }
-  } catch (error: any) {
-    console.error('[daily-master] Attendance task failed:', error)
-    results.attendanceError = error.message
+    const enforcement = await enforceAttendanceRules()
+    results.attendanceEnforcement = enforcement as unknown as Record<string, unknown>
+  } catch (error) {
+    const message = error instanceof Error ? error.message : 'Attendance task failed'
+    console.error('[daily-master] Attendance task failed:', message)
+    results.attendanceEnforcement = { error: message }
   }
 
   // ============================================================================

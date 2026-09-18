@@ -1,7 +1,8 @@
 'use server'
 
 import { createClient } from '@/utils/supabase/server'
-import { requireTeacherForClass } from '@/utils/auth-helpers'
+import { requireTeacherForClass, requireAdmin } from '@/utils/auth-helpers'
+import { enforceAttendanceRules } from '@/utils/attendance-enforcement'
 
 export async function getStudentAttendance(classId: string, date: string) {
   if (classId) {
@@ -12,6 +13,18 @@ export async function getStudentAttendance(classId: string, date: string) {
     const auth = await requireTeacherForClass('', { allowAdmin: true })
     if (!auth.ok) return { data: null, error: auth.error }
   }
+
+  // Auto-enforce if requested date is today (Asia/Kolkata) and the window has passed
+  try {
+    const now = new Date()
+    const istDate = new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Kolkata' }).format(now)
+    if (date === istDate) {
+      await enforceAttendanceRules()
+    }
+  } catch (err) {
+    console.warn('[getStudentAttendance] Auto-enforcement trigger error:', err)
+  }
+
   const supabase = await createClient()
   let query = supabase
     .from('student_attendance')
@@ -26,6 +39,18 @@ export async function getStudentAttendance(classId: string, date: string) {
     
   if (error) return { data: null, error: error.message }
   return { data, error: null }
+}
+
+export async function triggerAttendanceEnforcement() {
+  const auth = await requireAdmin()
+  if (!auth.ok) return { success: false, error: auth.error }
+
+  try {
+    const result = await enforceAttendanceRules()
+    return { success: true, result }
+  } catch (err) {
+    return { success: false, error: err instanceof Error ? err.message : 'Enforcement failed' }
+  }
 }
 import type { Database } from '@/types/supabase'
 import { dispatchAttendanceAlert } from '@/utils/notification-dispatcher'
