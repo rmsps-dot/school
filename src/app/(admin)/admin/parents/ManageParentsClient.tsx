@@ -208,59 +208,63 @@ export default function ManageParentsClient({ parents: initialParents, students 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {filteredParents.map(p => (
           <div key={p.id} className="glass rounded-2xl border border-hairline overflow-hidden flex flex-col">
-            <div className="p-6 flex justify-between items-start border-b border-hairline bg-white/5">
-              <Link href={`/admin/parents/${p.id}`} className="flex items-center gap-4 group/link">
+            <div className="p-4 sm:p-6 flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4 border-b border-hairline bg-white/5">
+              <Link href={`/admin/parents/${p.id}`} className="flex items-center gap-3 sm:gap-4 group/link min-w-0 flex-1">
                 {p.avatar_url && !imageErrors[p.id] ? (
                   <Image 
                     src={p.avatar_url} 
                     alt="Avatar" 
                     width={56} 
                     height={56} 
-                    className="w-14 h-14 rounded-full object-cover border border-hairline group-hover/link:ring-2 ring-coral/50 transition-all flex-shrink-0" 
+                    className="w-12 h-12 sm:w-14 sm:h-14 rounded-full object-cover border border-hairline group-hover/link:ring-2 ring-coral/50 transition-all shrink-0" 
                     onError={() => setImageErrors(prev => ({ ...prev, [p.id]: true }))}
                   />
                 ) : (
-                  <div className="w-14 h-14 rounded-full bg-pink-500/20 flex items-center justify-center text-pink-400 group-hover/link:ring-2 ring-coral/50 transition-all flex-shrink-0">
-                    <Users className="w-6 h-6" />
+                  <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-full bg-pink-500/20 flex items-center justify-center text-pink-400 group-hover/link:ring-2 ring-coral/50 transition-all shrink-0">
+                    <Users className="w-5 h-5 sm:w-6 sm:h-6" />
                   </div>
                 )}
-                <div>
-                  <h3 className="text-lg font-bold text-white group-hover/link:text-coral transition-colors">{p.full_name}</h3>
+                <div className="min-w-0 flex-1">
+                  <h3 className="text-base sm:text-lg font-bold text-white group-hover/link:text-coral transition-colors truncate">{p.full_name}</h3>
                   <p className="text-xs text-mist">Parent Profile</p>
                 </div>
               </Link>
-              <div className="flex items-center gap-1.5">
+              <div className="flex items-center gap-2 shrink-0 self-end sm:self-auto w-full sm:w-auto justify-end border-t sm:border-t-0 pt-2 sm:pt-0 border-white/5">
                 <button
+                  type="button"
                   onClick={() => openCredentialsModal(p)}
-                  className="p-2 text-gold hover:bg-gold/15 rounded-lg transition-colors border border-gold/20 hover:border-gold/40 flex items-center gap-1 text-xs font-medium"
+                  className="h-9 px-3 text-gold hover:bg-gold/15 rounded-xl transition-colors border border-gold/30 hover:border-gold/50 flex items-center gap-1.5 text-xs font-semibold shrink-0 bg-gold/5"
                   title="Direct Login Credentials (Set & Send)"
                 >
-                  <Key className="w-4 h-4" />
-                  <span className="hidden sm:inline">Credentials</span>
+                  <Key className="w-4 h-4 shrink-0" />
+                  <span>Credentials</span>
                 </button>
                 <button
+                  type="button"
                   onClick={() => handlePasswordReset(p.id)}
-                  className="p-2 text-coral hover:bg-coral/10 rounded-lg transition-colors"
+                  className="w-9 h-9 flex items-center justify-center text-coral hover:bg-coral/15 rounded-xl transition-colors border border-coral/25 hover:border-coral/40 shrink-0 bg-coral/5"
                   title="Send Password Reset Link via Email"
                 >
-                  <Mail className="w-4 h-4" />
+                  <Mail className="w-4 h-4 shrink-0" />
                 </button>
                 <button
+                  type="button"
                   onClick={() => {
                     setSelectedParentForEdit(p)
                     setIsEditModalOpen(true)
                   }}
-                  className="p-2 text-mist hover:text-coral hover:bg-coral/10 rounded-lg transition-colors"
+                  className="w-9 h-9 flex items-center justify-center text-mist hover:text-white hover:bg-white/10 rounded-xl transition-colors border border-white/10 hover:border-white/20 shrink-0 bg-white/5"
                   title="Edit Parent"
                 >
-                  <Pencil className="w-4 h-4" />
+                  <Pencil className="w-4 h-4 shrink-0" />
                 </button>
                 <button
+                  type="button"
                   onClick={() => handleDelete(p.id)}
-                  className="p-2 text-mist hover:text-red-400 hover:bg-red-500/10 rounded-lg transition-colors"
+                  className="w-9 h-9 flex items-center justify-center text-mist hover:text-red-400 hover:bg-red-500/15 rounded-xl transition-colors border border-white/10 hover:border-red-500/30 shrink-0 bg-white/5"
                   title="Delete Parent"
                 >
-                  {isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Trash2 className="w-4 h-4" />}
+                  {isPending ? <Loader2 className="w-4 h-4 animate-spin shrink-0" /> : <Trash2 className="w-4 h-4 shrink-0 text-red-400/80 hover:text-red-400" />}
                 </button>
               </div>
             </div>

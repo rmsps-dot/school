@@ -1196,7 +1196,7 @@ function PreFooter({ theme }: { theme: "light" | "dark" }) {
         </span>
 
         <h2
-          className={`text-3xl sm:text-5xl md:text-6xl font-display font-black leading-tight tracking-tight uppercase ${
+          className={`text-2xl sm:text-4xl md:text-5xl lg:text-6xl font-display font-black leading-tight tracking-tight uppercase break-words px-2 max-w-2xl mx-auto ${
             isLight ? "text-[#0B0B10]" : "text-white"
           }`}
         >
@@ -1207,23 +1207,23 @@ function PreFooter({ theme }: { theme: "light" | "dark" }) {
         </h2>
 
         <p
-          className={`text-sm sm:text-base md:text-lg max-w-xl mx-auto font-light leading-relaxed ${
+          className={`text-sm sm:text-base md:text-lg max-w-xl mx-auto font-light leading-relaxed px-2 ${
             isLight ? "text-[#4A453C]" : "text-white/80"
           }`}
         >
           Give your child the foundation of disciplined residential education, modern science laboratories, and dedicated faculty mentorship in Bihar.
         </p>
 
-        <div className="flex flex-col sm:flex-row gap-4 justify-center pt-4 max-w-md mx-auto">
+        <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center pt-4 max-w-xs sm:max-w-md mx-auto w-full px-4 sm:px-0">
           <Link
             href="/register"
-            className="btn-primary py-4 px-8 rounded-xl font-mono uppercase text-xs font-bold tracking-widest text-center shadow-xl hover:scale-105 transition-transform"
+            className="btn-primary py-3.5 px-6 rounded-xl font-mono uppercase text-xs font-bold tracking-wider text-center shadow-xl hover:scale-105 transition-transform w-full sm:w-auto"
           >
             Apply for Online Admission
           </Link>
           <a
             href={`tel:${LANDING_CONFIG.contact.phone}`}
-            className={`py-4 px-8 rounded-xl font-mono uppercase text-xs font-bold tracking-widest text-center transition-colors border ${
+            className={`py-3.5 px-6 rounded-xl font-mono uppercase text-xs font-bold tracking-wider text-center transition-colors border w-full sm:w-auto ${
               isLight
                 ? "bg-white/80 border-black/15 text-[#0B0B10] hover:bg-white"
                 : "bg-white/15 backdrop-blur-xl border-white/25 text-white hover:bg-white/25"
