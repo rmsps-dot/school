@@ -1,11 +1,11 @@
 import webpush from 'web-push'
 import { supabaseAdmin } from '@/utils/supabase/admin'
 
-export const VAPID_PUBLIC_KEY = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY || ''
+export const VAPID_PUBLIC_KEY = (process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY || '').trim().replace(/^["']|["']$/g, '')
 
-const VAPID_PRIVATE_KEY = process.env.VAPID_PRIVATE_KEY || ''
+const VAPID_PRIVATE_KEY = (process.env.VAPID_PRIVATE_KEY || '').trim().replace(/^["']|["']$/g, '')
 
-const VAPID_SUBJECT = process.env.VAPID_SUBJECT || 'mailto:admin@rmsps.edu'
+const VAPID_SUBJECT = (process.env.VAPID_SUBJECT || 'mailto:admin@rmsps.edu').trim().replace(/^["']|["']$/g, '')
 
 export const isWebPushConfigured = Boolean(VAPID_PUBLIC_KEY && VAPID_PRIVATE_KEY)
 

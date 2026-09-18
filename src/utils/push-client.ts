@@ -3,7 +3,8 @@
 import { getVapidPublicKey, subscribeUserToPush } from '@/actions/push-actions'
 
 export function urlBase64ToUint8Array(base64String: string): Uint8Array {
-  const clean = base64String.trim()
+  const clean = base64String.trim().replace(/^["']|["']$/g, '')
+  if (!clean) return new Uint8Array(0)
   const padding = '='.repeat((4 - (clean.length % 4)) % 4)
   const base64 = (clean + padding).replace(/-/g, '+').replace(/_/g, '/')
   const rawData = window.atob(base64)
@@ -70,12 +71,23 @@ export async function registerPushSubscription(): Promise<{ success: boolean; er
   }
 
   try {
-    const { publicKey } = await getVapidPublicKey()
-    if (!publicKey || publicKey.trim().length === 0) {
+    let publicKey = ''
+    try {
+      const res = await getVapidPublicKey()
+      publicKey = res?.publicKey || ''
+    } catch {
+      // server action fallback
+    }
+    if (!publicKey && process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY) {
+      publicKey = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY
+    }
+    publicKey = publicKey.trim().replace(/^["']|["']$/g, '')
+
+    if (!publicKey) {
       return {
         success: false,
         error:
-          'Push notification keys missing hain. Vercel Dashboard me NEXT_PUBLIC_VAPID_PUBLIC_KEY aur VAPID_PRIVATE_KEY environment variables add karke redeploy karein.',
+          'Push notification keys missing hain. Vercel Dashboard me NEXT_PUBLIC_VAPID_PUBLIC_KEY aur VAPID_PRIVATE_KEY environment variables verify karein.',
       }
     }
 
