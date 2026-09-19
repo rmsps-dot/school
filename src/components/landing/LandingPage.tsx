@@ -20,6 +20,8 @@ import {
   Building2,
   Atom,
   LogIn,
+  ChevronRight,
+  GraduationCap,
 } from "lucide-react";
 
 import IntroPreloader from "@/components/landing/IntroPreloader";
@@ -495,20 +497,24 @@ function Navbar({
       <AnimatePresence>
         {mobileMenuOpen && (
           <motion.div
-            initial={{ opacity: 0, y: -20 }}
+            initial={{ opacity: 0, y: -16 }}
             animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -20 }}
-            className={`fixed inset-0 z-[100] p-6 sm:p-10 flex flex-col justify-between ${
+            exit={{ opacity: 0, y: -16 }}
+            transition={{ duration: 0.2, ease: "easeOut" }}
+            className={`fixed inset-0 z-[100] flex flex-col justify-between overflow-y-auto ${
               isLight ? "bg-[#F8F6F0] text-[#0B0B10]" : "bg-[#0B0B10] text-white"
             }`}
           >
+            {/* Header Bar */}
             <div
-              className={`flex justify-between items-center border-b pb-6 ${
-                isLight ? "border-black/10" : "border-white/10"
+              className={`sticky top-0 z-10 flex justify-between items-center px-5 py-4 border-b backdrop-blur-md ${
+                isLight
+                  ? "bg-[#F8F6F0]/95 border-black/10"
+                  : "bg-[#0B0B10]/95 border-white/10"
               }`}
             >
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-full overflow-hidden border-2 border-[#F1917D] p-0.5 bg-black shrink-0">
+                <div className="w-10 h-10 rounded-full overflow-hidden border-2 border-[#F1917D] p-0.5 bg-black shrink-0 shadow-sm">
                   <Image
                     src="/icon-192.png"
                     alt="RMSPS Logo"
@@ -517,61 +523,310 @@ function Navbar({
                     className="w-full h-full object-cover rounded-full"
                   />
                 </div>
-                <span className="text-2xl font-display font-black tracking-widest uppercase">
-                  RMSPS
-                </span>
+                <div className="flex flex-col">
+                  <span className="text-xl font-display font-black tracking-widest uppercase leading-none">
+                    RMSPS
+                  </span>
+                  <span className="text-[9px] font-mono tracking-widest uppercase text-[#F1917D] font-bold mt-0.5">
+                    Pipra, Bihar
+                  </span>
+                </div>
               </div>
               <button
                 onClick={() => setMobileMenuOpen(false)}
-                className="p-2"
+                className={`w-9 h-9 rounded-full flex items-center justify-center border transition-all ${
+                  isLight
+                    ? "border-black/15 bg-black/5 hover:bg-black/10 text-[#0B0B10]"
+                    : "border-white/15 bg-white/10 hover:bg-white/20 text-white"
+                }`}
                 aria-label="Close Navigation Menu"
               >
-                <X size={28} />
+                <X size={18} />
               </button>
             </div>
-            <div className="flex flex-col gap-6 py-8">
-              <a
-                href="#experience"
-                onClick={() => setMobileMenuOpen(false)}
-                className="text-3xl font-display uppercase font-bold hover:text-[#F1917D] transition-colors"
-              >
-                Academics
-              </a>
-              <a
-                href="#features"
-                onClick={() => setMobileMenuOpen(false)}
-                className="text-3xl font-display uppercase font-bold hover:text-[#F1917D] transition-colors"
-              >
-                Campus Life
-              </a>
-              <a
-                href="#portals"
-                onClick={() => setMobileMenuOpen(false)}
-                className="text-3xl font-display uppercase font-bold hover:text-[#F1917D] transition-colors"
-              >
-                Portals
-              </a>
-              <a
-                href="#notices"
-                onClick={() => setMobileMenuOpen(false)}
-                className="text-3xl font-display uppercase font-bold hover:text-[#F1917D] transition-colors"
-              >
-                Circulars
-              </a>
-              <Link
-                href="/login"
-                onClick={() => setMobileMenuOpen(false)}
-                className="text-[#F1917D] text-3xl font-display uppercase font-bold"
-              >
-                Portal Login →
-              </Link>
+
+            {/* Scrollable Content */}
+            <div className="flex-1 px-5 py-6 space-y-6">
+              {/* Portals Access (ERP Login) */}
+              <div className="space-y-3">
+                <div className="flex items-center justify-between px-1">
+                  <span className="text-[10px] font-mono uppercase tracking-widest font-bold text-[#F1917D]">
+                    Portals & ERP Access
+                  </span>
+                  <span className="text-[9px] font-mono uppercase px-2 py-0.5 rounded-full bg-[#F1917D]/10 text-[#F1917D] font-semibold">
+                    Secure Login
+                  </span>
+                </div>
+
+                {/* Primary CTA */}
+                <Link
+                  href="/login"
+                  onClick={() => setMobileMenuOpen(false)}
+                  className="w-full flex items-center justify-between p-3.5 rounded-2xl bg-[#F1917D] text-white shadow-lg shadow-[#F1917D]/25 active:scale-[0.99] transition-all group"
+                >
+                  <div className="flex items-center gap-3">
+                    <div className="w-8 h-8 rounded-xl bg-white/20 flex items-center justify-center shrink-0">
+                      <LogIn className="w-4 h-4 text-white" />
+                    </div>
+                    <div className="text-left">
+                      <div className="font-display font-bold text-sm uppercase tracking-wider leading-tight">
+                        Portal Login
+                      </div>
+                      <p className="text-[11px] font-mono text-white/80 font-normal">
+                        Unified login for students, parents & staff
+                      </p>
+                    </div>
+                  </div>
+                  <ArrowRight className="w-4 h-4 text-white shrink-0 group-hover:translate-x-0.5 transition-transform" />
+                </Link>
+
+                {/* 4 Role Desks (2x2 Grid) */}
+                <div className="grid grid-cols-2 gap-2 pt-1">
+                  <Link
+                    href="/login?role=student"
+                    onClick={() => setMobileMenuOpen(false)}
+                    className={`p-3 rounded-xl border transition-all text-left group ${
+                      isLight
+                        ? "bg-white border-black/10 hover:border-[#81B29A] hover:shadow-sm"
+                        : "bg-white/[0.04] border-white/10 hover:border-[#81B29A]"
+                    }`}
+                  >
+                    <div className="flex items-center justify-between mb-1.5">
+                      <div className="w-6 h-6 rounded-lg bg-[#81B29A]/15 text-[#81B29A] flex items-center justify-center">
+                        <GraduationCap className="w-3.5 h-3.5" />
+                      </div>
+                      <span className="text-[9px] font-mono uppercase text-[#81B29A] font-bold">Portal</span>
+                    </div>
+                    <div className="font-display font-bold text-xs uppercase tracking-wider">
+                      Student Hub
+                    </div>
+                    <p className="text-[10px] text-muted-foreground font-sans mt-0.5 line-clamp-1">
+                      Scorecards & Tasks
+                    </p>
+                  </Link>
+
+                  <Link
+                    href="/login?role=parent"
+                    onClick={() => setMobileMenuOpen(false)}
+                    className={`p-3 rounded-xl border transition-all text-left group ${
+                      isLight
+                        ? "bg-white border-black/10 hover:border-[#D4AF6A] hover:shadow-sm"
+                        : "bg-white/[0.04] border-white/10 hover:border-[#D4AF6A]"
+                    }`}
+                  >
+                    <div className="flex items-center justify-between mb-1.5">
+                      <div className="w-6 h-6 rounded-lg bg-[#D4AF6A]/15 text-[#D4AF6A] flex items-center justify-center">
+                        <Shield className="w-3.5 h-3.5" />
+                      </div>
+                      <span className="text-[9px] font-mono uppercase text-[#D4AF6A] font-bold">Portal</span>
+                    </div>
+                    <div className="font-display font-bold text-xs uppercase tracking-wider">
+                      Parent Desk
+                    </div>
+                    <p className="text-[10px] text-muted-foreground font-sans mt-0.5 line-clamp-1">
+                      Attendance & Fees
+                    </p>
+                  </Link>
+
+                  <Link
+                    href="/login?role=teacher"
+                    onClick={() => setMobileMenuOpen(false)}
+                    className={`p-3 rounded-xl border transition-all text-left group ${
+                      isLight
+                        ? "bg-white border-black/10 hover:border-[#3E5C76] hover:shadow-sm"
+                        : "bg-white/[0.04] border-white/10 hover:border-[#3E5C76]"
+                    }`}
+                  >
+                    <div className="flex items-center justify-between mb-1.5">
+                      <div className="w-6 h-6 rounded-lg bg-[#3E5C76]/15 text-[#3E5C76] flex items-center justify-center">
+                        <Atom className="w-3.5 h-3.5" />
+                      </div>
+                      <span className="text-[9px] font-mono uppercase text-[#3E5C76] font-bold">Portal</span>
+                    </div>
+                    <div className="font-display font-bold text-xs uppercase tracking-wider">
+                      Teacher Desk
+                    </div>
+                    <p className="text-[10px] text-muted-foreground font-sans mt-0.5 line-clamp-1">
+                      Marks & Register
+                    </p>
+                  </Link>
+
+                  <Link
+                    href="/login?role=admin"
+                    onClick={() => setMobileMenuOpen(false)}
+                    className={`p-3 rounded-xl border transition-all text-left group ${
+                      isLight
+                        ? "bg-white border-black/10 hover:border-[#F1917D] hover:shadow-sm"
+                        : "bg-white/[0.04] border-white/10 hover:border-[#F1917D]"
+                    }`}
+                  >
+                    <div className="flex items-center justify-between mb-1.5">
+                      <div className="w-6 h-6 rounded-lg bg-[#F1917D]/15 text-[#F1917D] flex items-center justify-center">
+                        <Building2 className="w-3.5 h-3.5" />
+                      </div>
+                      <span className="text-[9px] font-mono uppercase text-[#F1917D] font-bold">Portal</span>
+                    </div>
+                    <div className="font-display font-bold text-xs uppercase tracking-wider">
+                      Admin Suite
+                    </div>
+                    <p className="text-[10px] text-muted-foreground font-sans mt-0.5 line-clamp-1">
+                      ERP & Ledgers
+                    </p>
+                  </Link>
+                </div>
+              </div>
+
+              {/* Campus Navigation */}
+              <div className="space-y-2 pt-1">
+                <span className="text-[10px] font-mono uppercase tracking-widest font-bold px-1 text-muted-foreground">
+                  Campus Navigation
+                </span>
+
+                <div className="space-y-1.5">
+                  <a
+                    href="#experience"
+                    onClick={() => setMobileMenuOpen(false)}
+                    className={`flex items-center justify-between p-3 rounded-xl border transition-all ${
+                      isLight
+                        ? "bg-white/60 border-black/5 hover:bg-white hover:border-black/10"
+                        : "bg-white/[0.02] border-white/5 hover:bg-white/5 hover:border-white/10"
+                    }`}
+                  >
+                    <div className="flex items-center gap-3">
+                      <div className="w-8 h-8 rounded-lg bg-[#F1917D]/10 text-[#F1917D] flex items-center justify-center shrink-0">
+                        <BookOpen className="w-4 h-4" />
+                      </div>
+                      <div>
+                        <div className="font-display font-bold text-sm uppercase tracking-wider">
+                          Academics
+                        </div>
+                        <p className="text-[11px] text-muted-foreground font-sans">
+                          BSEB Curriculum & Practical Labs
+                        </p>
+                      </div>
+                    </div>
+                    <ChevronRight className="w-4 h-4 text-muted-foreground shrink-0" />
+                  </a>
+
+                  <a
+                    href="#features"
+                    onClick={() => setMobileMenuOpen(false)}
+                    className={`flex items-center justify-between p-3 rounded-xl border transition-all ${
+                      isLight
+                        ? "bg-white/60 border-black/5 hover:bg-white hover:border-black/10"
+                        : "bg-white/[0.02] border-white/5 hover:bg-white/5 hover:border-white/10"
+                    }`}
+                  >
+                    <div className="flex items-center gap-3">
+                      <div className="w-8 h-8 rounded-lg bg-[#D4AF6A]/10 text-[#D4AF6A] flex items-center justify-center shrink-0">
+                        <Building2 className="w-4 h-4" />
+                      </div>
+                      <div>
+                        <div className="font-display font-bold text-sm uppercase tracking-wider">
+                          Campus Life
+                        </div>
+                        <p className="text-[11px] text-muted-foreground font-sans">
+                          Supervised Hostels & Smart Security
+                        </p>
+                      </div>
+                    </div>
+                    <ChevronRight className="w-4 h-4 text-muted-foreground shrink-0" />
+                  </a>
+
+                  <a
+                    href="#notices"
+                    onClick={() => setMobileMenuOpen(false)}
+                    className={`flex items-center justify-between p-3 rounded-xl border transition-all ${
+                      isLight
+                        ? "bg-white/60 border-black/5 hover:bg-white hover:border-black/10"
+                        : "bg-white/[0.02] border-white/5 hover:bg-white/5 hover:border-white/10"
+                    }`}
+                  >
+                    <div className="flex items-center gap-3">
+                      <div className="w-8 h-8 rounded-lg bg-[#3E5C76]/10 text-[#3E5C76] flex items-center justify-center shrink-0">
+                        <Bell className="w-4 h-4" />
+                      </div>
+                      <div>
+                        <div className="flex items-center gap-2">
+                          <span className="font-display font-bold text-sm uppercase tracking-wider">
+                            Circulars
+                          </span>
+                          <span className="text-[9px] font-mono uppercase px-1.5 py-0.5 rounded bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 font-bold">
+                            Live
+                          </span>
+                        </div>
+                        <p className="text-[11px] text-muted-foreground font-sans">
+                          Official Announcements & Bulletins
+                        </p>
+                      </div>
+                    </div>
+                    <ChevronRight className="w-4 h-4 text-muted-foreground shrink-0" />
+                  </a>
+
+                  <Link
+                    href="/register"
+                    onClick={() => setMobileMenuOpen(false)}
+                    className={`flex items-center justify-between p-3 rounded-xl border transition-all ${
+                      isLight
+                        ? "bg-white/60 border-black/5 hover:bg-white hover:border-black/10"
+                        : "bg-white/[0.02] border-white/5 hover:bg-white/5 hover:border-white/10"
+                    }`}
+                  >
+                    <div className="flex items-center gap-3">
+                      <div className="w-8 h-8 rounded-lg bg-[#F1917D]/10 text-[#F1917D] flex items-center justify-center shrink-0">
+                        <GraduationCap className="w-4 h-4" />
+                      </div>
+                      <div>
+                        <div className="flex items-center gap-2">
+                          <span className="font-display font-bold text-sm uppercase tracking-wider text-[#F1917D]">
+                            Online Admission
+                          </span>
+                          <span className="text-[9px] font-mono uppercase px-1.5 py-0.5 rounded bg-[#F1917D]/15 text-[#F1917D] font-bold">
+                            2026-27
+                          </span>
+                        </div>
+                        <p className="text-[11px] text-muted-foreground font-sans">
+                          Enrollment & Registration Form
+                        </p>
+                      </div>
+                    </div>
+                    <ChevronRight className="w-4 h-4 text-muted-foreground shrink-0" />
+                  </Link>
+                </div>
+              </div>
+
+              {/* Admissions Helpline Contact Card */}
+              <div className="pt-1">
+                <a
+                  href={`tel:${LANDING_CONFIG.contact.phone}`}
+                  className={`flex items-center justify-between p-3 rounded-xl border text-xs font-mono transition-all ${
+                    isLight
+                      ? "bg-white border-black/10 hover:border-black/20 hover:shadow-sm"
+                      : "bg-white/[0.03] border-white/10 hover:bg-white/[0.06]"
+                  }`}
+                >
+                  <div className="flex items-center gap-2.5">
+                    <Phone className="w-4 h-4 text-[#F1917D]" />
+                    <div>
+                      <div className="text-[10px] uppercase text-muted-foreground">Admissions Helpline</div>
+                      <div className="font-bold text-xs">{LANDING_CONFIG.contact.phone}</div>
+                    </div>
+                  </div>
+                  <span className="text-[11px] px-2.5 py-1 rounded-full bg-[#F1917D]/15 text-[#F1917D] font-bold uppercase tracking-wider">
+                    Call Desk
+                  </span>
+                </a>
+              </div>
             </div>
+
+            {/* Footer Accreditation */}
             <div
-              className={`text-xs font-mono uppercase border-t pt-6 ${
+              className={`px-5 py-4 text-[10px] font-mono uppercase border-t tracking-wider text-center ${
                 isLight ? "border-black/10 text-black/50" : "border-white/10 text-white/50"
               }`}
             >
-              Reg No. PSS217/19 • UDISE CODE: 10060603629 • Pipra, Bihar
+              <div>Reg No. {LANDING_CONFIG.contact.regNo} • UDISE CODE: {LANDING_CONFIG.contact.udiseCode}</div>
+              <div className="text-[9px] mt-0.5 opacity-80">Pipra, Supaul, Bihar • Est. 2016</div>
             </div>
           </motion.div>
         )}
