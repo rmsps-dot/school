@@ -25,7 +25,7 @@ export default async function Image() {
         }}
       >
         <img
-          src="http://rmsps.vercel.app/logo.jpg"
+          src="https://rmsps.vercel.app/logo.jpg"
           alt="RMSPS Logo"
           style={{ width: 250, height: 250, borderRadius: '50%' }}
         />

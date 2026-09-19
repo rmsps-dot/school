@@ -190,7 +190,7 @@ export async function recordTeacherPayment(
     }
 
     revalidatePath('/admin/teachers')
-    return { success: true }
+    return { success: true, id: data.id }
   } catch (err) {
     return { success: false, error: err instanceof Error ? err.message : 'Failed to record payment' }
   }

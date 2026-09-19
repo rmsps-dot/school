@@ -17,12 +17,13 @@ export const dynamic = 'force-dynamic'
  */
 export async function GET(request: NextRequest) {
   const cronSecret = process.env.CRON_SECRET
-  const authHeader = request.headers.get('authorization')
-  const userAgent = request.headers.get('user-agent') || ''
-  const isVercelCron = request.headers.get('x-vercel-cron') === '1' || userAgent.includes('vercel-cron')
+  if (!cronSecret) {
+    console.error('[daily-master] CRON_SECRET env var is not set! Route is disabled.')
+    return Response.json({ error: 'Cron route not configured.' }, { status: 503 })
+  }
 
-  // If CRON_SECRET is explicitly configured, verify it unless invoked directly by Vercel's cron agent
-  if (cronSecret && !isVercelCron && authHeader !== `Bearer ${cronSecret}`) {
+  const authHeader = request.headers.get('authorization')
+  if (authHeader !== `Bearer ${cronSecret}`) {
     return Response.json({ error: 'Unauthorized.' }, { status: 401 })
   }
 

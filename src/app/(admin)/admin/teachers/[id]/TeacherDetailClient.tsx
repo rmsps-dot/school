@@ -219,11 +219,11 @@ export default function TeacherDetailClient({ teacher, classes: allAvailableClas
       }
       setPayments([
         {
-          id: `pay-${Date.now()}`,
+          id: res.id,
           amount: payload.amount,
           payment_date: payload.paymentDate,
           status: payload.status,
-          remarks: payload.remarks,
+          remarks: payload.remarks ?? null,
         },
         ...payments,
       ])

@@ -51,15 +51,21 @@ export async function GET(request: NextRequest) {
 
     if (students && students.length > 0) {
       const feeRecords = students
-        .filter((s) => s.classes && (s.classes as any).monthly_fee > 0)
-        .map((s) => ({
-          student_id: s.student_id,
-          fee_name: `Tuition Fee - ${currentMonth}`,
-          amount: (s.classes as any).monthly_fee,
-          due_date: dueDate,
-          status: 'due',
-          paid_amount: 0,
-        }))
+        .filter((s) => {
+          const cls = Array.isArray(s.classes) ? s.classes[0] : s.classes
+          return cls && (cls as any).monthly_fee > 0
+        })
+        .map((s) => {
+          const cls = Array.isArray(s.classes) ? s.classes[0] : s.classes
+          return {
+            student_id: s.student_id,
+            fee_name: `Tuition Fee - ${currentMonth}`,
+            amount: (cls as any).monthly_fee,
+            due_date: dueDate,
+            status: 'due',
+            paid_amount: 0,
+          }
+        })
 
       if (feeRecords.length > 0) {
         const { error: feeError } = await supabaseAdmin.from('student_fees').insert(feeRecords)
