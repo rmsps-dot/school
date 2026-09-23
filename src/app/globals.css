@@ -44,7 +44,6 @@
   --font-display: var(--font-syne), sans-serif;
   --font-body: var(--font-dm-sans), sans-serif;
   --font-mono: var(--font-mono), monospace;
-  --font-kanit: var(--font-kanit), 'Kanit', sans-serif;
 }
 
 * {
@@ -115,16 +114,6 @@ button, input, select, textarea {
 /* Typography */
 h1, h2, h3, h4, h5, h6, .font-display {
   font-family: var(--font-syne), sans-serif;
-}
-
-.font-kanit {
-  font-family: var(--font-kanit), 'Kanit', sans-serif;
-}
-
-.hero-heading {
-  background: linear-gradient(180deg, #646973 0%, #BBCCD7 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
 }
 
 .data-mono, table td, .numeric-data {

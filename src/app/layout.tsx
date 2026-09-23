@@ -1,14 +1,7 @@
 import type { Metadata, Viewport } from "next";
-import { Kanit, Syne, DM_Sans, JetBrains_Mono } from "next/font/google";
+import { Syne, DM_Sans, JetBrains_Mono } from "next/font/google";
 import "./globals.css";
 import MobileViewportShield from "@/components/shared/MobileViewportShield";
-
-const kanit = Kanit({
-  subsets: ["latin"],
-  weight: ["300", "400", "500", "600", "700", "800", "900"],
-  variable: "--font-kanit",
-  display: "swap",
-});
 
 const syne = Syne({
   subsets: ["latin"],
@@ -106,7 +99,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className={`${kanit.variable} ${syne.variable} ${dmSans.variable} ${jetbrainsMono.variable} h-full`}>
+    <html lang="en" className={`${syne.variable} ${dmSans.variable} ${jetbrainsMono.variable} h-full`}>
       <head>
         <link rel="preconnect" href="https://images.unsplash.com" crossOrigin="anonymous" />
         <script
