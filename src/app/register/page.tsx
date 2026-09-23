@@ -244,37 +244,44 @@ function OtpVerifyScreen({
       initial={{ opacity: 0, x: 40 }}
       animate={{ opacity: 1, x: 0 }}
       exit={{ opacity: 0, x: -40 }}
-      className="flex flex-col gap-6"
+      className="flex flex-col gap-5"
     >
       {/* Step heading */}
       <div>
         <p className="text-xs text-coral font-semibold tracking-widest uppercase mb-1">
           Step 3 of 3 — Email Verification
         </p>
-        <h2 className="font-display text-2xl font-bold text-parchment">
+        <h2 className="font-display text-xl sm:text-2xl font-bold text-parchment">
           Verify Student Email
         </h2>
+        <p className="text-xs text-mist mt-1 leading-relaxed">
+          Enter the 6-digit confirmation code sent to your inbox to complete registration.
+        </p>
       </div>
 
       {/* Target Email badge with Edit option */}
-      <div className="surface-card rounded-2xl p-4 flex items-center justify-between gap-3 border border-hairline">
-        <div className="flex items-center gap-3 min-w-0">
+      <div className="surface-card rounded-xl p-3 sm:p-3.5 flex items-center justify-between gap-3 border border-hairline">
+        <div className="flex items-center gap-2.5 min-w-0 flex-1">
           <div
-            className="w-10 h-10 rounded-xl flex items-center justify-center border border-coral/30 shrink-0"
+            className="w-8 h-8 rounded-lg flex items-center justify-center border border-coral/30 shrink-0 text-coral"
             style={{ background: "rgba(241,145,125,0.1)" }}
           >
-            <Mail className="w-5 h-5 text-coral" />
+            <Mail className="w-4 h-4" />
           </div>
-          <div className="min-w-0">
-            <p className="text-[11px] font-semibold text-mist uppercase tracking-wider">Verification OTP Sent To</p>
-            <p className="text-xs sm:text-sm font-bold text-parchment truncate font-mono">{email}</p>
+          <div className="min-w-0 flex-1">
+            <p className="text-[10px] font-semibold text-mist uppercase tracking-wider whitespace-nowrap">
+              Verification Code Sent To
+            </p>
+            <p className="text-xs sm:text-sm font-bold text-parchment truncate font-mono">
+              {email}
+            </p>
           </div>
         </div>
         {onBack && (
           <button
             type="button"
             onClick={onBack}
-            className="text-xs font-semibold text-coral hover:underline shrink-0 px-2 py-1"
+            className="text-xs font-semibold text-coral hover:text-coral/80 transition-colors shrink-0 px-2.5 py-1 rounded-md hover:bg-coral/10 whitespace-nowrap cursor-pointer"
           >
             Change
           </button>
@@ -282,11 +289,11 @@ function OtpVerifyScreen({
       </div>
 
       {/* 6-digit OTP Inputs */}
-      <div className="flex flex-col gap-2.5">
-        <label className="text-xs font-semibold text-mist uppercase tracking-wider text-center">
+      <div className="flex flex-col gap-2">
+        <label className="text-[11px] font-semibold text-mist uppercase tracking-wider text-center">
           Enter 6-Digit Code <span className="text-coral">*</span>
         </label>
-        <div className="flex items-center justify-center gap-2 sm:gap-3 max-w-sm mx-auto w-full">
+        <div className="flex items-center justify-center gap-1.5 sm:gap-2.5 max-w-[320px] mx-auto w-full px-1">
           {digits.map((digit, idx) => (
             <input
               key={idx}
@@ -295,15 +302,16 @@ function OtpVerifyScreen({
               }}
               type="text"
               inputMode="numeric"
+              pattern="[0-9]*"
               maxLength={1}
               value={digit}
               onChange={(e) => handleDigitChange(idx, e.target.value)}
               onKeyDown={(e) => handleKeyDown(idx, e)}
               onPaste={handlePaste}
-              className={`w-11 sm:w-12 h-14 sm:h-16 text-center text-xl sm:text-2xl font-bold font-mono rounded-xl bg-ink/60 border transition-all focus:outline-none ${
+              className={`w-9 sm:w-11 h-11 sm:h-12 text-center text-base sm:text-lg font-bold font-mono rounded-lg sm:rounded-xl bg-ink/60 border transition-all focus:outline-none ${
                 digit
-                  ? "border-coral text-parchment shadow-[0_0_12px_rgba(241,145,125,0.2)]"
-                  : "border-hairline text-mist focus:border-coral/60 focus:ring-1 focus:ring-coral/20"
+                  ? "border-coral text-parchment bg-coral/5 shadow-[0_0_10px_rgba(241,145,125,0.15)]"
+                  : "border-hairline text-mist/60 focus:border-coral/70 focus:ring-1 focus:ring-coral/20"
               }`}
             />
           ))}
@@ -312,33 +320,33 @@ function OtpVerifyScreen({
 
       {/* Error or Success notification */}
       {error && (
-        <div className="flex items-center gap-2 text-red-400 text-sm bg-red-500/10 border border-red-500/20 rounded-xl px-4 py-3">
-          <AlertCircle className="w-4 h-4 flex-shrink-0" /> {error}
+        <div className="flex items-center gap-2 text-red-400 text-xs sm:text-sm bg-red-500/10 border border-red-500/20 rounded-xl px-3.5 py-2.5">
+          <AlertCircle className="w-4 h-4 flex-shrink-0" /> <span>{error}</span>
         </div>
       )}
       {successMsg && !error && (
-        <div className="flex items-center gap-2 text-emerald-400 text-sm bg-emerald-500/10 border border-emerald-500/20 rounded-xl px-4 py-3">
-          <CheckCircle className="w-4 h-4 flex-shrink-0" /> {successMsg}
+        <div className="flex items-center gap-2 text-emerald-400 text-xs sm:text-sm bg-emerald-500/10 border border-emerald-500/20 rounded-xl px-3.5 py-2.5">
+          <CheckCircle className="w-4 h-4 flex-shrink-0" /> <span>{successMsg}</span>
         </div>
       )}
 
       {/* Action Buttons */}
-      <div className="flex gap-3 mt-1">
+      <div className="flex items-center gap-2.5 sm:gap-3 pt-1">
         {onBack && (
           <button
             type="button"
             disabled={loading}
             onClick={onBack}
-            className="flex-1 py-3.5 rounded-xl surface-card font-semibold flex items-center justify-center gap-2 text-sm text-mist hover:text-parchment transition-colors disabled:opacity-50"
+            className="w-[90px] sm:w-[110px] py-2.5 sm:py-3 rounded-xl border border-hairline font-semibold flex items-center justify-center gap-1.5 text-xs sm:text-sm text-mist hover:text-parchment hover:bg-white/5 transition-all disabled:opacity-50 shrink-0 cursor-pointer"
           >
-            <ArrowLeft className="w-4 h-4" /> Back
+            <ArrowLeft className="w-3.5 h-3.5" /> Back
           </button>
         )}
         <button
           id="verify-otp-btn"
           onClick={handleVerify}
           disabled={loading || !isComplete}
-          className={`${onBack ? "flex-[2]" : "w-full"} py-3.5 rounded-xl font-semibold flex items-center justify-center gap-2 disabled:opacity-50 text-sm transition-all hover:scale-[1.01] active:scale-[0.99]`}
+          className="flex-1 py-2.5 sm:py-3 rounded-xl font-bold flex items-center justify-center gap-2 disabled:opacity-40 disabled:cursor-not-allowed text-xs sm:text-sm transition-all shadow-md hover:opacity-95 active:scale-[0.99] cursor-pointer"
           style={{ background: "var(--coral)", color: "var(--ink)" }}
         >
           {loading ? (
@@ -347,21 +355,21 @@ function OtpVerifyScreen({
             </>
           ) : (
             <>
-              Verify OTP <ArrowRight className="w-4 h-4" />
+              Verify OTP <ArrowRight className="w-3.5 h-3.5" />
             </>
           )}
         </button>
       </div>
 
       {/* Resend OTP */}
-      <p className="text-xs text-mist text-center">
+      <p className="text-xs text-mist text-center pt-1">
         Didn&apos;t receive it? Check spam folder or{" "}
         {otpCooldown > 0 ? (
           <span className="text-mist font-medium">Resend in {otpCooldown}s</span>
         ) : (
           <button
             type="button"
-            className="text-coral font-semibold hover:underline transition-all"
+            className="text-coral font-semibold hover:underline transition-all cursor-pointer"
             onClick={async () => {
               setError("");
               setSuccessMsg("");
@@ -548,7 +556,7 @@ export default function RegisterPage() {
           )}
 
           {/* Card */}
-          <div className="glass-panel rounded-3xl p-8">
+          <div className="glass-panel rounded-2xl sm:rounded-3xl p-5 sm:p-8">
             <AnimatePresence mode="wait">
               {/* ── SUCCESS ── */}
               {submitted ? (
