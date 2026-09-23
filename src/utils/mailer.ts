@@ -118,6 +118,63 @@ export async function sendParentCredentials(
 }
 
 /* ══════════════════════════════════════════════════════════════
+   1B. PASSWORD RESET EMAIL (SECURE DIRECT RECOVERY LINK)
+   ══════════════════════════════════════════════════════════════ */
+export async function sendPasswordResetEmail(
+  toEmail: string,
+  recipientName: string,
+  resetLink: string
+): Promise<{ success: boolean; error?: string }> {
+  if (!process.env.SMTP_EMAIL || !process.env.SMTP_PASSWORD) {
+    console.warn('SMTP credentials not configured. Skipping email send.')
+    return { success: false, error: 'SMTP not configured' }
+  }
+
+  const mailOptions = {
+    from: `"RMSPS Security" <${process.env.SMTP_EMAIL}>`,
+    to: toEmail,
+    subject: `Reset Your Password - RMSPS Portal`,
+    html: `
+      <div style="font-family: Arial, sans-serif; max-width: 600px; width: 100%; box-sizing: border-box; word-break: break-word; margin: 0 auto; border: 1px solid #e2e8f0; border-radius: 12px; overflow: hidden; background-color: #ffffff;">
+        ${getSchoolHeaderHtml('Password Reset Request', 'Secure Account Recovery')}
+        <div style="padding: 32px; background-color: #ffffff;">
+          <p style="font-size: 16px; color: #334155;">Hello <strong>${recipientName || 'User'}</strong>,</p>
+          <p style="font-size: 15px; color: #334155; line-height: 1.6;">
+            We received a request to reset your password for your RMSPS Portal account.
+          </p>
+          <p style="font-size: 15px; color: #334155; line-height: 1.6;">
+            Click the button below to set a new password. This secure link is valid for 24 hours.
+          </p>
+          <div style="text-align: center; margin: 32px 0;">
+            <a href="${resetLink}" style="display: inline-block; background-color: #3E5C76; color: #ffffff; text-decoration: none; padding: 14px 32px; border-radius: 8px; font-weight: bold; font-size: 15px; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);">
+              Reset Password
+            </a>
+          </div>
+          <div style="background-color: #F8FAFC; border: 1px solid #E2E8F0; border-radius: 8px; padding: 16px; margin: 24px 0;">
+            <p style="margin: 0 0 6px 0; font-size: 12px; color: #64748B; font-weight: bold; text-transform: uppercase;">Or copy and paste this link:</p>
+            <p style="margin: 0; font-size: 12px; color: #3E5C76; word-break: break-all;">
+              <a href="${resetLink}" style="color: #3E5C76; text-decoration: underline;">${resetLink}</a>
+            </p>
+          </div>
+          <p style="font-size: 13px; color: #64748B; line-height: 1.5;">
+            <em>If you did not request this password reset, please ignore this email or contact the school administration immediately. Your password will remain unchanged.</em>
+          </p>
+        </div>
+        ${getSchoolFooterHtml()}
+      </div>
+    `,
+  }
+
+  try {
+    await transporter.sendMail(mailOptions)
+    return { success: true }
+  } catch (error: unknown) {
+    console.error('Error sending password reset email:', error)
+    return { success: false, error: error instanceof Error ? error.message : 'Failed to send email' }
+  }
+}
+
+/* ══════════════════════════════════════════════════════════════
    2. STUDENT ATTENDANCE ALERT (ABSENT / LATE)
    ══════════════════════════════════════════════════════════════ */
 export interface AttendanceAlertParams {

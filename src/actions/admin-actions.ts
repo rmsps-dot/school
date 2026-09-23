@@ -172,7 +172,8 @@ export async function approveRegistration(
     }
 
     /* 5. Check if parent already has an auth account */
-    const existingParentId = await getAuthUserIdByEmail(reg.parent_email)
+    const cleanParentEmail = (reg.parent_email || '').trim().toLowerCase()
+    const existingParentId = await getAuthUserIdByEmail(cleanParentEmail)
 
     let parentAuthId: string
 
@@ -180,12 +181,12 @@ export async function approveRegistration(
       /* Parent exists — just use their existing account */
       parentAuthId = existingParentId
     } else {
-      /* Parent doesn't exist — create account with auto-generated password and send email */
-      const generatedPassword = randomBytes(12).toString('base64url').slice(0, 16) + 'A1!'
+      /* Parent doesn't exist — create account with clean auto-generated password and send email */
+      const generatedPassword = `RMSPS@${randomBytes(3).toString('hex').toUpperCase()}!`
       const parentName = `${reg.father_name ?? ''} ${reg.mother_name ? '& ' + reg.mother_name : ''}`.trim() || 'Parent'
       
       const { data: createdUser, error: createErr } = await supabaseAdmin.auth.admin.createUser({
-        email: reg.parent_email,
+        email: cleanParentEmail,
         password: generatedPassword,
         email_confirm: true,
         user_metadata: {
@@ -201,7 +202,7 @@ export async function approveRegistration(
 
       // Send the credentials via email
       await sendParentCredentials(
-        reg.parent_email,
+        cleanParentEmail,
         parentName,
         reg.student_name,
         generatedPassword

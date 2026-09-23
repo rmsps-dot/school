@@ -4,7 +4,7 @@ import { useState } from 'react'
 import { motion } from 'framer-motion'
 import { Mail, ArrowLeft, Loader2, CheckCircle2, AlertCircle } from 'lucide-react'
 import Link from 'next/link'
-import { supabase } from '@/utils/supabase/client'
+import { requestPasswordResetAction } from '@/actions/user-management-actions'
 
 export default function ForgotPasswordPage() {
   const [email, setEmail] = useState('')
@@ -18,12 +18,17 @@ export default function ForgotPasswordPage() {
     setError('')
     setSuccess(false)
 
-    const { error: resetError } = await supabase.auth.resetPasswordForEmail(email, {
-      redirectTo: `${window.location.origin}/reset-password`,
-    })
+    const cleanEmail = email.trim().toLowerCase()
+    if (!cleanEmail) {
+      setError('Please enter your email.')
+      setIsLoading(false)
+      return
+    }
 
-    if (resetError) {
-      setError(resetError.message)
+    const res = await requestPasswordResetAction(cleanEmail)
+
+    if (!res.success) {
+      setError(res.error || 'Failed to send reset link.')
     } else {
       setSuccess(true)
     }

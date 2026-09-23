@@ -22,6 +22,7 @@ import {
   GraduationCap,
 } from "lucide-react";
 import { supabase } from "@/utils/supabase/client";
+import { requestPasswordResetAction } from "@/actions/user-management-actions";
 import IntroPreloader from "@/components/landing/IntroPreloader";
 
 /* ─── Types ─── */
@@ -124,18 +125,17 @@ function ForgotPasswordModal({
       : "bg-role-student";
 
   async function handleSend() {
-    if (!email.trim()) {
+    const cleanEmail = email.trim().toLowerCase();
+    if (!cleanEmail) {
       setError("Please enter your email.");
       return;
     }
     setLoading(true);
     setError("");
-    const { error: err } = await supabase.auth.resetPasswordForEmail(email.trim(), {
-      redirectTo: `${window.location.origin}/reset-password`,
-    });
+    const res = await requestPasswordResetAction(cleanEmail);
     setLoading(false);
-    if (err) {
-      setError(err.message);
+    if (!res.success) {
+      setError(res.error || "Failed to send reset link.");
       return;
     }
     setSent(true);
@@ -260,7 +260,10 @@ function LoginForm() {
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
-    if (!email || !password) {
+    const cleanEmail = email.trim().toLowerCase();
+    const cleanPassword = password.trim();
+
+    if (!cleanEmail || !cleanPassword) {
       setError("Please enter both email and password.");
       return;
     }
@@ -268,8 +271,8 @@ function LoginForm() {
 
     try {
       const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
-        email,
-        password,
+        email: cleanEmail,
+        password: cleanPassword,
       });
       if (authError) throw authError;
 

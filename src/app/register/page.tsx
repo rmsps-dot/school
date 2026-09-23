@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import Image from "next/image";
 import { motion, AnimatePresence } from "framer-motion";
 import Link from "next/link";
@@ -59,20 +59,20 @@ function StepIndicator({ step, current, label }: { step: number; current: number
   const done   = current > step;
   const active = current === step;
   return (
-    <div className="flex flex-col items-center gap-2">
+    <div className="flex flex-col items-center gap-1.5 shrink-0">
       <div
-        className={`w-10 h-10 rounded-full flex items-center justify-center text-sm font-bold transition-all duration-500 border
+        className={`w-9 sm:w-10 h-9 sm:h-10 rounded-full flex items-center justify-center text-xs sm:text-sm font-bold transition-all duration-300 border
           ${done
             ? "bg-emerald-500/20 border-emerald-500/50 text-emerald-400"
             : active
-            ? "border-coral/60 text-coral"
-            : "border-hairline text-mist"
+            ? "border-coral/70 bg-coral/10 text-coral ring-2 ring-coral/20"
+            : "border-hairline bg-ink/40 text-mist"
           }`}
-        style={active ? { boxShadow: "0 0 16px rgba(241,145,125,0.3)" } : {}}
+        style={active ? { boxShadow: "0 0 16px rgba(241,145,125,0.25)" } : {}}
       >
-        {done ? <CheckCircle className="w-5 h-5" /> : step}
+        {done ? <CheckCircle className="w-4 h-4 sm:w-5 sm:h-5" /> : step}
       </div>
-      <span className={`text-xs font-medium tracking-wider uppercase hidden sm:block ${active ? "text-parchment" : "text-mist"}`}>
+      <span className={`text-[10px] sm:text-xs font-medium tracking-wider uppercase hidden sm:block ${active ? "text-parchment" : "text-mist"}`}>
         {label}
       </span>
     </div>
@@ -81,7 +81,7 @@ function StepIndicator({ step, current, label }: { step: number; current: number
 
 function StepConnector({ active }: { active: boolean }) {
   return (
-    <div className={`flex-1 h-px mx-2 mt-[-12px] sm:mt-[-18px] transition-all duration-500 ${active ? "bg-emerald-500/50" : "bg-white/10"}`} />
+    <div className={`flex-1 h-0.5 mx-2 -mt-4 sm:-mt-5 transition-all duration-300 ${active ? "bg-emerald-500/60" : "bg-white/10"}`} />
   );
 }
 
@@ -121,8 +121,17 @@ function Field({
 }
 
 /* ─── OTP VERIFY SCREEN ─── */
-function OtpVerifyScreen({ email, onSuccess }: { email: string; onSuccess: () => Promise<{ success: boolean; error?: string }> }) {
-  const [otp, setOtp] = useState("");
+function OtpVerifyScreen({
+  email,
+  onSuccess,
+  onBack,
+}: {
+  email: string;
+  onSuccess: () => Promise<{ success: boolean; error?: string }>;
+  onBack?: () => void;
+}) {
+  const [digits, setDigits] = useState<string[]>(["", "", "", "", "", ""]);
+  const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [successMsg, setSuccessMsg] = useState("");
@@ -130,77 +139,178 @@ function OtpVerifyScreen({ email, onSuccess }: { email: string; onSuccess: () =>
 
   useEffect(() => {
     if (otpCooldown <= 0) return;
-    const t = setTimeout(() => setOtpCooldown(c => c - 1), 1000);
+    const t = setTimeout(() => setOtpCooldown((c) => c - 1), 1000);
     return () => clearTimeout(t);
   }, [otpCooldown]);
 
+  useEffect(() => {
+    inputRefs.current[0]?.focus();
+  }, []);
+
+  const handleDigitChange = (index: number, val: string) => {
+    const cleaned = val.replace(/\D/g, "");
+    if (!cleaned) {
+      const next = [...digits];
+      next[index] = "";
+      setDigits(next);
+      return;
+    }
+
+    if (cleaned.length > 1) {
+      const next = [...digits];
+      for (let i = 0; i < 6; i++) {
+        if (cleaned[i]) next[i] = cleaned[i];
+      }
+      setDigits(next);
+      const nextFocus = Math.min(cleaned.length, 5);
+      inputRefs.current[nextFocus]?.focus();
+      return;
+    }
+
+    const next = [...digits];
+    next[index] = cleaned[0];
+    setDigits(next);
+
+    if (index < 5) {
+      inputRefs.current[index + 1]?.focus();
+    }
+  };
+
+  const handleKeyDown = (index: number, e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === "Backspace" && !digits[index] && index > 0) {
+      inputRefs.current[index - 1]?.focus();
+    }
+  };
+
+  const handlePaste = (e: React.ClipboardEvent<HTMLInputElement>) => {
+    e.preventDefault();
+    const pasted = e.clipboardData.getData("text").replace(/\D/g, "").slice(0, 6);
+    if (!pasted) return;
+    const next = [...digits];
+    for (let i = 0; i < 6; i++) {
+      next[i] = pasted[i] || "";
+    }
+    setDigits(next);
+    const nextFocus = Math.min(pasted.length, 5);
+    inputRefs.current[nextFocus]?.focus();
+  };
+
   async function handleVerify() {
-    if (otp.trim().length < 6) { setError("Please enter the complete OTP."); setSuccessMsg(""); return; }
-    setLoading(true); setError(""); setSuccessMsg("");
-    
+    const fullOtp = digits.join("").trim();
+    if (fullOtp.length < 6) {
+      setError("Please enter the complete 6-digit OTP.");
+      setSuccessMsg("");
+      return;
+    }
+    setLoading(true);
+    setError("");
+    setSuccessMsg("");
+
     const { error: err } = await supabase.auth.verifyOtp({
       email: email.trim().toLowerCase(),
-      token: otp.trim(),
-      type: "signup"
+      token: fullOtp,
+      type: "signup",
     });
 
     if (err) {
       setLoading(false);
-      setError(err.message);
+      setError(err.message || "Invalid or expired OTP. Please try again.");
       return;
     }
-    
-    // Give the browser client a moment to flush cookies before server action is called
-    await new Promise(r => setTimeout(r, 800));
-    
+
+    // Give browser client a moment to flush cookies before server action is called
+    await new Promise((r) => setTimeout(r, 800));
+
     // Call server action
     let res = await onSuccess();
-    
-    // If the server action complains about session not found, retry once after a short delay
-    if (res && !res.success && res.error?.includes('Session not found')) {
-      await new Promise(r => setTimeout(r, 1000));
+
+    // If server action complains about session not found, retry once after short delay
+    if (res && !res.success && res.error?.includes("Session not found")) {
+      await new Promise((r) => setTimeout(r, 1000));
       res = await onSuccess();
     }
-    
+
     setLoading(false);
     if (res && !res.success) {
       setError(res.error || "Verification failed");
     }
   }
 
+  const isComplete = digits.join("").trim().length === 6;
+
   return (
     <motion.div
       key="otp"
-      initial={{ opacity: 0, x: 40 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -40 }}
+      initial={{ opacity: 0, x: 40 }}
+      animate={{ opacity: 1, x: 0 }}
+      exit={{ opacity: 0, x: -40 }}
       className="flex flex-col gap-6"
     >
-      <div className="text-center">
-        <div className="w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-4 border border-coral/30"
-          style={{ background: "rgba(241,145,125,0.1)", boxShadow: "0 0 32px rgba(241,145,125,0.15)" }}>
-          <Mail className="w-8 h-8 text-coral" />
-        </div>
-        <h3 className="font-display text-xl font-bold text-parchment mb-1">Verify Your Email</h3>
-        <p className="text-sm text-mist">
-          We sent a 6-digit OTP to <span className="text-coral font-medium">{email}</span>
+      {/* Step heading */}
+      <div>
+        <p className="text-xs text-coral font-semibold tracking-widest uppercase mb-1">
+          Step 3 of 3 — Email Verification
         </p>
+        <h2 className="font-display text-2xl font-bold text-parchment">
+          Verify Student Email
+        </h2>
       </div>
 
-      <div className="flex flex-col gap-1.5">
-        <label htmlFor="otp-input" className="text-xs font-semibold text-mist uppercase tracking-wider">
-          Enter OTP <span className="text-coral">*</span>
+      {/* Target Email badge with Edit option */}
+      <div className="surface-card rounded-2xl p-4 flex items-center justify-between gap-3 border border-hairline">
+        <div className="flex items-center gap-3 min-w-0">
+          <div
+            className="w-10 h-10 rounded-xl flex items-center justify-center border border-coral/30 shrink-0"
+            style={{ background: "rgba(241,145,125,0.1)" }}
+          >
+            <Mail className="w-5 h-5 text-coral" />
+          </div>
+          <div className="min-w-0">
+            <p className="text-[11px] font-semibold text-mist uppercase tracking-wider">Verification OTP Sent To</p>
+            <p className="text-xs sm:text-sm font-bold text-parchment truncate font-mono">{email}</p>
+          </div>
+        </div>
+        {onBack && (
+          <button
+            type="button"
+            onClick={onBack}
+            className="text-xs font-semibold text-coral hover:underline shrink-0 px-2 py-1"
+          >
+            Change
+          </button>
+        )}
+      </div>
+
+      {/* 6-digit OTP Inputs */}
+      <div className="flex flex-col gap-2.5">
+        <label className="text-xs font-semibold text-mist uppercase tracking-wider text-center">
+          Enter 6-Digit Code <span className="text-coral">*</span>
         </label>
-        <input
-          id="otp-input"
-          type="text"
-          inputMode="numeric"
-          maxLength={8}
-          value={otp}
-          onChange={(e) => setOtp(e.target.value.replace(/\D/g, ""))}
-          placeholder="— — — — — —"
-          className="w-full px-4 py-4 input-glass rounded-xl text-center text-3xl font-bold tracking-[0.5em] text-parchment placeholder-mist/30 focus:outline-none focus:border-coral/60 focus:ring-1 focus:ring-coral/20 transition-all"
-        />
+        <div className="flex items-center justify-center gap-2 sm:gap-3 max-w-sm mx-auto w-full">
+          {digits.map((digit, idx) => (
+            <input
+              key={idx}
+              ref={(el) => {
+                inputRefs.current[idx] = el;
+              }}
+              type="text"
+              inputMode="numeric"
+              maxLength={1}
+              value={digit}
+              onChange={(e) => handleDigitChange(idx, e.target.value)}
+              onKeyDown={(e) => handleKeyDown(idx, e)}
+              onPaste={handlePaste}
+              className={`w-11 sm:w-12 h-14 sm:h-16 text-center text-xl sm:text-2xl font-bold font-mono rounded-xl bg-ink/60 border transition-all focus:outline-none ${
+                digit
+                  ? "border-coral text-parchment shadow-[0_0_12px_rgba(241,145,125,0.2)]"
+                  : "border-hairline text-mist focus:border-coral/60 focus:ring-1 focus:ring-coral/20"
+              }`}
+            />
+          ))}
+        </div>
       </div>
 
+      {/* Error or Success notification */}
       {error && (
         <div className="flex items-center gap-2 text-red-400 text-sm bg-red-500/10 border border-red-500/20 rounded-xl px-4 py-3">
           <AlertCircle className="w-4 h-4 flex-shrink-0" /> {error}
@@ -212,42 +322,65 @@ function OtpVerifyScreen({ email, onSuccess }: { email: string; onSuccess: () =>
         </div>
       )}
 
-      <button
-        id="verify-otp-btn"
-        onClick={handleVerify}
-        disabled={loading}
-        className="w-full py-3.5 rounded-xl font-semibold flex items-center justify-center gap-2 disabled:opacity-60 text-sm transition-all hover:scale-[1.01] active:scale-[0.99]"
-        style={{ background: "var(--coral)", color: "var(--ink)" }}
-      >
-        {loading ? <><Loader2 className="w-4 h-4 animate-spin" /> Verifying...</> : <>Verify OTP <ArrowRight className="w-4 h-4" /></>}
-      </button>
+      {/* Action Buttons */}
+      <div className="flex gap-3 mt-1">
+        {onBack && (
+          <button
+            type="button"
+            disabled={loading}
+            onClick={onBack}
+            className="flex-1 py-3.5 rounded-xl surface-card font-semibold flex items-center justify-center gap-2 text-sm text-mist hover:text-parchment transition-colors disabled:opacity-50"
+          >
+            <ArrowLeft className="w-4 h-4" /> Back
+          </button>
+        )}
+        <button
+          id="verify-otp-btn"
+          onClick={handleVerify}
+          disabled={loading || !isComplete}
+          className={`${onBack ? "flex-[2]" : "w-full"} py-3.5 rounded-xl font-semibold flex items-center justify-center gap-2 disabled:opacity-50 text-sm transition-all hover:scale-[1.01] active:scale-[0.99]`}
+          style={{ background: "var(--coral)", color: "var(--ink)" }}
+        >
+          {loading ? (
+            <>
+              <Loader2 className="w-4 h-4 animate-spin" /> Verifying...
+            </>
+          ) : (
+            <>
+              Verify OTP <ArrowRight className="w-4 h-4" />
+            </>
+          )}
+        </button>
+      </div>
 
+      {/* Resend OTP */}
       <p className="text-xs text-mist text-center">
-        Didn&apos;t receive it? Check your spam folder or{" "}
+        Didn&apos;t receive it? Check spam folder or{" "}
         {otpCooldown > 0 ? (
-          <span className="text-mist">Resend in {otpCooldown}s</span>
+          <span className="text-mist font-medium">Resend in {otpCooldown}s</span>
         ) : (
           <button
             type="button"
-            className="text-coral hover:underline transition-all"
-            onClick={async () => { 
-                setError("");
-                setSuccessMsg("");
-                setOtpCooldown(60); 
-                
-                const { error: resendErr } = await supabase.auth.resend({ 
-                  type: "signup", 
-                  email: email.trim().toLowerCase() 
-                }); 
-                if (resendErr) {
-                  const msg = (!resendErr.message || resendErr.message === '{}')
-                    ? 'Failed to resend verification email. Please try again later.'
+            className="text-coral font-semibold hover:underline transition-all"
+            onClick={async () => {
+              setError("");
+              setSuccessMsg("");
+              setOtpCooldown(60);
+
+              const { error: resendErr } = await supabase.auth.resend({
+                type: "signup",
+                email: email.trim().toLowerCase(),
+              });
+              if (resendErr) {
+                const msg =
+                  !resendErr.message || resendErr.message === "{}"
+                    ? "Failed to resend verification email. Please try again later."
                     : resendErr.message;
-                  setError(msg);
-                  setOtpCooldown(0);
-                } else {
-                  setSuccessMsg("OTP resent successfully!");
-                }
+                setError(msg);
+                setOtpCooldown(0);
+              } else {
+                setSuccessMsg("OTP resent successfully!");
+              }
             }}
           >
             resend OTP
@@ -400,13 +533,17 @@ export default function RegisterPage() {
 
           {/* Step Indicators */}
           {!submitted && (
-            <div className="flex items-center justify-center mb-10">
-              {stepLabels.map((label, idx) => (
-                <div key={idx} className="flex items-center flex-1">
-                  <StepIndicator step={idx + 1} current={step} label={label} />
-                  {idx < stepLabels.length - 1 && <StepConnector active={step > idx + 1} />}
-                </div>
-              ))}
+            <div className="flex items-center justify-between max-w-sm mx-auto mb-8 sm:mb-10 w-full px-2">
+              {stepLabels.map((label, idx) => {
+                const s = idx + 1;
+                const isLast = idx === stepLabels.length - 1;
+                return (
+                  <div key={idx} className={`flex items-center ${isLast ? "flex-none" : "flex-1"}`}>
+                    <StepIndicator step={s} current={step} label={label} />
+                    {!isLast && <StepConnector active={step > s} />}
+                  </div>
+                );
+              })}
             </div>
           )}
 
@@ -451,6 +588,11 @@ export default function RegisterPage() {
                 <OtpVerifyScreen
                   email={form.studentEmail.trim()}
                   onSuccess={handleSubmitAfterVerify}
+                  onBack={() => {
+                    setError("");
+                    setStep(1);
+                    setOtpSent(false);
+                  }}
                 />
               ) : (
                 <motion.div

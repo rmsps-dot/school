@@ -53,14 +53,44 @@ export default function ResetPasswordPage() {
             return
           }
 
-          // 2. PKCE flow: code in search params
+          // 2. Token Hash flow (OTP recovery via token_hash)
+          const tokenHash = searchParams.get('token_hash') || searchParams.get('token')
+          const type = searchParams.get('type')
+          if (tokenHash && type === 'recovery') {
+            const { data: verifyData, error: verifyError } = await supabase.auth.verifyOtp({
+              token_hash: tokenHash,
+              type: 'recovery',
+            })
+            if (verifyError) {
+              isTerminalError = true
+              if (mounted) {
+                setError(verifyError.message || 'Invalid or expired reset link. Please request a new one.')
+                setTargetEmail(null)
+                setIsVerifying(false)
+              }
+              return
+            }
+            if (verifyData?.user?.email && mounted) {
+              setTargetEmail(verifyData.user.email)
+              setError('')
+              setIsVerifying(false)
+              return
+            }
+          }
+
+          // 3. PKCE flow: code in search params
           const code = searchParams.get('code')
           if (code) {
             const { data: exchangeData, error: exchangeError } = await supabase.auth.exchangeCodeForSession(code)
             if (exchangeError) {
               isTerminalError = true
               if (mounted) {
-                setError(exchangeError.message || 'Invalid or expired reset link. Please request a new one.')
+                const isPkceMismatch = exchangeError.message?.toLowerCase().includes('code verifier') ||
+                                       exchangeError.message?.toLowerCase().includes('pkce')
+                const friendlyMsg = isPkceMismatch
+                  ? 'This password reset link was opened in a different browser or device session. Please request a new reset link to continue.'
+                  : (exchangeError.message || 'Invalid or expired reset link. Please request a new one.')
+                setError(friendlyMsg)
                 setTargetEmail(null)
                 setIsVerifying(false)
               }
@@ -74,7 +104,7 @@ export default function ResetPasswordPage() {
             }
           }
 
-          // 3. Implicit flow: check if hash explicitly specifies recovery type
+          // 4. Implicit flow: check if hash explicitly specifies recovery type
           const hashType = hashParams.get('type')
           const accessToken = hashParams.get('access_token')
           if (accessToken && hashType === 'recovery') {

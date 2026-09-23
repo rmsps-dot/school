@@ -5,7 +5,7 @@ import { supabaseAdmin as adminClient } from '@/utils/supabase/admin'
 import { revalidatePath } from 'next/cache'
 import { requireAdmin, getAuthUserEmailMap } from '@/utils/auth-helpers'
 import { randomBytes } from 'crypto'
-import { sendParentCredentials } from '@/utils/mailer'
+import { sendParentCredentials, sendPasswordResetEmail } from '@/utils/mailer'
 
 
 
@@ -644,12 +644,94 @@ export async function sendPasswordResetLink(profileId: string) {
   if (!email) return { error: 'User does not have an email address' }
 
   const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || process.env.NEXT_PUBLIC_APP_URL || 'https://rmsps.vercel.app'
-  const { error } = await adminAuthClient.auth.resetPasswordForEmail(email, {
-    redirectTo: `${siteUrl}/reset-password`,
+
+  // Get recipient profile name for email greeting
+  const { data: profile } = await adminAuthClient
+    .from('profiles')
+    .select('full_name')
+    .eq('id', profileId)
+    .maybeSingle()
+
+  const recipientName = profile?.full_name || userData.user.user_metadata?.full_name || 'User'
+
+  // Generate secure direct recovery link (bypasses browser-locked PKCE storage errors)
+  const { data: linkData, error: linkError } = await adminAuthClient.auth.admin.generateLink({
+    type: 'recovery',
+    email,
+    options: {
+      redirectTo: `${siteUrl}/reset-password`,
+    },
   })
+
+  if (linkError || !linkData?.properties?.action_link) {
+    return { error: linkError?.message || 'Failed to generate password reset link' }
+  }
+
+  // Send branded email with direct recovery link via verified Gmail SMTP
+  const mailRes = await sendPasswordResetEmail(email, recipientName, linkData.properties.action_link)
+  if (!mailRes.success) {
+    return { error: mailRes.error || 'Failed to send password reset email via SMTP' }
+  }
   
-  if (error) return { error: error.message }
   return { success: true, email }
+}
+
+/**
+ * Public action: allows a user requesting password reset from login/forgot-password
+ * to receive a reliable recovery link via verified SMTP and admin.generateLink.
+ * This completely avoids the Next.js client-side PKCE storage verifier mismatch bug.
+ */
+export async function requestPasswordResetAction(email: string): Promise<{ success: boolean; error?: string }> {
+  try {
+    const cleanEmail = email.trim().toLowerCase()
+    if (!cleanEmail) {
+      return { success: false, error: 'Please enter a valid email address.' }
+    }
+
+    const adminAuthClient = adminClient
+    const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || process.env.NEXT_PUBLIC_APP_URL || 'https://rmsps.vercel.app'
+
+    // Look up user to see if they exist and get full_name
+    const { data: userList, error: listError } = await adminAuthClient.auth.admin.listUsers({ page: 1, perPage: 1000 })
+    if (listError) {
+      return { success: false, error: 'Service temporarily unavailable. Please try again later.' }
+    }
+
+    const matchedUser = userList.users.find(u => u.email?.toLowerCase() === cleanEmail)
+    if (!matchedUser) {
+      // Return success with generic message to avoid email enumeration
+      return { success: true }
+    }
+
+    const { data: profile } = await adminAuthClient
+      .from('profiles')
+      .select('full_name')
+      .eq('id', matchedUser.id)
+      .maybeSingle()
+
+    const recipientName = profile?.full_name || matchedUser.user_metadata?.full_name || 'User'
+
+    const { data: linkData, error: linkError } = await adminAuthClient.auth.admin.generateLink({
+      type: 'recovery',
+      email: cleanEmail,
+      options: {
+        redirectTo: `${siteUrl}/reset-password`,
+      },
+    })
+
+    if (linkError || !linkData?.properties?.action_link) {
+      return { success: false, error: linkError?.message || 'Failed to generate reset link.' }
+    }
+
+    const mailRes = await sendPasswordResetEmail(cleanEmail, recipientName, linkData.properties.action_link)
+    if (!mailRes.success) {
+      return { success: false, error: mailRes.error || 'Failed to send reset email.' }
+    }
+
+    return { success: true }
+  } catch (err) {
+    return { success: false, error: err instanceof Error ? err.message : 'An unexpected error occurred.' }
+  }
 }
 
 export async function linkStudentToParent(parentTableId: string, studentProfileId: string) {
